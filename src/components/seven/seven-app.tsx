@@ -62,7 +62,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
       <div className="relative z-10">
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
           <Link to="/" className="home-brand" id="top">
-            Seven Nil
+            7-0
           </Link>
           <div className="flex items-center gap-2">
             <MuteButton />

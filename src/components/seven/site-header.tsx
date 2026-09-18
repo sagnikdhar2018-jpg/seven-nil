@@ -11,7 +11,7 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
   return (
     <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5">
       <Link to="/" className="home-brand">
-        Seven Nil
+        7-0
       </Link>
       <div className="flex flex-wrap items-center justify-end gap-2">
         <MuteButton />

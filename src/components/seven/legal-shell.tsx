@@ -16,7 +16,7 @@ export function LegalShell({
       <div className="relative z-10">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
           <Link to="/" className="home-brand">
-            Seven Nil
+            7-0
           </Link>
           <Link to="/" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted hover:text-ink">
             Play
