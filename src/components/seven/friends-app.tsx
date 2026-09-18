@@ -310,7 +310,7 @@ function Selector({ pool }: { pool: PoolId }) {
                     <p className="text-xs leading-relaxed text-muted">
                       {item.id === "local"
                         ? "Pass the device. Each roll is one pick, then the other person goes."
-                        : "The timer is a pace guide. It does not skip a turn when it hits zero."}
+                        : "When the timer hits zero, a legal footballer is picked for you."}
                     </p>
                   </div>
                 ) : null}
@@ -528,7 +528,7 @@ function Lobby({ pool }: { pool: PoolId }) {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted">{timer}s turn indicator · {readyHumans} ready</p>
+      <p className="text-xs text-muted">{timer}s turn · auto-pick at zero · {readyHumans} ready</p>
       {isHost ? (
         <Button data-action="host-start" disabled={readyHumans < needReady} onClick={() => act({ type: "start" })}>
           Start
@@ -552,6 +552,7 @@ function DraftTable() {
   const timer = useFriends((s) => s.timer);
   const turnStartedAt = useFriends((s) => s.turnStartedAt);
   const actorId = useFriends((s) => s.actorId);
+  const hostId = useFriends((s) => s.hostId);
   const history = useFriends((s) => s.history);
   const pool = useFriends((s) => s.pool);
   const { busy, spin } = useDiceSpin();
@@ -585,7 +586,11 @@ function DraftTable() {
           <p className="mt-2 text-sm text-muted">
             {filledCount(active.slots)}/11 · {active.formation} · {active.style}
           </p>
-          <TurnClock startedAt={turnStartedAt} seconds={timer} />
+          <TurnClock
+            startedAt={turnStartedAt}
+            seconds={timer}
+            onExpire={kind === "local" || actorId === hostId ? () => act({ type: "autoPick" }) : undefined}
+          />
         </div>
         <div className="card-ink flex flex-col overflow-hidden rounded-lg">
           <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-4">
@@ -830,10 +835,20 @@ function ResultView() {
   );
 }
 
-function TurnClock({ startedAt, seconds }: { startedAt: number; seconds: number }) {
+function TurnClock({
+  startedAt,
+  seconds,
+  onExpire,
+}: {
+  startedAt: number;
+  seconds: number;
+  onExpire?: () => void;
+}) {
   const [left, setLeft] = useState(seconds);
   const warned = useRef<number | null>(null);
   const live = useRef(false);
+  const expire = useRef(onExpire);
+  expire.current = onExpire;
 
   useEffect(() => {
     const elapsed = (Date.now() - startedAt) / 1000;
@@ -857,6 +872,7 @@ function TurnClock({ startedAt, seconds }: { startedAt: number; seconds: number 
     if (left === 0 && warned.current !== 0) {
       warned.current = 0;
       playTimerExpire();
+      expire.current?.();
     }
   }, [left]);
 

@@ -59,6 +59,7 @@ export type FriendsAction =
   | { type: "sameYear" }
   | { type: "pick"; player: Player }
   | { type: "place"; slotId: string }
+  | { type: "autoPick" }
   | { type: "confirm"; seatId: string }
   | { type: "simulate" }
   | { type: "simDone" };
@@ -266,6 +267,42 @@ function placePlayer(state: FriendsState, player: Player, slotId: string): Frien
   return next;
 }
 
+function autoPickPlayer(state: FriendsState): FriendsState {
+  const seat = state.seats[state.activeSeat];
+  if (!seat || seat.kind !== "human") return state;
+  if (filledCount(seat.slots) >= 11) return state;
+
+  if (state.selected) {
+    const options = emptySlotsFor(seat.slots, state.selected.pos);
+    if (options[0]) return placePlayer(state, state.selected, options[0].id);
+  }
+
+  let cur = state;
+  for (let i = 0; i < 8; i++) {
+    if (!cur.draw || cur.draw.remaining.length === 0) {
+      const next = drawLegal(
+        cur.seats[cur.activeSeat]!.slots,
+        cur.history,
+        cur.claimed,
+        cur.pool,
+      );
+      cur = {
+        ...cur,
+        draw: { squad: next.squad, remaining: next.remaining },
+        history: next.history,
+        selected: null,
+      };
+    }
+    const remaining = cur.draw?.remaining ?? [];
+    if (remaining.length === 0) continue;
+    const player = remaining[Math.floor(Math.random() * remaining.length)]!;
+    const options = emptySlotsFor(cur.seats[cur.activeSeat]!.slots, player.pos);
+    if (!options[0]) continue;
+    return placePlayer(cur, player, options[0].id);
+  }
+  return cur;
+}
+
 function fillCpu(state: FriendsState): FriendsState {
   let claimed = [...state.claimed];
   const seats = state.seats.map((seat) => {
@@ -470,6 +507,11 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "place": {
       if (state.phase !== "draft" || !isActive || !state.selected) return state;
       return placePlayer(state, state.selected, action.slotId);
+    }
+    case "autoPick": {
+      if (!isHost) return state;
+      if (state.phase !== "draft") return state;
+      return autoPickPlayer(state);
     }
     case "confirm": {
       if (action.seatId !== actorId && !isHost) return state;
