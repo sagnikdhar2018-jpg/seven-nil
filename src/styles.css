@@ -648,6 +648,54 @@
   align-items: center;
 }
 
+.live-duel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.live-sidebox {
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  padding: 0.75rem 0.85rem;
+  min-width: 0;
+}
+
+.live-sidebox.is-away {
+  text-align: right;
+}
+
+.live-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.35rem;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.live-scorers {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 3.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.live-scorers li {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-start;
+}
+
+.live-sidebox.is-away .live-scorers li {
+  justify-content: flex-end;
+}
+
 .live-side {
   font-family: var(--font-display);
   font-size: clamp(1.1rem, 2.4vw, 1.6rem);
@@ -673,6 +721,10 @@
 .live-clock {
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.live-clock.is-flash {
+  color: var(--accent);
 }
 
 .live-goal {

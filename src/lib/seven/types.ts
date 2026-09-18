@@ -66,6 +66,13 @@ export type MatchGoal = {
   scorer: string;
 };
 
+export type TeamRatings = {
+  ovr: number;
+  atk: number;
+  mid: number;
+  def: number;
+};
+
 export type Match = {
   round: string;
   opponent: string;
@@ -76,6 +83,8 @@ export type Match = {
   away?: string;
   goals: MatchGoal[];
   pens?: { home: number; away: number };
+  homeRatings?: TeamRatings;
+  awayRatings?: TeamRatings;
 };
 
 export type Campaign = {

@@ -355,6 +355,8 @@ function runSimulate(state: FriendsState): FriendsState {
         winner: match.result === "W" ? shownName(home.name, "Home") : shownName(away.name, "Away"),
         goals: match.goals,
         pens: match.pens,
+        homeRatings: match.homeRatings,
+        awayRatings: match.awayRatings,
       },
     ],
   };

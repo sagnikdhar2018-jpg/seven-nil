@@ -1,5 +1,5 @@
 import { ATT_POS, DEF_POS, MID_POS } from "./formations";
-import type { Campaign, Match, MatchGoal, Player, PoolId, Slot, StyleId } from "./types";
+import type { Campaign, Match, MatchGoal, Player, PoolId, Slot, StyleId, TeamRatings } from "./types";
 
 const OPPONENTS = [
   { name: "Brazil", att: 91, mid: 88, def: 86, gk: 88 },
@@ -81,6 +81,19 @@ export function teamAxes(slots: Slot[], style: StyleId): Axis {
   };
 }
 
+export function displayRatings(slots: Slot[], style: StyleId): TeamRatings {
+  const a = teamAxes(slots, style);
+  return clampRatings(a.attack, a.midfield, a.defence);
+}
+
+export function clampRatings(atk: number, mid: number, def: number): TeamRatings {
+  const cap = (n: number) => Math.max(1, Math.min(99, Math.round(n)));
+  const A = cap(atk);
+  const M = cap(mid);
+  const D = cap(def);
+  return { ovr: cap((A + M + D) / 3), atk: A, mid: M, def: D };
+}
+
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
@@ -152,6 +165,8 @@ function playMatch(
     ga,
     result,
     goals: scriptGoals(gf, ga, homeSlots, awaySlots),
+    homeRatings: clampRatings(us.attack, us.midfield, us.defence),
+    awayRatings: clampRatings(them.att, them.mid, them.def),
   };
 }
 
@@ -275,6 +290,8 @@ export type BracketGame = {
   winner: string;
   goals: MatchGoal[];
   pens?: { home: number; away: number };
+  homeRatings?: TeamRatings;
+  awayRatings?: TeamRatings;
 };
 
 export function roundNameFor(size: number) {
@@ -307,6 +324,8 @@ export function simulateKnockout(
         winner: homeWins ? home.name : away.name,
         goals: match.goals,
         pens: match.pens,
+        homeRatings: displayRatings(home.slots, home.style),
+        awayRatings: displayRatings(away.slots, away.style),
       });
       next.push(homeWins ? home : away);
     }

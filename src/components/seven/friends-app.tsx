@@ -26,6 +26,7 @@ import { useSeven } from "@/lib/seven/store";
 import type { FormationId, ModeId, PoolId, StyleId } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
 import { ChipGroup } from "./chips";
+import { LineupBox } from "./box-score";
 import { LiveCup } from "./live-match";
 import { Pitch } from "./pitch";
 import { PlayerPickRow } from "./player-pick";
@@ -723,6 +724,12 @@ function DraftTable() {
               </div>
             );
           })}
+        <LineupBox
+          slots={viewing.slots}
+          style={viewing.style}
+          classic={classic}
+          title={`${shownName(viewing.name)} XI`}
+        />
         <Button variant="ghost" data-action="leave-draft" onClick={() => backToMenu(pool)}>
           Leave
         </Button>
@@ -746,6 +753,8 @@ function SimView() {
     ga: g.ga,
     goals: g.goals ?? [],
     pens: g.pens,
+    homeRatings: g.homeRatings,
+    awayRatings: g.awayRatings,
   }));
 
   return (

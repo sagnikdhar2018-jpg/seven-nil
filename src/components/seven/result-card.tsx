@@ -53,6 +53,8 @@ export function ResultCard() {
               ga: current.ga,
               goals: current.goals ?? [],
               pens: current.pens,
+              homeRatings: current.homeRatings,
+              awayRatings: current.awayRatings,
             }}
             onDone={revealNext}
           />

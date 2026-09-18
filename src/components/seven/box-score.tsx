@@ -1,31 +1,44 @@
-import { teamAxes } from "@/lib/seven/simulate";
+import { displayRatings } from "@/lib/seven/simulate";
+import type { Slot, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
 
-export function BoxScore() {
-  const slots = useSeven((s) => s.slots);
-  const style = useSeven((s) => s.style);
-  const mode = useSeven((s) => s.mode);
-  const filled = slots.filter((s) => s.player);
-  const axes = teamAxes(slots, style);
-  const overall = Math.round((axes.attack + axes.defence + axes.midfield) / 3);
-  const classic = mode === "classic";
+export function LineupBox({
+  slots,
+  style,
+  classic = true,
+  title = "Lineup",
+}: {
+  slots: Slot[];
+  style: StyleId;
+  classic?: boolean;
+  title?: string;
+}) {
+  const filled = slots.filter((s) => s.player).length;
+  const ratings = filled >= 11 ? displayRatings(slots, style) : null;
 
   return (
     <div className="card-ink rounded-lg px-4 py-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Box score</p>
-          <p className="mt-1 text-sm text-muted">{filled.length}/11 on the pitch</p>
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">{title}</p>
+          <p className="mt-1 text-sm text-muted">{filled}/11 on the pitch</p>
         </div>
-        <p className="font-numeral text-4xl font-extrabold leading-none tabular-nums text-ink">
-          {classic ? overall : "—"}
-        </p>
+        {ratings && classic ? (
+          <p className="font-numeral text-4xl font-extrabold leading-none tabular-nums text-ink">{ratings.ovr}</p>
+        ) : (
+          <p className="font-numeral text-4xl font-extrabold leading-none tabular-nums text-muted">—</p>
+        )}
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 border-y border-line py-3 text-center">
-        <Stat label="Attack" value={classic ? Math.round(axes.attack) : "—"} />
-        <Stat label="Midfield" value={classic ? Math.round(axes.midfield) : "—"} />
-        <Stat label="Defence" value={classic ? Math.round(axes.defence) : "—"} />
-      </div>
+      {ratings && classic ? (
+        <div className="mt-4 grid grid-cols-4 gap-1 border-y border-line py-3 text-center">
+          <Stat label="OVR" value={ratings.ovr} />
+          <Stat label="ATK" value={ratings.atk} />
+          <Stat label="MID" value={ratings.mid} />
+          <Stat label="DEF" value={ratings.def} />
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted">Ratings lock in at 11.</p>
+      )}
       <ul className="mt-2">
         {slots.map((slot) => (
           <li
@@ -44,6 +57,13 @@ export function BoxScore() {
       </ul>
     </div>
   );
+}
+
+export function BoxScore() {
+  const slots = useSeven((s) => s.slots);
+  const style = useSeven((s) => s.style);
+  const mode = useSeven((s) => s.mode);
+  return <LineupBox slots={slots} style={style} classic={mode === "classic"} title="Box score" />;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {

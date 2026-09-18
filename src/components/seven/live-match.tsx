@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { MatchGoal } from "@/lib/seven/types";
+import type { MatchGoal, TeamRatings } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type BoardMatch = {
   round: string;
@@ -10,6 +11,8 @@ type BoardMatch = {
   ga: number;
   goals: MatchGoal[];
   pens?: { home: number; away: number };
+  homeRatings?: TeamRatings;
+  awayRatings?: TeamRatings;
 };
 
 function scoreAt(goals: MatchGoal[], minute: number) {
@@ -30,6 +33,73 @@ function clockLabel(minute: number) {
   const m = Math.floor(minute);
   const s = Math.floor((minute - m) * 60);
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function RatingsToggle({ ratings }: { ratings?: TeamRatings }) {
+  const [open, setOpen] = useState(false);
+  if (!ratings) return null;
+  return (
+    <div className="mt-3">
+      <Button
+        variant={open ? "ink" : "secondary"}
+        className="w-full text-xs"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "Hide ratings" : "Ratings"}
+      </Button>
+      {open ? (
+        <div className="mt-2 grid grid-cols-4 gap-1 text-center">
+          <RateChip n="OVR" v={ratings.ovr} />
+          <RateChip n="ATK" v={ratings.atk} />
+          <RateChip n="MID" v={ratings.mid} />
+          <RateChip n="DEF" v={ratings.def} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function RateChip({ n, v }: { n: string; v: number }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">{n}</p>
+      <p className="font-numeral text-lg font-extrabold tabular-nums">{v}</p>
+    </div>
+  );
+}
+
+function SideBox({
+  name,
+  score,
+  goals,
+  ratings,
+  away,
+}: {
+  name: string;
+  score: number;
+  goals: MatchGoal[];
+  ratings?: TeamRatings;
+  away?: boolean;
+}) {
+  return (
+    <div className={cn("live-sidebox", away && "is-away")}>
+      <p className="live-side">{name}</p>
+      <p className="font-numeral mt-1 text-2xl font-extrabold tabular-nums">{score}</p>
+      <ul className="live-scorers">
+        {goals.length === 0 ? (
+          <li className="text-muted">—</li>
+        ) : (
+          goals.map((g, i) => (
+            <li key={`${g.minute}-${g.scorer}-${i}`}>
+              <span className="font-numeral tabular-nums">{g.minute}'</span>
+              <span>{g.scorer}</span>
+            </li>
+          ))
+        )}
+      </ul>
+      <RatingsToggle ratings={ratings} />
+    </div>
+  );
 }
 
 export function LiveMatchBoard({
@@ -115,40 +185,45 @@ export function LiveMatchBoard({
 
   const live = scoreAt(match.goals, minute);
   const ticker = match.goals.filter((g) => g.minute <= minute);
+  const clock =
+    phase === "ht" ? "HT" : phase === "pens" ? "PENS" : phase === "ft" ? "FT" : clockLabel(minute);
 
   return (
     <div className="live-board">
       <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">{match.round}</p>
-      <div className="live-score mt-3">
-        <span className="live-side">{match.home}</span>
-        <span className={cn("live-nums", flash && "is-flash")}>
-          {live.home}–{live.away}
-        </span>
-        <span className="live-side is-away">{match.away}</span>
+      <div className="live-duel mt-3">
+        <SideBox
+          name={match.home}
+          score={live.home}
+          goals={ticker.filter((g) => g.side === "home")}
+          ratings={match.homeRatings}
+        />
+        <div className="live-mid">
+          <p className={cn("live-clock font-numeral text-sm font-extrabold tabular-nums", flash && "is-flash")}>
+            {clock}
+          </p>
+          <p className={cn("live-nums", flash && "is-flash")}>
+            {live.home}–{live.away}
+          </p>
+          {phase === "pens" && match.pens ? (
+            <p className="mt-1 text-xs font-extrabold text-accent">
+              {match.pens.home}–{match.pens.away}
+            </p>
+          ) : null}
+          {flash ? (
+            <p className="live-goal mt-2">
+              {flash.minute}' {flash.scorer}
+            </p>
+          ) : null}
+        </div>
+        <SideBox
+          name={match.away}
+          score={live.away}
+          goals={ticker.filter((g) => g.side === "away")}
+          ratings={match.awayRatings}
+          away
+        />
       </div>
-      <p className="live-clock mt-2 font-numeral text-sm font-extrabold tabular-nums">
-        {phase === "ht" ? "Half time" : phase === "pens" ? "Penalties" : phase === "ft" ? "Full time" : clockLabel(minute)}
-      </p>
-      {phase === "pens" && match.pens ? (
-        <p className="mt-1 text-sm font-extrabold text-accent">
-          Pens {match.pens.home}–{match.pens.away}
-        </p>
-      ) : null}
-      {flash ? (
-        <p className="live-goal mt-3">
-          {flash.minute}' {flash.scorer}
-        </p>
-      ) : null}
-      <ul className="live-ticker mt-4">
-        {ticker.map((g, i) => (
-          <li key={`${g.minute}-${g.scorer}-${i}`}>
-            <span>{g.minute}'</span>
-            <span>
-              {g.scorer} · {g.side === "home" ? match.home : match.away}
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -191,7 +266,7 @@ export function LiveCup({
                     {g.home} vs {g.away}
                   </span>
                   <span className="font-numeral text-base font-extrabold tabular-nums">
-                    {shown || done && games.indexOf(g) <= index ? `${g.gf}–${g.ga}` : "vs"}
+                    {shown || (done && games.indexOf(g) <= index) ? `${g.gf}–${g.ga}` : "vs"}
                   </span>
                 </div>
               );
