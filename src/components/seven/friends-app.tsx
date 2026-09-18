@@ -72,6 +72,21 @@ function NameField({
   );
 }
 
+function ConnectingNote() {
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setWaited(true), 8000);
+    return () => window.clearTimeout(id);
+  }, []);
+  return (
+    <p className="text-sm text-muted">
+      {waited
+        ? "Still connecting. Keep the host lobby open on another phone or laptop, then refresh this page."
+        : "Connecting to the room…"}
+    </p>
+  );
+}
+
 export function FriendsApp() {
   const hydrate = useSeven((s) => s.hydrate);
   const phase = useFriends((s) => s.phase);
@@ -417,7 +432,7 @@ function Lobby() {
           </Button>
         </div>
       ) : (
-        <p className="text-sm text-muted">Connecting to the room…</p>
+        <ConnectingNote />
       )}
       <ul className="card-ink rounded-lg px-4 py-3">
         {seats.map((seat) => (
@@ -856,7 +871,12 @@ function NetInner({
     becomeGuest(useFriends.getState(), p2p.selfId);
     p2p.send({ t: "hello", id: p2p.selfId, name: selfName, password });
     p2p.send({ t: "need" });
-  }, [isHost, p2p.joined, p2p.selfId, p2p.send, selfName, password, becomeGuest]);
+  }, [isHost, p2p.joined, p2p.peers.length, p2p.selfId, p2p.send, selfName, password, becomeGuest]);
+
+  useEffect(() => {
+    if (!isHost || !p2p.joined || p2p.peers.length === 0) return;
+    p2p.send({ t: "state", state: pickState(useFriends.getState()) });
+  }, [isHost, p2p.joined, p2p.peers.length, p2p.send]);
 
   useEffect(() => {
     if (!isHost) {

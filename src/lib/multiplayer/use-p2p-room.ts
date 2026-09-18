@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { P2PRoom, type PeerInfo } from "./p2p";
+import { defaultIceServers, type PeerInfo } from "./p2p";
 
 export interface UseP2PRoomOptions {
   room?: string;
@@ -24,41 +24,69 @@ function defaultRoom(): string {
   return `room-${window.location.hostname.split(".")[0]}`.slice(0, 64);
 }
 
+type Sender = (data: unknown, target?: string | string[] | null) => Promise<unknown>;
+
 export function useP2PRoom(options: UseP2PRoomOptions = {}): P2PRoomHandle {
   const [selfId] = useState(() => options.selfId ?? `p-${Math.random().toString(36).slice(2, 10)}`);
   const [room] = useState(() => options.room ?? defaultRoom());
-  const [name] = useState(() => options.name ?? selfId);
   const [peers, setPeers] = useState<PeerInfo[]>([]);
   const [joined, setJoined] = useState(false);
-  const roomRef = useRef<P2PRoom | null>(null);
+  const sendRef = useRef<Sender | null>(null);
   const listeners = useRef(
     new Set<(from: string, data: unknown, channel: "state" | "reliable") => void>(),
   );
 
   useEffect(() => {
-    const p2p = new P2PRoom({
-      room,
-      selfId,
-      name,
-      onPeersChanged: setPeers,
-      onMessage: (from, data, channel) => {
-        for (const fn of listeners.current) fn(from, data, channel);
-      },
-      onConnected: () => setJoined(true),
-    });
-    roomRef.current = p2p;
-    void p2p.join();
-    return () => {
-      roomRef.current = null;
-      p2p.close();
-    };
-  }, [room, selfId, name]);
+    let cancelled = false;
+    let leave: (() => void) | undefined;
 
-  const broadcast = useCallback((data: unknown) => roomRef.current?.broadcast(data), []);
-  const send = useCallback(
-    (data: unknown, peerId?: string) => roomRef.current?.send(data, peerId),
-    [],
-  );
+    void (async () => {
+      const { joinRoom } = await import("trystero/mqtt");
+      if (cancelled) return;
+      const handle = joinRoom(
+        {
+          appId: "seven-nil",
+          rtcConfig: { iceServers: defaultIceServers() },
+        },
+        room,
+      );
+      leave = () => {
+        void handle.leave();
+      };
+      const [send, recv] = handle.makeAction("sn");
+      sendRef.current = (data, target) => send(data as never, target);
+      recv((data, peerId) => {
+        for (const fn of listeners.current) fn(peerId, data, "reliable");
+      });
+      const sync = () => {
+        const map = handle.getPeers();
+        setPeers(
+          Object.entries(map).map(([id, pc]) => ({
+            id,
+            name: id,
+            connectionState: pc.connectionState,
+            candidateType: null,
+            rttMs: null,
+          })),
+        );
+      };
+      handle.onPeerJoin(() => sync());
+      handle.onPeerLeave(() => sync());
+      sync();
+      if (!cancelled) setJoined(true);
+    })();
+
+    return () => {
+      cancelled = true;
+      sendRef.current = null;
+      leave?.();
+    };
+  }, [room]);
+
+  const send = useCallback((data: unknown, peerId?: string) => {
+    void sendRef.current?.(data, peerId ?? null);
+  }, []);
+
   const onMessage = useCallback(
     (fn: (from: string, data: unknown, channel: "state" | "reliable") => void) => {
       listeners.current.add(fn);
@@ -69,5 +97,5 @@ export function useP2PRoom(options: UseP2PRoomOptions = {}): P2PRoomHandle {
     [],
   );
 
-  return { selfId, room, peers, joined, broadcast, send, onMessage };
+  return { selfId, room, peers, joined, broadcast: send, send, onMessage };
 }
