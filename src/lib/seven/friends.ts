@@ -1,11 +1,12 @@
 import { canFill, emptySlotsFor, makeSlots } from "./formations";
 import { autoFillXi, drawLegal, drawSameTeam, filledCount } from "./draft";
+import { personKey } from "./person";
 import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
 import type { DrawnSquad, FormationId, ModeId, Player, Slot, StyleId } from "./types";
 
 export type FriendKind = "local" | "final" | "cup";
 export type TimerSec = 20 | 30 | 45;
-export type BracketSize = 4 | 8 | 16;
+export type BracketSize = 4 | 8 | 16 | 32;
 export type FriendsPhase = "menu" | "setup" | "lobby" | "draft" | "simulating" | "result";
 
 export type Seat = {
@@ -58,7 +59,8 @@ export type FriendsAction =
   | { type: "pick"; player: Player }
   | { type: "place"; slotId: string }
   | { type: "confirm"; seatId: string }
-  | { type: "simulate" };
+  | { type: "simulate" }
+  | { type: "simDone" };
 
 export function shownName(name: string, fallback = "Player") {
   const n = name.trim();
@@ -196,13 +198,13 @@ function placePlayer(state: FriendsState, player: Player, slotId: string): Frien
   if (!seat) return state;
   const slot = seat.slots.find((s) => s.id === slotId);
   if (!slot || slot.player || !canFill(slot.pos, player.pos)) return state;
-  if (state.claimed.includes(player.id)) return state;
+  if (state.claimed.includes(personKey(player.name))) return state;
   const slots = seat.slots.map((s) => (s.id === slotId ? { ...s, player } : s));
   const seats = state.seats.map((s, i) => (i === state.activeSeat ? { ...s, slots } : s));
   const next = passTurn({
     ...state,
     seats,
-    claimed: [...state.claimed, player.id],
+    claimed: [...state.claimed, personKey(player.name)],
     selected: null,
     draw: null,
   });
@@ -227,14 +229,14 @@ function runSimulate(state: FriendsState): FriendsState {
     const { games, champion } = simulateKnockout(
       filled.seats.map((s) => ({ name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"), slots: s.slots, style: s.style })),
     );
-    return { ...filled, phase: "result", bracket: games, champion, resultMatch: null };
+    return { ...filled, phase: "simulating", bracket: games, champion, resultMatch: null };
   }
   const home = filled.seats[0]!;
   const away = filled.seats[1]!;
-  const match = simulateFinal(home.slots, away.slots, home.style, away.style, away.name);
+  const match = simulateFinal(home.slots, away.slots, home.style, away.style, shownName(away.name, "Away"), "Cup Final", shownName(home.name, "Home"));
   return {
     ...filled,
-    phase: "result",
+    phase: "simulating",
     resultMatch: {
       home: shownName(home.name, "Home"),
       away: shownName(away.name, "Away"),
@@ -243,7 +245,18 @@ function runSimulate(state: FriendsState): FriendsState {
       result: match.result,
     },
     champion: match.result === "W" ? shownName(home.name, "Home") : shownName(away.name, "Away"),
-    bracket: [],
+    bracket: [
+      {
+        round: "Cup Final",
+        home: shownName(home.name, "Home"),
+        away: shownName(away.name, "Away"),
+        gf: match.gf,
+        ga: match.ga,
+        winner: match.result === "W" ? shownName(home.name, "Home") : shownName(away.name, "Away"),
+        goals: match.goals,
+        pens: match.pens,
+      },
+    ],
   };
 }
 
@@ -385,7 +398,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     }
     case "pick": {
       if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
-      if (state.claimed.includes(action.player.id)) return state;
+      if (state.claimed.includes(personKey(action.player.name))) return state;
       const options = emptySlotsFor(active.slots, action.player.pos);
       if (options.length === 0) return state;
       if (options.length > 1) return { ...state, selected: action.player };
@@ -409,6 +422,9 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (!isHost) return state;
       if (!allHumansFull(state)) return state;
       return runSimulate(state);
+    case "simDone":
+      if (state.phase !== "simulating") return state;
+      return { ...state, phase: "result" };
     default:
       return state;
   }

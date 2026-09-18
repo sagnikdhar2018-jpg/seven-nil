@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { canFill, emptySlotsFor, makeSlots } from "./formations";
 import { drawLegal, drawSameTeam, filledCount } from "./draft";
+import { personKey, takenKeysFromSlots } from "./person";
 import { loadSave, writeSave, type BoardSave, type SevenSave } from "./persist";
 import { simulateCampaign } from "./simulate";
 import type {
@@ -189,7 +190,7 @@ export const useSeven = create<SevenState>((set, get) => ({
     if (state.phase === "simulating" || state.phase === "result") return;
     if (filledCount(state.slots) >= 11) return;
     if (state.draw && state.phase === "picking") return;
-    const next = drawLegal(state.slots, state.history, [], state.pool);
+    const next = drawLegal(state.slots, state.history, takenKeysFromSlots(state.slots), state.pool);
     set({
       phase: "picking",
       draw: { squad: next.squad, remaining: next.remaining },
@@ -203,7 +204,7 @@ export const useSeven = create<SevenState>((set, get) => ({
     const state = get();
     if (state.rerolls <= 0) return;
     if (state.phase !== "picking") return;
-    const next = drawLegal(state.slots, state.history, [], state.pool);
+    const next = drawLegal(state.slots, state.history, takenKeysFromSlots(state.slots), state.pool);
     set({
       rerolls: state.rerolls - 1,
       draw: { squad: next.squad, remaining: next.remaining },
@@ -217,7 +218,7 @@ export const useSeven = create<SevenState>((set, get) => ({
     const state = get();
     if (state.rerolls <= 0) return;
     if (state.phase !== "picking" || !state.draw) return;
-    const next = drawSameTeam(state.slots, state.history, state.draw.squad, [], state.pool);
+    const next = drawSameTeam(state.slots, state.history, state.draw.squad, takenKeysFromSlots(state.slots), state.pool);
     if (!next) return;
     set({
       rerolls: state.rerolls - 1,
@@ -231,6 +232,7 @@ export const useSeven = create<SevenState>((set, get) => ({
   pick: (player) => {
     const state = get();
     if (state.phase !== "picking" || !state.draw) return;
+    if (takenKeysFromSlots(state.slots).includes(personKey(player.name))) return;
     const options = emptySlotsFor(state.slots, player.pos);
     if (options.length === 0) return;
     if (options.length > 1) {
@@ -292,7 +294,7 @@ export const useSeven = create<SevenState>((set, get) => ({
     set({
       phase: "simulating",
       campaign,
-      revealTo: 1,
+      revealTo: 0,
       runs,
       dreams,
     });

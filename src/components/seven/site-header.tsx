@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSeven } from "@/lib/seven/store";
@@ -9,9 +10,9 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
 
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
-      <a href="/" className="home-brand">
+      <Link to="/" className="home-brand">
         Seven Nil
-      </a>
+      </Link>
       <div className="flex items-center gap-2">
         <MuteButton />
         <Button
@@ -27,10 +28,17 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
           )}
         </Button>
         <Button variant="ghost" asChild>
-          <a href="/club">Clubs</a>
+          <Link to="/club">Clubs</Link>
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/friends">Friends</Link>
         </Button>
         <Button variant="secondary" asChild>
-          <a href={playHref}>{playLabel}</a>
+          {playHref.startsWith("#") ? (
+            <a href={playHref}>{playLabel}</a>
+          ) : (
+            <Link to={playHref as "/"}>{playLabel}</Link>
+          )}
         </Button>
       </div>
     </header>

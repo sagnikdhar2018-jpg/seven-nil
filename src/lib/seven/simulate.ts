@@ -1,5 +1,5 @@
 import { ATT_POS, DEF_POS, MID_POS } from "./formations";
-import type { Campaign, Match, Player, PoolId, Slot, StyleId } from "./types";
+import type { Campaign, Match, MatchGoal, Player, PoolId, Slot, StyleId } from "./types";
 
 const OPPONENTS = [
   { name: "Brazil", att: 91, mid: 88, def: 86, gk: 88 },
@@ -96,17 +96,63 @@ function poisson(lambda: number) {
   return k - 1;
 }
 
+function lastName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? name;
+}
+
+function scorers(slots: Slot[], fallback: string) {
+  const names = slots.filter((s) => s.player && s.pos !== "GK").map((s) => lastName(s.player!.name));
+  return names.length ? names : [fallback];
+}
+
+function uniqueMinutes(count: number) {
+  const mins: number[] = [];
+  let guard = 0;
+  while (mins.length < count && guard < 80) {
+    guard += 1;
+    const m = 7 + Math.floor(Math.random() * 83);
+    if (!mins.includes(m)) mins.push(m);
+  }
+  return mins.sort((a, b) => a - b);
+}
+
+function scriptGoals(gf: number, ga: number, homeSlots: Slot[], awaySlots: Slot[]): MatchGoal[] {
+  const home = scorers(homeSlots, "Home");
+  const away = scorers(awaySlots, "Away");
+  const goals: MatchGoal[] = [];
+  for (const minute of uniqueMinutes(gf)) {
+    goals.push({ minute, side: "home", scorer: home[Math.floor(Math.random() * home.length)]! });
+  }
+  for (const minute of uniqueMinutes(ga)) {
+    goals.push({ minute, side: "away", scorer: away[Math.floor(Math.random() * away.length)]! });
+  }
+  return goals.sort((a, b) => a.minute - b.minute);
+}
+
 function playMatch(
   us: Axis,
   them: { name: string; att: number; mid: number; def: number; gk: number },
   round: string,
+  homeSlots: Slot[] = [],
+  awaySlots: Slot[] = [],
+  homeName = "You",
 ): Match {
   const ourChance = (us.attack + us.midfield * 0.35 - them.def * 0.7 - them.gk * 0.25) / 18;
   const theirChance = (them.att + them.mid * 0.3 - us.defence * 0.7 - us.gk * 0.25) / 18;
   const gf = clamp(poisson(clamp(1.15 + ourChance, 0.15, 4.4)), 0, 8);
   const ga = clamp(poisson(clamp(1.05 + theirChance, 0.1, 4.1)), 0, 8);
   const result: Match["result"] = gf > ga ? "W" : gf === ga ? "D" : "L";
-  return { round, opponent: them.name, gf, ga, result };
+  return {
+    round,
+    opponent: them.name,
+    home: homeName,
+    away: them.name,
+    gf,
+    ga,
+    result,
+    goals: scriptGoals(gf, ga, homeSlots, awaySlots),
+  };
 }
 
 function pickOpponents(count: number, pool: PoolId = "world") {
@@ -118,79 +164,52 @@ function pickOpponents(count: number, pool: PoolId = "world") {
   return copy.slice(0, count);
 }
 
+const KNOCKOUT = [
+  "Round of 32",
+  "Round of 16",
+  "Quarter-final",
+  "Semi-final",
+  "Final",
+] as const;
+
 export function simulateCampaign(slots: Slot[], style: StyleId, pool: PoolId = "world"): Campaign {
   const axes = teamAxes(slots, style);
-  const foes = pickOpponents(8, pool);
+  const foes = pickOpponents(5, pool);
   const matches: Match[] = [];
-  const groupLabel = pool === "club" ? "League phase" : "Group";
-
-  const group = foes.slice(0, 3);
-  for (const opp of group) {
-    matches.push(playMatch(axes, opp, groupLabel));
-  }
+  const homeName = pool === "club" ? "Your XI" : "Your XI";
 
   let pts = 0;
   let gf = 0;
   let ga = 0;
   let won = 0;
-  let drawn = 0;
   let lost = 0;
-  for (const m of matches) {
-    gf += m.gf;
-    ga += m.ga;
-    if (m.result === "W") {
-      pts += 3;
-      won += 1;
-    } else if (m.result === "D") {
-      pts += 1;
-      drawn += 1;
-    } else lost += 1;
-  }
-
-  let exit = pool === "club" ? "League phase" : "Group stage";
+  let exit = "Round of 32";
   let champion = false;
-  const qualify = pts >= 5 || (pts >= 4 && gf - ga >= 0);
-  const knock = [
-    { round: "Round of 16", opp: foes[3]! },
-    { round: "Quarter-final", opp: foes[4]! },
-    { round: "Semi-final", opp: foes[5]! },
-    { round: "Final", opp: foes[6]! },
-  ];
 
-  if (qualify) {
-    for (const step of knock) {
-      const match = playMatch(axes, step.opp, step.round);
-      matches.push(match);
-      gf += match.gf;
-      ga += match.ga;
-      if (match.result === "W") {
-        won += 1;
-        pts += 3;
-        exit = step.round;
-        if (step.round === "Final") {
-          champion = true;
-          exit = "Champions";
-        }
-      } else if (match.result === "D") {
-        drawn += 1;
-        const pens = Math.random() < 0.5 + (axes.gk - 80) / 80;
-        if (!pens) {
-          lost += 1;
-          exit = `${step.round} (pens)`;
-          break;
-        }
-        won += 1;
-        match.result = "W";
-        exit = step.round;
-        if (step.round === "Final") {
-          champion = true;
-          exit = "Champions (pens)";
-        }
-      } else {
-        lost += 1;
-        exit = step.round;
-        break;
+  for (let i = 0; i < KNOCKOUT.length; i++) {
+    const round = KNOCKOUT[i]!;
+    const opp = foes[i]!;
+    const match = playMatch(axes, opp, round, slots, [], homeName);
+    if (match.result === "D") {
+      const pens = Math.random() < 0.5 + (axes.gk - 80) / 80;
+      match.result = pens ? "W" : "L";
+      match.pens = pens ? { home: 5, away: 4 } : { home: 3, away: 4 };
+    }
+    matches.push(match);
+    gf += match.gf;
+    ga += match.ga;
+    if (match.result === "W") {
+      won += 1;
+      pts += 3;
+      exit = round;
+      if (round === "Final") {
+        champion = true;
+        exit = match.pens ? "Champions (pens)" : "Champions";
       }
+    } else {
+      lost += 1;
+      exit = match.pens ? `${round} (pens)` : round;
+      break;
     }
   }
 
@@ -206,7 +225,7 @@ export function simulateCampaign(slots: Slot[], style: StyleId, pool: PoolId = "
     ga,
     pts,
     won,
-    drawn,
+    drawn: 0,
     lost,
     champion,
     unbeaten,
@@ -226,16 +245,23 @@ export function simulateFinal(
   styleUs: StyleId,
   styleThem: StyleId,
   themName = "Them",
+  round = "Cup Final",
+  usName = "Home",
 ): Match {
   const their = teamAxes(them, styleThem);
   const match = playMatch(
     teamAxes(us, styleUs),
     { name: themName, att: their.attack, mid: their.midfield, def: their.defence, gk: their.gk },
-    "Cup Final",
+    round,
+    us,
+    them,
+    usName,
   );
   if (match.result === "D") {
     const edge = teamAxes(us, styleUs).gk - their.gk;
-    match.result = Math.random() < 0.5 + edge / 80 ? "W" : "L";
+    const win = Math.random() < 0.5 + edge / 80;
+    match.result = win ? "W" : "L";
+    match.pens = win ? { home: 5, away: 4 } : { home: 3, away: 4 };
   }
   return match;
 }
@@ -247,23 +273,30 @@ export type BracketGame = {
   gf: number;
   ga: number;
   winner: string;
+  goals: MatchGoal[];
+  pens?: { home: number; away: number };
 };
+
+export function roundNameFor(size: number) {
+  if (size <= 2) return "Final";
+  if (size <= 4) return "Semi-final";
+  if (size <= 8) return "Quarter-final";
+  if (size <= 16) return "Round of 16";
+  return "Round of 32";
+}
 
 export function simulateKnockout(
   teams: { name: string; slots: Slot[]; style: StyleId }[],
 ): { games: BracketGame[]; champion: string } {
-  const roundName = (n: number) =>
-    n === 2 ? "Final" : n === 4 ? "Semi-final" : n === 8 ? "Quarter-final" : "Round of 16";
   let live = [...teams];
   const games: BracketGame[] = [];
   while (live.length >= 2) {
     const next: typeof live = [];
-    const label = roundName(live.length);
+    const label = roundNameFor(live.length);
     for (let i = 0; i < live.length; i += 2) {
       const home = live[i]!;
       const away = live[i + 1]!;
-      const match = simulateFinal(home.slots, away.slots, home.style, away.style, away.name);
-      match.round = label;
+      const match = simulateFinal(home.slots, away.slots, home.style, away.style, away.name, label, home.name);
       const homeWins = match.result === "W";
       games.push({
         round: label,
@@ -272,6 +305,8 @@ export function simulateKnockout(
         gf: match.gf,
         ga: match.ga,
         winner: homeWins ? home.name : away.name,
+        goals: match.goals,
+        pens: match.pens,
       });
       next.push(homeWins ? home : away);
     }

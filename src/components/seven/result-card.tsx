@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useSeven } from "@/lib/seven/store";
+import { LiveMatchBoard } from "./live-match";
 
 export function ResultCard() {
   const phase = useSeven((s) => s.phase);
   const campaign = useSeven((s) => s.campaign);
   const revealTo = useSeven((s) => s.revealTo);
+  const revealNext = useSeven((s) => s.revealNext);
   const skipReveal = useSeven((s) => s.skipReveal);
   const resetDraft = useSeven((s) => s.resetDraft);
   const slots = useSeven((s) => s.slots);
@@ -12,17 +14,18 @@ export function ResultCard() {
 
   if (!campaign || (phase !== "simulating" && phase !== "result")) return null;
 
-  const shown = campaign.matches.slice(0, revealTo);
   const done = phase === "result";
+  const current = !done ? campaign.matches[revealTo] : null;
+  const shown = campaign.matches.slice(0, done ? campaign.matches.length : revealTo);
 
   return (
     <div className="card-ink rounded-lg px-5 py-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
-            {pool === "club" ? "Europe" : "Campaign"}
+            {pool === "club" ? "Europe" : "Knockout"}
           </p>
-          <p className="result-stamp mt-2">{done ? campaign.exit : "Live"}</p>
+          <p className="result-stamp mt-2">{done ? campaign.exit : current?.round ?? "Live"}</p>
         </div>
         {done ? (
           <div className="text-right">
@@ -38,6 +41,24 @@ export function ResultCard() {
         )}
       </div>
 
+      {current && !done ? (
+        <div className="mt-4">
+          <LiveMatchBoard
+            key={`${current.round}-${current.opponent}-${revealTo}`}
+            match={{
+              round: current.round,
+              home: current.home ?? "Your XI",
+              away: current.opponent,
+              gf: current.gf,
+              ga: current.ga,
+              goals: current.goals ?? [],
+              pens: current.pens,
+            }}
+            onDone={revealNext}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-4">
         {shown.map((match, index) => (
           <div key={`${match.round}-${match.opponent}-${index}`} className="match-row">
@@ -47,6 +68,7 @@ export function ResultCard() {
             <span className="truncate text-sm font-extrabold text-ink">{match.opponent}</span>
             <span className="font-numeral text-base font-extrabold tabular-nums">
               {match.gf}–{match.ga}
+              {match.pens ? ` P ${match.pens.home}–${match.pens.away}` : ""}
               <span className="ml-2 text-accent">{match.result}</span>
             </span>
           </div>

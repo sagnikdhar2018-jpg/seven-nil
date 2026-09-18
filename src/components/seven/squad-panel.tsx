@@ -2,8 +2,9 @@ import { CalendarRange, Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canDrawSameTeam } from "@/lib/seven/draft";
 import { emptySlotsFor } from "@/lib/seven/formations";
+import { isPersonTaken, takenKeysFromSlots } from "@/lib/seven/person";
 import { useSeven } from "@/lib/seven/store";
-import { cn } from "@/lib/utils";
+import { PlayerPickRow } from "./player-pick";
 import { useDiceSpin } from "./use-dice-spin";
 
 export function SquadPanel() {
@@ -22,20 +23,17 @@ export function SquadPanel() {
   const filled = slots.filter((s) => s.player).length;
   const classic = mode === "classic";
   const canYear = draw ? canDrawSameTeam(draw.squad, history, pool) : false;
+  const taken = takenKeysFromSlots(slots);
 
-  const legalIds = draw
-    ? new Set(
-        draw.remaining
-          .filter((player) => emptySlotsFor(slots, player.pos).length > 0)
-          .map((player) => player.id),
-      )
-    : new Set<string>();
-
+  const roster = draw?.squad.players ?? [];
+  const legalIds = new Set(
+    roster
+      .filter((player) => !isPersonTaken(player.name, taken) && emptySlotsFor(slots, player.pos).length > 0)
+      .map((player) => player.id),
+  );
   const bestId =
-    classic && draw
-      ? draw.remaining
-          .filter((player) => legalIds.has(player.id))
-          .sort((a, b) => b.ovr - a.ovr)[0]?.id
+    classic
+      ? roster.filter((player) => legalIds.has(player.id)).sort((a, b) => b.ovr - a.ovr)[0]?.id
       : undefined;
 
   return (
@@ -116,35 +114,20 @@ export function SquadPanel() {
 
       <div className="max-h-80 overflow-y-auto">
         {draw ? (
-          draw.remaining.map((player) => {
-            const legal = legalIds.has(player.id);
-            return (
-              <button
-                key={player.id}
-                type="button"
-                className={cn("player-row", bestId === player.id && "bg-accent/10")}
-                disabled={!legal}
-                onClick={() => pick(player)}
-              >
-                <span className="num">#{player.num}</span>
-                <span>
-                  <span className="block text-sm font-extrabold text-ink">{player.name}</span>
-                  <span className="block text-xs font-semibold text-muted">
-                    {player.pos.join(" · ")}
-                  </span>
-                </span>
-                <span className="text-xs font-semibold text-muted">
-                  {bestId === player.id ? "Fit" : legal ? "In" : "Out"}
-                </span>
-                <span className="font-numeral text-base font-extrabold tabular-nums text-accent">
-                  {classic ? player.ovr : "—"}
-                </span>
-              </button>
-            );
-          })
+          roster.map((player) => (
+            <PlayerPickRow
+              key={player.id}
+              player={player}
+              legal={legalIds.has(player.id)}
+              taken={isPersonTaken(player.name, taken)}
+              best={bestId === player.id}
+              classic={classic}
+              onPick={pick}
+            />
+          ))
         ) : (
           <p className="px-4 py-6 text-sm text-muted">
-            Each roll is one squad. You take one footballer, then you roll again.
+            Each roll is one squad. You take one footballer, then you roll again. A name taken once is gone for every year.
           </p>
         )}
       </div>

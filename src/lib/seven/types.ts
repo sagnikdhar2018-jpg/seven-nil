@@ -60,12 +60,22 @@ export type DrawnSquad = {
   remaining: Player[];
 };
 
+export type MatchGoal = {
+  minute: number;
+  side: "home" | "away";
+  scorer: string;
+};
+
 export type Match = {
   round: string;
   opponent: string;
   gf: number;
   ga: number;
   result: "W" | "D" | "L";
+  home?: string;
+  away?: string;
+  goals: MatchGoal[];
+  pens?: { home: number; away: number };
 };
 
 export type Campaign = {

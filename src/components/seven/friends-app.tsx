@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { CalendarRange, Copy, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
@@ -18,12 +19,15 @@ import {
   type TimerSec,
 } from "@/lib/seven/friends";
 import { useFriends } from "@/lib/seven/friends-store";
+import { isPersonTaken } from "@/lib/seven/person";
 import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
 import { useSeven } from "@/lib/seven/store";
 import type { FormationId, ModeId, StyleId } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
 import { ChipGroup } from "./chips";
+import { LiveCup } from "./live-match";
 import { Pitch } from "./pitch";
+import { PlayerPickRow } from "./player-pick";
 import { SfxRoot } from "./sfx";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
@@ -87,7 +91,7 @@ function ConnectingNote() {
   );
 }
 
-export function FriendsApp() {
+export function FriendsApp({ roomFromUrl }: { roomFromUrl?: string }) {
   const hydrate = useSeven((s) => s.hydrate);
   const phase = useFriends((s) => s.phase);
   const kind = useFriends((s) => s.kind);
@@ -97,8 +101,8 @@ export function FriendsApp() {
   }, [hydrate]);
 
   useEffect(() => {
-    bootFromUrl();
-  }, []);
+    bootFromUrl(roomFromUrl);
+  }, [roomFromUrl]);
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink">
@@ -109,7 +113,8 @@ export function FriendsApp() {
         {phase === "menu" ? <Selector /> : null}
         {phase === "setup" ? <LocalSetup /> : null}
         {phase === "lobby" ? <Lobby /> : null}
-        {phase === "draft" || phase === "simulating" ? <DraftTable /> : null}
+        {phase === "draft" ? <DraftTable /> : null}
+        {phase === "simulating" ? <SimView /> : null}
         {phase === "result" ? <ResultView /> : null}
         {phase === "menu" || phase === "setup" ? <SiteFooter /> : null}
       </div>
@@ -120,10 +125,9 @@ export function FriendsApp() {
   );
 }
 
-function bootFromUrl() {
+function bootFromUrl(roomFromUrl?: string) {
   if (typeof window === "undefined") return;
-  const q = new URLSearchParams(window.location.search);
-  const room = (q.get("room") ?? "").toUpperCase();
+  const room = (roomFromUrl ?? new URLSearchParams(window.location.search).get("room") ?? "").toUpperCase();
   if (!room) return;
   const existing = useFriends.getState();
   if (existing.code === room && existing.phase !== "menu") return;
@@ -158,6 +162,7 @@ function Selector() {
   const [bracketSize, setBracketSize] = useState<BracketSize>(8);
   const hydrateLocal = useFriends((s) => s.hydrateLocal);
   const becomeHost = useFriends((s) => s.becomeHost);
+  const navigate = useNavigate();
 
   const startHost = (kind: FriendKind) => {
     const id = `p-${Math.random().toString(36).slice(2, 10)}`;
@@ -166,7 +171,7 @@ function Selector() {
     becomeHost(kind, id, name, { mode, timer, password, bracketSize });
     const code = useFriends.getState().code;
     sessionStorage.setItem(`sn-host-${code}`, id);
-    window.history.replaceState(null, "", `/friends?room=${code}`);
+    void navigate({ to: "/friends", search: { room: code }, replace: true });
   };
 
   const joinRoom = () => {
@@ -176,7 +181,7 @@ function Selector() {
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
     sessionStorage.setItem("sn-join-password", password);
-    window.location.assign(`/friends?room=${code}`);
+    void navigate({ to: "/friends", search: { room: code } });
   };
 
   return (
@@ -257,6 +262,7 @@ function Selector() {
                           { id: 4, label: "4" },
                           { id: 8, label: "8" },
                           { id: 16, label: "16" },
+                          { id: 32, label: "32" },
                         ]}
                       />
                     ) : null}
@@ -482,17 +488,17 @@ function DraftTable() {
   const classic = mode === "classic";
   const filled = filledCount(viewing.slots);
   const canYear = draw ? canDrawSameTeam(draw.squad, history) : false;
-  const legalIds = draw
-    ? new Set(
-        draw.remaining
-          .filter((p) => !claimed.includes(p.id) && emptySlotsFor(active.slots, p.pos).length > 0)
-          .map((p) => p.id),
+  const roster = draw?.squad.players ?? [];
+  const legalIds = new Set(
+    roster
+      .filter(
+        (p) => !isPersonTaken(p.name, claimed) && emptySlotsFor(active.slots, p.pos).length > 0,
       )
-    : new Set<string>();
-  const bestId =
-    classic && draw
-      ? draw.remaining.filter((p) => legalIds.has(p.id)).sort((a, b) => b.ovr - a.ovr)[0]?.id
-      : undefined;
+      .map((p) => p.id),
+  );
+  const bestId = classic
+    ? roster.filter((p) => legalIds.has(p.id)).sort((a, b) => b.ovr - a.ovr)[0]?.id
+    : undefined;
 
   return (
     <section className="mx-auto grid w-full max-w-6xl gap-6 px-5 pb-24 pt-2 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)]">
@@ -564,35 +570,21 @@ function DraftTable() {
           )}
           <div className="max-h-80 overflow-y-auto">
             {draw ? (
-              draw.remaining.map((player) => {
-                const legal = legalIds.has(player.id);
-                return (
-                  <button
-                    key={player.id}
-                    type="button"
-                    className={cn("player-row", bestId === player.id && "bg-accent/10")}
-                    disabled={!myTurn || !legal}
-                    onClick={() => act({ type: "pick", player })}
-                  >
-                    <span className="num">#{player.num}</span>
-                    <span>
-                      <span className="block text-sm font-extrabold">{player.name}</span>
-                      <span className="block text-xs font-semibold text-muted">
-                        {player.pos.join(" · ")}
-                      </span>
-                    </span>
-                    <span className="text-xs font-semibold text-muted">
-                      {claimed.includes(player.id) ? "Taken" : legal ? "In" : "Out"}
-                    </span>
-                    <span className="font-numeral text-base font-extrabold tabular-nums text-accent">
-                      {classic ? player.ovr : "—"}
-                    </span>
-                  </button>
-                );
-              })
+              roster.map((player) => (
+                <PlayerPickRow
+                  key={player.id}
+                  player={player}
+                  legal={legalIds.has(player.id)}
+                  taken={isPersonTaken(player.name, claimed)}
+                  best={bestId === player.id}
+                  classic={classic}
+                  disabled={!myTurn}
+                  onPick={(p) => act({ type: "pick", player: p })}
+                />
+              ))
             ) : (
               <p className="px-4 py-6 text-sm text-muted">
-                Claimed footballers are locked for every XI. Take the scarce role first.
+                If someone claims a footballer, every other year of that name is locked. Can't select.
               </p>
             )}
           </div>
@@ -655,6 +647,38 @@ function DraftTable() {
   );
 }
 
+function SimView() {
+  const bracket = useFriends((s) => s.bracket);
+  const champion = useFriends((s) => s.champion);
+  const act = useFriends((s) => s.act);
+  const games = bracket.map((g) => ({
+    round: g.round,
+    home: g.home,
+    away: g.away,
+    gf: g.gf,
+    ga: g.ga,
+    goals: g.goals ?? [],
+    pens: g.pens,
+  }));
+
+  return (
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-24 pt-2">
+      <div>
+        <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Live knockout</p>
+        <h1 className="home-headline mt-2">Round by round</h1>
+        <p className="mt-2 text-sm text-muted">
+          Round of 32 through the Final, minute by minute. Champion on the board: {shownName(champion ?? "—")}
+        </p>
+      </div>
+      {games.length ? (
+        <LiveCup games={games} onDone={() => act({ type: "simDone" })} />
+      ) : (
+        <p className="text-sm text-muted">Building the bracket…</p>
+      )}
+    </section>
+  );
+}
+
 function ResultView() {
   const resultMatch = useFriends((s) => s.resultMatch);
   const bracket = useFriends((s) => s.bracket);
@@ -709,7 +733,7 @@ function ResultView() {
           ))}
       </div>
       <Button asChild>
-        <a href="/friends">New room</a>
+        <Link to="/friends">New room</Link>
       </Button>
     </section>
   );

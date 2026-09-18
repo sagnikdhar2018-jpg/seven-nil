@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Dices, Moon, RotateCcw, Sun, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PoolId } from "@/lib/seven/types";
@@ -40,8 +41,6 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   const theme = useSeven((s) => s.theme);
   const setTheme = useSeven((s) => s.setTheme);
   const phase = useSeven((s) => s.phase);
-  const revealTo = useSeven((s) => s.revealTo);
-  const revealNext = useSeven((s) => s.revealNext);
   const simulate = useSeven((s) => s.simulate);
   const undoLast = useSeven((s) => s.undoLast);
   const resetDraft = useSeven((s) => s.resetDraft);
@@ -56,22 +55,15 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
     hydrate(pool);
   }, [hydrate, pool]);
 
-  useEffect(() => {
-    if (phase !== "simulating") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = window.setTimeout(revealNext, reduced ? 0 : 720);
-    return () => window.clearTimeout(t);
-  }, [phase, revealNext, revealTo]);
-
   return (
     <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink" data-pool={pool}>
       <SfxRoot />
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
-          <a href="/" className="home-brand" id="top">
+          <Link to="/" className="home-brand" id="top">
             Seven Nil
-          </a>
+          </Link>
           <div className="flex items-center gap-2">
             <MuteButton />
             <Button
@@ -88,15 +80,15 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
             </Button>
             {pool === "world" ? (
               <Button variant="secondary" asChild>
-                <a href="/club">Clubs</a>
+                <Link to="/club">Clubs</Link>
               </Button>
             ) : (
               <Button variant="secondary" asChild>
-                <a href="/">World Cup</a>
+                <Link to="/">World Cup</Link>
               </Button>
             )}
             <Button variant="ghost" asChild>
-              <a href="/friends">Friends</a>
+              <Link to="/friends">Friends</Link>
             </Button>
           </div>
         </header>
@@ -128,18 +120,18 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               </Button>
               {pool === "world" ? (
                 <Button variant="secondary" asChild>
-                  <a href="/club">
+                  <Link to="/club">
                     Club mode
                     <span className="badge-new">New</span>
-                  </a>
+                  </Link>
                 </Button>
               ) : (
                 <Button variant="secondary" asChild>
-                  <a href="/">World Cup</a>
+                  <Link to="/">World Cup</Link>
                 </Button>
               )}
               <Button variant="ghost" asChild>
-                <a href="/how-to-play">How to play</a>
+                <Link to="/how-to-play">How to play</Link>
               </Button>
             </div>
             {runs > 0 ? (

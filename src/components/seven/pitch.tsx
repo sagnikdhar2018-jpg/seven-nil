@@ -24,6 +24,7 @@ export function Pitch({
 
   return (
     <div className="pitch mx-auto max-w-md lg:max-w-none">
+      <div className="pitch-glow" aria-hidden="true" />
       <svg className="pitch-markings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <rect x="4" y="4" width="92" height="92" />
         <line x1="4" y1="50" x2="96" y2="50" />
@@ -41,7 +42,7 @@ export function Pitch({
           <button
             key={slot.id}
             type="button"
-            className={cn("disc", !filled && "is-empty", legal && "is-legal")}
+            className={cn("disc", !filled && "is-empty", filled && "is-filled", legal && "is-legal")}
             style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
             disabled={!legal && !filled}
             onClick={() => {

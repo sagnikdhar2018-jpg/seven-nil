@@ -3,6 +3,11 @@ import { FriendsApp } from "@/components/seven/friends-app";
 import { pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/friends")({
+  validateSearch: (s: Record<string, unknown>): { room?: string } => {
+    const raw = s.room;
+    if (typeof raw !== "string" || !raw.trim()) return {};
+    return { room: raw.trim().toUpperCase() };
+  },
   component: FriendsPage,
   head: () =>
     pageHead({
@@ -14,5 +19,6 @@ export const Route = createFileRoute("/friends")({
 });
 
 function FriendsPage() {
-  return <FriendsApp />;
+  const { room } = Route.useSearch();
+  return <FriendsApp roomFromUrl={room} />;
 }

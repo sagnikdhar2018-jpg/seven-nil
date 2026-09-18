@@ -1,9 +1,18 @@
 import { bestSlot, emptySlotsFor, makeSlots } from "./formations";
+import { isPersonTaken, personKey, takenKeysFromSlots } from "./person";
 import { ALL_PLAYERS, otherYears, randomSquad } from "./squads";
-import type { FormationId, PoolId, Slot, Squad } from "./types";
+import type { FormationId, Player, PoolId, Slot, Squad } from "./types";
 
 export function filledCount(slots: Slot[]) {
   return slots.filter((s) => s.player).length;
+}
+
+export function takenKeys(claimed: string[], slots: Slot[] = []) {
+  return new Set([...claimed, ...takenKeysFromSlots(slots)]);
+}
+
+function selectable(slots: Slot[], player: Player, taken: Set<string>) {
+  return !isPersonTaken(player.name, taken) && emptySlotsFor(slots, player.pos).length > 0;
 }
 
 export function drawLegal(
@@ -12,12 +21,10 @@ export function drawLegal(
   claimed: string[] = [],
   pool: PoolId = "world",
 ) {
-  const taken = new Set(claimed);
+  const taken = takenKeys(claimed, slots);
   for (let i = 0; i < 48; i++) {
     const squad = randomSquad(history, pool);
-    const remaining = squad.players.filter(
-      (p) => !taken.has(p.id) && emptySlotsFor(slots, p.pos).length > 0,
-    );
+    const remaining = squad.players.filter((p) => selectable(slots, p, taken));
     if (remaining.length > 0) {
       return { squad, remaining, history: [...history, squad.id] };
     }
@@ -25,7 +32,7 @@ export function drawLegal(
   const squad = randomSquad(history, pool);
   return {
     squad,
-    remaining: squad.players.filter((p) => !taken.has(p.id)),
+    remaining: squad.players.filter((p) => selectable(slots, p, taken)),
     history: [...history, squad.id],
   };
 }
@@ -43,12 +50,10 @@ export function drawSameTeam(
 ) {
   const options = otherYears(current, history, pool);
   if (options.length === 0) return null;
-  const taken = new Set(claimed);
+  const taken = takenKeys(claimed, slots);
   const shuffled = options.slice().sort(() => Math.random() - 0.5);
   for (const squad of shuffled) {
-    const remaining = squad.players.filter(
-      (p) => !taken.has(p.id) && emptySlotsFor(slots, p.pos).length > 0,
-    );
+    const remaining = squad.players.filter((p) => selectable(slots, p, taken));
     if (remaining.length > 0) {
       return { squad, remaining, history: [...history, squad.id] };
     }
@@ -56,7 +61,7 @@ export function drawSameTeam(
   const squad = shuffled[0]!;
   return {
     squad,
-    remaining: squad.players.filter((p) => !taken.has(p.id)),
+    remaining: squad.players.filter((p) => selectable(slots, p, taken)),
     history: [...history, squad.id],
   };
 }
@@ -66,10 +71,10 @@ export function autoFillXi(formation: FormationId, claimed: string[]): { slots: 
   const slots = makeSlots(formation);
   const pool = [...ALL_PLAYERS].sort((a, b) => b.ovr - a.ovr);
   for (const slot of slots) {
-    const pick = pool.find((p) => !taken.has(p.id) && emptySlotsFor([slot], p.pos).length > 0);
+    const pick = pool.find((p) => !isPersonTaken(p.name, taken) && emptySlotsFor([slot], p.pos).length > 0);
     if (!pick) continue;
     slot.player = pick;
-    taken.add(pick.id);
+    taken.add(personKey(pick.name));
   }
   return { slots, claimed: [...taken] };
 }
@@ -86,7 +91,7 @@ export function cpuPickOne(slots: Slot[], claimed: string[], history: string[]):
   if (!slot) return { slots, claimed, history: next.history };
   return {
     slots: slots.map((s) => (s.id === slot.id ? { ...s, player: best } : s)),
-    claimed: [...claimed, best.id],
+    claimed: [...claimed, personKey(best.name)],
     history: next.history,
   };
 }

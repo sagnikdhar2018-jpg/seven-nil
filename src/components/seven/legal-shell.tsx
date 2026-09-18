@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { SiteFooter } from "./site-footer";
 
 export function LegalShell({
@@ -14,12 +15,12 @@ export function LegalShell({
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
-          <a href="/" className="home-brand">
+          <Link to="/" className="home-brand">
             Seven Nil
-          </a>
-          <a href="/" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted hover:text-ink">
+          </Link>
+          <Link to="/" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted hover:text-ink">
             Play
-          </a>
+          </Link>
         </header>
         <article className="mx-auto w-full max-w-3xl px-5 pb-8">
           <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{kicker}</p>
