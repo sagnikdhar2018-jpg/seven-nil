@@ -1,6 +1,7 @@
 import { bestSlot, emptySlotsFor, makeSlots } from "./formations";
 import { isPersonTaken, personKey, takenKeysFromSlots } from "./person";
 import { ALL_PLAYERS, otherYears, randomSquad } from "./squads";
+import { CLUB_PLAYERS } from "./club-squads";
 import type { FormationId, Player, PoolId, Slot, Squad } from "./types";
 
 export function filledCount(slots: Slot[]) {
@@ -66,12 +67,16 @@ export function drawSameTeam(
   };
 }
 
-export function autoFillXi(formation: FormationId, claimed: string[]): { slots: Slot[]; claimed: string[] } {
+export function autoFillXi(
+  formation: FormationId,
+  claimed: string[],
+  pool: PoolId = "world",
+): { slots: Slot[]; claimed: string[] } {
   const taken = new Set(claimed);
   const slots = makeSlots(formation);
-  const pool = [...ALL_PLAYERS].sort((a, b) => b.ovr - a.ovr);
+  const ranked = [...(pool === "club" ? CLUB_PLAYERS : ALL_PLAYERS)].sort((a, b) => b.ovr - a.ovr);
   for (const slot of slots) {
-    const pick = pool.find((p) => !isPersonTaken(p.name, taken) && emptySlotsFor([slot], p.pos).length > 0);
+    const pick = ranked.find((p) => !isPersonTaken(p.name, taken) && emptySlotsFor([slot], p.pos).length > 0);
     if (!pick) continue;
     slot.player = pick;
     taken.add(personKey(pick.name));

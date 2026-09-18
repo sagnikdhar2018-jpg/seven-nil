@@ -67,6 +67,10 @@ const CLUB_FAQ = [
     a: "No. Club mode never draws a national team. World Cup mode never draws a club. They are two games.",
   },
   {
+    q: "Can I play club drafts with friends?",
+    a: "Yes. Club friends is a separate lobby: friend vs friend on one device, a Rivalry 1v1 online, or a UCL knockout of 4 to 32. Those rooms never mix with World Cup friends.",
+  },
+  {
     q: "What does the simulation judge?",
     a: "A European campaign against other clubs. Same dream: champions, unbeaten, nothing conceded.",
   },

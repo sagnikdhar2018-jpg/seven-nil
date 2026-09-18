@@ -30,7 +30,7 @@ const COPY: Record<
     kicker: "Club draft · top five · 1980 — 2024",
     h1: ["Build your dream", "club XI"],
     blurb:
-      "Roll a side from England, Spain, Italy, Germany, or France and a season since 1980. One footballer per draw. Then take the XI into Europe.",
+      "Roll a side from England, Spain, Italy, Germany, or France and a season since 1980. One footballer per draw. Then take the XI into Europe — or open Club friends for a rivalry or a UCL night.",
     play: "Play clubs",
     footer: "A club draft of the top five leagues. Not affiliated with UEFA or any league.",
   },
@@ -88,7 +88,9 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               </Button>
             )}
             <Button variant="ghost" asChild>
-              <Link to="/friends">Friends</Link>
+              <Link to={pool === "club" ? "/club/friends" : "/friends"}>
+                {pool === "club" ? "Club friends" : "Friends"}
+              </Link>
             </Button>
           </div>
         </header>
@@ -127,6 +129,15 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 </Button>
               ) : (
                 <Button variant="secondary" asChild>
+                  <Link to="/club/friends">Club friends</Link>
+                </Button>
+              )}
+              {pool === "world" ? (
+                <Button variant="ghost" asChild>
+                  <Link to="/friends">Friends</Link>
+                </Button>
+              ) : (
+                <Button variant="ghost" asChild>
                   <Link to="/">World Cup</Link>
                 </Button>
               )}

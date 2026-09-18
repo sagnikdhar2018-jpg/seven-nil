@@ -21,6 +21,9 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/friends">
           Friends
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club/friends">
+          Club friends
+        </Link>
       </nav>
     </footer>
   );

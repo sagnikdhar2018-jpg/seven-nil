@@ -41,11 +41,15 @@ function AboutPage() {
         <a className="underline" href="/club">
           club draft
         </a>
-        , or{" "}
+        ,{" "}
         <a className="underline" href="/friends">
-          Friends
+          World Cup friends
+        </a>
+        , or{" "}
+        <a className="underline" href="/club/friends">
+          Club friends
         </a>{" "}
-        for local and online cups. A short{" "}
+        for a rivalry or a UCL night. A short{" "}
         <a className="underline" href="/how-to-play">
           how to play
         </a>{" "}

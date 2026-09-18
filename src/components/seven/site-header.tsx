@@ -9,11 +9,11 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
   const setTheme = useSeven((s) => s.setTheme);
 
   return (
-    <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
+    <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5">
       <Link to="/" className="home-brand">
         Seven Nil
       </Link>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <MuteButton />
         <Button
           variant="ghost"
@@ -32,6 +32,9 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
         </Button>
         <Button variant="ghost" asChild>
           <Link to="/friends">Friends</Link>
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/club/friends">Club friends</Link>
         </Button>
         <Button variant="secondary" asChild>
           {playHref.startsWith("#") ? (

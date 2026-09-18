@@ -7,6 +7,7 @@ import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
 import { emptySlotsFor, FORMATIONS } from "@/lib/seven/formations";
 import {
   apply,
+  friendsPath,
   loadPlayerName,
   makeSeat,
   pickState,
@@ -22,7 +23,7 @@ import { useFriends } from "@/lib/seven/friends-store";
 import { isPersonTaken } from "@/lib/seven/person";
 import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
 import { useSeven } from "@/lib/seven/store";
-import type { FormationId, ModeId, StyleId } from "@/lib/seven/types";
+import type { FormationId, ModeId, PoolId, StyleId } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
 import { ChipGroup } from "./chips";
 import { LiveCup } from "./live-match";
@@ -39,11 +40,20 @@ type Wire =
   | { t: "act"; action: FriendsAction; actorId: string }
   | { t: "need" };
 
-const KINDS: { id: FriendKind; n: string; name: string; desc: string }[] = [
-  { id: "local", n: "01", name: "Local", desc: "Two players on the same device, taking turns" },
-  { id: "final", n: "02", name: "Cup Final", desc: "Each player builds their team and plays the Final" },
-  { id: "cup", n: "03", name: "Full Cup", desc: "Bracket of 4 to 16 teams, humans and CPU" },
-];
+function modeList(pool: PoolId): { id: FriendKind; n: string; name: string; desc: string }[] {
+  if (pool === "club") {
+    return [
+      { id: "local", n: "01", name: "Friend vs friend", desc: "Two club XIs on this device, then one European night" },
+      { id: "final", n: "02", name: "Rivalry", desc: "Online 1v1. Draft historic clubs, play a final" },
+      { id: "cup", n: "03", name: "UCL", desc: "Knockout of 4 to 32. Humans and CPU, Champions League path" },
+    ];
+  }
+  return [
+    { id: "local", n: "01", name: "Local", desc: "Two players on the same device, taking turns" },
+    { id: "final", n: "02", name: "Cup Final", desc: "Each player builds their team and plays the Final" },
+    { id: "cup", n: "03", name: "Full Cup", desc: "Bracket of 4 to 32 teams, humans and CPU" },
+  ];
+}
 
 function NameField({
   label = "Your name",
@@ -91,41 +101,57 @@ function ConnectingNote() {
   );
 }
 
-export function FriendsApp({ roomFromUrl }: { roomFromUrl?: string }) {
+export function FriendsApp({
+  pool = "world",
+  roomFromUrl,
+}: {
+  pool?: PoolId;
+  roomFromUrl?: string;
+}) {
   const hydrate = useSeven((s) => s.hydrate);
   const phase = useFriends((s) => s.phase);
   const kind = useFriends((s) => s.kind);
+  const backToMenu = useFriends((s) => s.backToMenu);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrate(pool);
+  }, [hydrate, pool]);
 
   useEffect(() => {
-    bootFromUrl(roomFromUrl);
-  }, [roomFromUrl]);
+    const s = useFriends.getState();
+    if (s.pool !== pool) backToMenu(pool);
+  }, [pool, backToMenu]);
+
+  useEffect(() => {
+    bootFromUrl(roomFromUrl, pool);
+  }, [roomFromUrl, pool]);
 
   return (
-    <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink">
+    <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink" data-pool={pool}>
       <SfxRoot />
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
-        <SiteHeader playLabel="World Cup" playHref="/" />
-        {phase === "menu" ? <Selector /> : null}
-        {phase === "setup" ? <LocalSetup /> : null}
-        {phase === "lobby" ? <Lobby /> : null}
+        <SiteHeader
+          playLabel={pool === "club" ? "Clubs" : "World Cup"}
+          playHref={pool === "club" ? "/club" : "/"}
+        />
+        {phase === "menu" ? <Selector pool={pool} /> : null}
+        {phase === "setup" ? <LocalSetup pool={pool} /> : null}
+        {phase === "lobby" ? <Lobby pool={pool} /> : null}
         {phase === "draft" ? <DraftTable /> : null}
         {phase === "simulating" ? <SimView /> : null}
         {phase === "result" ? <ResultView /> : null}
         {phase === "menu" || phase === "setup" ? <SiteFooter /> : null}
       </div>
-      {kind !== "local" && (phase === "lobby" || phase === "draft" || phase === "result") ? (
+      {kind !== "local" &&
+      (phase === "lobby" || phase === "draft" || phase === "simulating" || phase === "result") ? (
         <NetBridge />
       ) : null}
     </main>
   );
 }
 
-function bootFromUrl(roomFromUrl?: string) {
+function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
   if (typeof window === "undefined") return;
   const room = (roomFromUrl ?? new URLSearchParams(window.location.search).get("room") ?? "").toUpperCase();
   if (!room) return;
@@ -141,6 +167,7 @@ function bootFromUrl(roomFromUrl?: string) {
   const guest = {
     ...existing,
     kind: "final" as const,
+    pool,
     code: room,
     phase: "lobby" as const,
     hostId: "pending",
@@ -152,7 +179,7 @@ function bootFromUrl(roomFromUrl?: string) {
   }
 }
 
-function Selector() {
+function Selector({ pool }: { pool: PoolId }) {
   const [open, setOpen] = useState<FriendKind | null>(null);
   const [join, setJoin] = useState("");
   const [password, setPassword] = useState("");
@@ -163,15 +190,17 @@ function Selector() {
   const hydrateLocal = useFriends((s) => s.hydrateLocal);
   const becomeHost = useFriends((s) => s.becomeHost);
   const navigate = useNavigate();
+  const kinds = modeList(pool);
+  const path = friendsPath(pool);
 
   const startHost = (kind: FriendKind) => {
     const id = `p-${Math.random().toString(36).slice(2, 10)}`;
     const name = shownName(displayName, "Host");
     savePlayerName(name);
-    becomeHost(kind, id, name, { mode, timer, password, bracketSize });
+    becomeHost(kind, id, name, { mode, timer, password, bracketSize, pool });
     const code = useFriends.getState().code;
     sessionStorage.setItem(`sn-host-${code}`, id);
-    void navigate({ to: "/friends", search: { room: code }, replace: true });
+    void navigate({ to: path, search: { room: code }, replace: true });
   };
 
   const joinRoom = () => {
@@ -181,20 +210,26 @@ function Selector() {
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
     sessionStorage.setItem("sn-join-password", password);
-    void navigate({ to: "/friends", search: { room: code } });
+    void navigate({ to: path, search: { room: code } });
   };
 
   return (
     <>
       <section className="mx-auto flex w-full max-w-xl flex-col gap-8 px-5 pb-10 pt-2">
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">With friends</p>
-          <h1 className="home-headline mt-2">Pick your tournament</h1>
-          <p className="mt-3 text-sm font-semibold text-muted">3 modes · local and online</p>
+          <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
+            {pool === "club" ? "Club friends" : "With friends"}
+          </p>
+          <h1 className="home-headline mt-2">
+            {pool === "club" ? "Rivalries and UCL nights" : "Pick your tournament"}
+          </h1>
+          <p className="mt-3 text-sm font-semibold text-muted">
+            {pool === "club" ? "Friend vs friend · UCL knockout" : "3 modes · local and online"}
+          </p>
         </div>
 
         <div className="ms-list">
-          {KINDS.map((item) => {
+          {kinds.map((item) => {
             const expanded = open === item.id;
             return (
               <div key={item.id} className="flex flex-col gap-2">
@@ -268,7 +303,7 @@ function Selector() {
                     ) : null}
                     <Button
                       data-action={item.id === "local" ? "start-local" : "create-room"}
-                      onClick={() => (item.id === "local" ? hydrateLocal("local") : startHost(item.id))}
+                      onClick={() => (item.id === "local" ? hydrateLocal("local", pool) : startHost(item.id))}
                     >
                       {item.id === "local" ? "Start on this device" : "Create room"}
                     </Button>
@@ -311,13 +346,30 @@ function Selector() {
             </Button>
           </div>
         </div>
+        <p className="text-sm text-muted">
+          {pool === "club" ? (
+            <>
+              Looking for nations?{" "}
+              <Link className="font-extrabold text-ink underline-offset-2 hover:underline" to="/friends">
+                World Cup friends
+              </Link>
+            </>
+          ) : (
+            <>
+              Historic clubs?{" "}
+              <Link className="font-extrabold text-ink underline-offset-2 hover:underline" to="/club/friends">
+                Club friends
+              </Link>
+            </>
+          )}
+        </p>
       </section>
-      <FriendsGuide />
+      <FriendsGuide pool={pool} />
     </>
   );
 }
 
-function LocalSetup() {
+function LocalSetup({ pool }: { pool: PoolId }) {
   const seats = useFriends((s) => s.seats);
   const act = useFriends((s) => s.act);
   const mode = useFriends((s) => s.mode);
@@ -326,8 +378,12 @@ function LocalSetup() {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
-        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Local</p>
-        <h1 className="home-headline mt-2">Two XIs, one device</h1>
+        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
+          {pool === "club" ? "Friend vs friend" : "Local"}
+        </p>
+        <h1 className="home-headline mt-2">
+          {pool === "club" ? "Two club XIs, one European night" : "Two XIs, one device"}
+        </h1>
       </div>
       <ChipGroup<ModeId>
         label="Mode"
@@ -367,7 +423,7 @@ function LocalSetup() {
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="ghost" onClick={backToMenu}>
+        <Button variant="ghost" onClick={() => backToMenu(pool)}>
           Back
         </Button>
         <Button className="ml-auto" data-action="start-draft" onClick={() => act({ type: "start" })}>
@@ -378,7 +434,7 @@ function LocalSetup() {
   );
 }
 
-function Lobby() {
+function Lobby({ pool }: { pool: PoolId }) {
   const seats = useFriends((s) => s.seats);
   const code = useFriends((s) => s.code);
   const hostId = useFriends((s) => s.hostId);
@@ -389,15 +445,22 @@ function Lobby() {
   const me = seats.find((s) => s.id === actorId) ?? seats[0];
   const readyHumans = seats.filter((s) => s.kind === "human" && s.ready).length;
   const isHost = actorId === hostId;
-  const share = typeof window !== "undefined" ? `${window.location.origin}/friends?room=${code}` : code;
+  const share =
+    typeof window !== "undefined" ? `${window.location.origin}${friendsPath(pool)}?room=${code}` : code;
   const needReady = kind === "cup" ? 1 : 2;
+  const lobbyLabel =
+    kind === "cup"
+      ? pool === "club"
+        ? "UCL lobby"
+        : "Full Cup lobby"
+      : pool === "club"
+        ? "Rivalry lobby"
+        : "Cup Final lobby";
 
   return (
     <section className="mx-auto flex w-full max-w-xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
-        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
-          {kind === "cup" ? "Full Cup" : "Cup Final"} lobby
-        </p>
+        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{lobbyLabel}</p>
         <p className="room-code mt-2">{code}</p>
         <p className="mt-2 text-sm text-muted">Share the code or the invite link. Set your name before you mark ready.</p>
       </div>
@@ -479,7 +542,9 @@ function DraftTable() {
   const turnStartedAt = useFriends((s) => s.turnStartedAt);
   const actorId = useFriends((s) => s.actorId);
   const history = useFriends((s) => s.history);
+  const pool = useFriends((s) => s.pool);
   const { busy, spin } = useDiceSpin();
+  const backToMenu = useFriends((s) => s.backToMenu);
   const active = seats[activeSeat];
   if (!active) return null;
   const viewingId = kind === "local" ? active.id : actorId;
@@ -487,7 +552,7 @@ function DraftTable() {
   const myTurn = kind === "local" || actorId === active.id;
   const classic = mode === "classic";
   const filled = filledCount(viewing.slots);
-  const canYear = draw ? canDrawSameTeam(draw.squad, history) : false;
+  const canYear = draw ? canDrawSameTeam(draw.squad, history, pool) : false;
   const roster = draw?.squad.players ?? [];
   const legalIds = new Set(
     roster
@@ -520,7 +585,7 @@ function DraftTable() {
                   <h3 className="mt-1 font-display text-2xl leading-none normal-case tracking-tight">
                     {draw.squad.nation}
                   </h3>
-                  <p className="mt-1 text-sm font-semibold text-accent">Cup {draw.squad.year}</p>
+                  <p className="mt-1 text-sm font-semibold text-accent">{draw.squad.league ?? (pool === "club" ? "Europe" : "Cup")} {draw.squad.year}</p>
                 </>
               ) : (
                 <h3 className="mt-1 font-display text-2xl leading-none">
@@ -539,18 +604,18 @@ function DraftTable() {
                   disabled={!myTurn || active.rerolls <= 0 || busy}
                   onClick={() => spin(() => act({ type: "reroll" }))}
                 >
-                  Another team
+                  Another {pool === "club" ? "club" : "team"}
                 </Button>
                 <Button
                   variant="secondary"
                   className="flex-1 text-sm"
                   data-action="same-year"
                   disabled={!myTurn || active.rerolls <= 0 || busy || !canYear}
-                  aria-label="Same team, another year"
+                  aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
                   onClick={() => spin(() => act({ type: "sameYear" }))}
                 >
                   <CalendarRange className="size-4" strokeWidth={2} />
-                  Another year
+                  Another {pool === "club" ? "season" : "year"}
                 </Button>
               </div>
               <p className="text-xs font-semibold text-muted">{active.rerolls} left</p>
@@ -642,6 +707,9 @@ function DraftTable() {
               </div>
             );
           })}
+        <Button variant="ghost" data-action="leave-draft" onClick={() => backToMenu(pool)}>
+          Leave
+        </Button>
       </div>
     </section>
   );
@@ -650,7 +718,10 @@ function DraftTable() {
 function SimView() {
   const bracket = useFriends((s) => s.bracket);
   const champion = useFriends((s) => s.champion);
+  const pool = useFriends((s) => s.pool);
+  const kind = useFriends((s) => s.kind);
   const act = useFriends((s) => s.act);
+  const backToMenu = useFriends((s) => s.backToMenu);
   const games = bracket.map((g) => ({
     round: g.round,
     home: g.home,
@@ -664,8 +735,12 @@ function SimView() {
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
-        <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Live knockout</p>
-        <h1 className="home-headline mt-2">Round by round</h1>
+        <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
+          {pool === "club" ? (kind === "cup" ? "UCL live" : "European night") : "Live knockout"}
+        </p>
+        <h1 className="home-headline mt-2">
+          {pool === "club" && kind === "cup" ? "Road to the final" : "Round by round"}
+        </h1>
         <p className="mt-2 text-sm text-muted">
           Round of 32 through the Final, minute by minute. Champion on the board: {shownName(champion ?? "—")}
         </p>
@@ -675,6 +750,9 @@ function SimView() {
       ) : (
         <p className="text-sm text-muted">Building the bracket…</p>
       )}
+      <Button variant="ghost" onClick={() => backToMenu(pool)}>
+        Leave
+      </Button>
     </section>
   );
 }
@@ -684,6 +762,8 @@ function ResultView() {
   const bracket = useFriends((s) => s.bracket);
   const champion = useFriends((s) => s.champion);
   const seats = useFriends((s) => s.seats);
+  const pool = useFriends((s) => s.pool);
+  const backToMenu = useFriends((s) => s.backToMenu);
 
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-24 pt-2">
@@ -693,7 +773,7 @@ function ResultView() {
       </div>
       {resultMatch ? (
         <div className="card-ink rounded-lg px-5 py-5">
-          <p className="text-sm font-semibold text-muted">Cup Final</p>
+          <p className="text-sm font-semibold text-muted">{pool === "club" ? "European night" : "Cup Final"}</p>
           <p className="mt-2 font-display text-4xl leading-none">
             {resultMatch.home} {resultMatch.gf}–{resultMatch.ga} {resultMatch.away}
           </p>
@@ -732,8 +812,8 @@ function ResultView() {
             </div>
           ))}
       </div>
-      <Button asChild>
-        <Link to="/friends">New room</Link>
+      <Button data-action="new-room" onClick={() => backToMenu(pool)}>
+        New room
       </Button>
     </section>
   );
@@ -783,40 +863,46 @@ function TurnClock({ startedAt, seconds }: { startedAt: number; seconds: number 
   );
 }
 
-function FriendsGuide() {
+function FriendsGuide({ pool }: { pool: PoolId }) {
+  const club = pool === "club";
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 pb-24 pt-4">
       <div className="max-w-2xl">
-        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Friends guide</p>
-        <h2 className="home-headline mt-2">Quick drafts, watch parties, friend groups</h2>
+        <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
+          {club ? "Club friends guide" : "Friends guide"}
+        </p>
+        <h2 className="home-headline mt-2">
+          {club ? "Rivalries, watch parties, UCL brackets" : "Quick drafts, watch parties, friend groups"}
+        </h2>
         <p className="mt-4 text-base leading-relaxed text-muted">
-          Join with a code, put your name on the shirt, choose a formation and style, mark ready,
-          and build separate XIs in turn order. You can rename yourself in the lobby and during
-          the draft. On each turn the active player draws a nation and a World Cup year, then
-          claims one valid footballer. That footballer is then locked for everyone else. When
-          the XI is full, confirm it.
+          {club
+            ? "Join with a code, put your name on the shirt, and draft historic club sides from the top five leagues. Taken footballers are locked across every year. Confirm the XI, then play a European night or a full UCL knockout."
+            : "Join with a code, put your name on the shirt, choose a formation and style, mark ready, and build separate XIs in turn order. You can rename yourself in the lobby and during the draft. On each turn the active player draws a nation and a World Cup year, then claims one valid footballer. That footballer is then locked for everyone else. When the XI is full, confirm it."}
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-3">
         <article className="flex flex-col gap-2">
-          <h3 className="font-display text-2xl leading-none">Local</h3>
+          <h3 className="font-display text-2xl leading-none">{club ? "Friend vs friend" : "Local"}</h3>
           <p className="text-sm leading-relaxed text-muted">
-            Two people, one screen. Set both names, pass the device after every pick, and rename
-            whenever you like. Same shared pool, then one Cup Final.
+            {club
+              ? "Two people, one screen. Historic clubs only. Pass the device after every pick, then one European night."
+              : "Two people, one screen. Set both names, pass the device after every pick, and rename whenever you like. Same shared pool, then one Cup Final."}
           </p>
         </article>
         <article className="flex flex-col gap-2">
-          <h3 className="font-display text-2xl leading-none">Cup Final</h3>
+          <h3 className="font-display text-2xl leading-none">{club ? "Rivalry" : "Cup Final"}</h3>
           <p className="text-sm leading-relaxed text-muted">
-            Fast head-to-head for two. Separate XIs, one simulated match. Balance beats a famous
-            attack with a weak full-back.
+            {club
+              ? "Online 1v1. Separate club XIs, one simulated European night. Balance beats a famous attack with a weak full-back."
+              : "Fast head-to-head for two. Separate XIs, one simulated match. Balance beats a famous attack with a weak full-back."}
           </p>
         </article>
         <article className="flex flex-col gap-2">
-          <h3 className="font-display text-2xl leading-none">Full Cup</h3>
+          <h3 className="font-display text-2xl leading-none">{club ? "UCL" : "Full Cup"}</h3>
           <p className="text-sm leading-relaxed text-muted">
-            Bracket of 4, 8, or 16. CPU fills empty slots when the group is small. Upsets, a
-            dangerous seed, and a champion that had to survive.
+            {club
+              ? "Knockout of 4, 8, 16, or 32. CPU fills empty slots as other European sides. Round of 32 through the Final, live."
+              : "Bracket of 4, 8, 16, or 32. CPU fills empty slots when the group is small. Upsets, a dangerous seed, and a champion that had to survive."}
           </p>
         </article>
       </div>
@@ -854,7 +940,8 @@ function NetInner({
   password: string;
   selfIdHint: string;
 }) {
-  const room = `sn-${code}`.slice(0, 64);
+  const pool = useFriends((s) => s.pool);
+  const room = `${pool === "club" ? "snc" : "sn"}-${code}`.slice(0, 64);
   const p2p = useP2PRoom({ room, name: selfName, selfId: selfIdHint });
   const replace = useFriends((s) => s.replace);
   const becomeGuest = useFriends((s) => s.becomeGuest);

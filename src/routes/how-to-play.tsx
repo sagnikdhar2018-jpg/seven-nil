@@ -46,14 +46,26 @@ function HowToPlayPage() {
         </a>
         .
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Friends</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Friends — World Cup</h2>
       <p>
         Local is pass-and-play on one device. Cup Final is a two-seat knockout. Full Cup fills a bracket, with CPU
         seats if you are short of humans. Set names in the lobby. Online rooms use a code.
       </p>
       <p>
         <a className="underline" href="/friends">
-          Play with friends
+          World Cup friends
+        </a>
+        .
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Friends — Clubs and UCL</h2>
+      <p>
+        Club friends is a separate lobby. It never shares a room or a player pool with World Cup friends. Friend vs
+        friend is two club XIs on one device, then one European night. Rivalry is online 1v1. UCL is a knockout of 4,
+        8, 16, or 32 — empty seats become other European clubs, then the live path from the Round of 32 to the Final.
+      </p>
+      <p>
+        <a className="underline" href="/club/friends">
+          Club friends
         </a>
         .
       </p>

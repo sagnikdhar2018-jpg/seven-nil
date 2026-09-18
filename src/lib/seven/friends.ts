@@ -2,7 +2,7 @@ import { canFill, emptySlotsFor, makeSlots } from "./formations";
 import { autoFillXi, drawLegal, drawSameTeam, filledCount } from "./draft";
 import { personKey } from "./person";
 import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
-import type { DrawnSquad, FormationId, ModeId, Player, Slot, StyleId } from "./types";
+import type { DrawnSquad, FormationId, ModeId, Player, PoolId, Slot, StyleId } from "./types";
 
 export type FriendKind = "local" | "final" | "cup";
 export type TimerSec = 20 | 30 | 45;
@@ -23,6 +23,7 @@ export type Seat = {
 
 export type FriendsState = {
   kind: FriendKind;
+  pool: PoolId;
   code: string;
   password: string;
   mode: ModeId;
@@ -110,7 +111,16 @@ export function makeSeat(id: string, name: string, kind: Seat["kind"] = "human")
   };
 }
 
-export function freshFriends(kind: FriendKind, hostId: string, hostName = "Home"): FriendsState {
+export function friendsPath(pool: PoolId): "/friends" | "/club/friends" {
+  return pool === "club" ? "/club/friends" : "/friends";
+}
+
+export function freshFriends(
+  kind: FriendKind,
+  hostId: string,
+  hostName = "Home",
+  pool: PoolId = "world",
+): FriendsState {
   const code = roomCode();
   const seats =
     kind === "local"
@@ -118,6 +128,7 @@ export function freshFriends(kind: FriendKind, hostId: string, hostName = "Home"
       : [makeSeat(hostId, hostName)];
   return {
     kind,
+    pool,
     code,
     password: "",
     mode: "classic",
@@ -141,6 +152,7 @@ export function freshFriends(kind: FriendKind, hostId: string, hostName = "Home"
 export function pickState(s: FriendsState): FriendsState {
   return {
     kind: s.kind,
+    pool: s.pool,
     code: s.code,
     password: s.password,
     mode: s.mode,
@@ -159,6 +171,48 @@ export function pickState(s: FriendsState): FriendsState {
     bracket: s.bracket,
     champion: s.champion,
   };
+}
+
+const CLUB_CPU = [
+  "Porto",
+  "Benfica",
+  "Ajax",
+  "Celtic",
+  "Galatasaray",
+  "Marseille",
+  "Leverkusen",
+  "Roma",
+  "Sevilla",
+  "Sporting",
+  "Feyenoord",
+  "Anderlecht",
+  "Red Star",
+  "Shakhtar",
+  "Monaco",
+  "Atalanta",
+  "Lyon",
+  "Villarreal",
+  "Napoli",
+  "Dortmund",
+  "Inter",
+  "Milan",
+  "Arsenal",
+  "Chelsea",
+  "Atlético",
+  "PSG",
+  "Bayern",
+  "Liverpool",
+  "Barcelona",
+  "Real Madrid",
+  "Juventus",
+  "City",
+];
+
+function cpuName(index: number, pool: PoolId) {
+  if (pool !== "club") return `CPU ${index + 1}`;
+  const base = CLUB_CPU[index % CLUB_CPU.length]!;
+  const lap = Math.floor(index / CLUB_CPU.length);
+  return lap === 0 ? base : `${base} ${lap + 1}`;
 }
 
 function humans(state: FriendsState) {
@@ -216,7 +270,7 @@ function fillCpu(state: FriendsState): FriendsState {
   let claimed = [...state.claimed];
   const seats = state.seats.map((seat) => {
     if (seat.kind !== "cpu") return seat;
-    const filled = autoFillXi(seat.formation, claimed);
+    const filled = autoFillXi(seat.formation, claimed, state.pool);
     claimed = filled.claimed;
     return { ...seat, slots: filled.slots, confirmed: true };
   });
@@ -233,7 +287,16 @@ function runSimulate(state: FriendsState): FriendsState {
   }
   const home = filled.seats[0]!;
   const away = filled.seats[1]!;
-  const match = simulateFinal(home.slots, away.slots, home.style, away.style, shownName(away.name, "Away"), "Cup Final", shownName(home.name, "Home"));
+  const label = filled.pool === "club" ? "European night" : "Cup Final";
+  const match = simulateFinal(
+    home.slots,
+    away.slots,
+    home.style,
+    away.style,
+    shownName(away.name, "Away"),
+    label,
+    shownName(home.name, "Home"),
+  );
   return {
     ...filled,
     phase: "simulating",
@@ -247,7 +310,7 @@ function runSimulate(state: FriendsState): FriendsState {
     champion: match.result === "W" ? shownName(home.name, "Home") : shownName(away.name, "Away"),
     bracket: [
       {
-        round: "Cup Final",
+        round: label,
         home: shownName(home.name, "Home"),
         away: shownName(away.name, "Away"),
         gf: match.gf,
@@ -337,7 +400,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
         const need = state.bracketSize - seats.length;
         const extras: Seat[] = [];
         for (let i = 0; i < need; i++) {
-          extras.push(makeSeat(`cpu-${i + 1}`, `CPU ${i + 1}`, "cpu"));
+          extras.push(makeSeat(`cpu-${i + 1}`, cpuName(i, state.pool), "cpu"));
         }
         seats = [...seats, ...extras];
       }
@@ -357,7 +420,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (active.kind !== "human") return state;
       if (state.draw) return state;
       if (filledCount(active.slots) >= 11) return state;
-      const next = drawLegal(active.slots, state.history, state.claimed);
+      const next = drawLegal(active.slots, state.history, state.claimed, state.pool);
       return {
         ...state,
         draw: { squad: next.squad, remaining: next.remaining },
@@ -368,7 +431,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "reroll": {
       if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
       if (active.rerolls <= 0) return state;
-      const next = drawLegal(active.slots, state.history, state.claimed);
+      const next = drawLegal(active.slots, state.history, state.claimed, state.pool);
       const seats = state.seats.map((s, i) =>
         i === state.activeSeat ? { ...s, rerolls: s.rerolls - 1 } : s,
       );
@@ -383,7 +446,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "sameYear": {
       if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
       if (active.rerolls <= 0) return state;
-      const next = drawSameTeam(active.slots, state.history, state.draw.squad, state.claimed);
+      const next = drawSameTeam(active.slots, state.history, state.draw.squad, state.claimed, state.pool);
       if (!next) return state;
       const seats = state.seats.map((s, i) =>
         i === state.activeSeat ? { ...s, rerolls: s.rerolls - 1 } : s,

@@ -8,28 +8,29 @@ import {
   type TimerSec,
   type BracketSize,
 } from "./friends";
-import type { ModeId } from "./types";
+import type { ModeId, PoolId } from "./types";
 
 type HostOpts = {
   mode?: ModeId;
   timer?: TimerSec;
   password?: string;
   bracketSize?: BracketSize;
+  pool?: PoolId;
 };
 
 type FriendsStore = FriendsState & {
   actorId: string;
-  hydrateLocal: (kind: FriendKind) => void;
+  hydrateLocal: (kind: FriendKind, pool?: PoolId) => void;
   becomeHost: (kind: FriendKind, hostId: string, hostName: string, opts?: HostOpts) => void;
   becomeGuest: (state: FriendsState, actorId: string) => void;
   replace: (state: FriendsState) => void;
-  backToMenu: () => void;
+  backToMenu: (pool?: PoolId) => void;
   act: (action: FriendsAction) => FriendsState;
   lastAction: { action: FriendsAction; actorId: string } | null;
 };
 
-function menuState(): FriendsState {
-  return { ...freshFriends("final", "home"), phase: "menu", seats: [], code: "" };
+function menuState(pool: PoolId = "world"): FriendsState {
+  return { ...freshFriends("final", "home", "Home", pool), phase: "menu", seats: [], code: "" };
 }
 
 export const useFriends = create<FriendsStore>((set, get) => ({
@@ -37,13 +38,13 @@ export const useFriends = create<FriendsStore>((set, get) => ({
   actorId: "home",
   lastAction: null,
 
-  hydrateLocal: (kind) => {
-    const state = freshFriends(kind, "home", "Home");
+  hydrateLocal: (kind, pool = "world") => {
+    const state = freshFriends(kind, "home", "Home", pool);
     set({ ...state, actorId: "home" });
   },
 
   becomeHost: (kind, hostId, hostName, opts) => {
-    let state = freshFriends(kind, hostId, hostName);
+    let state = freshFriends(kind, hostId, hostName, opts?.pool ?? "world");
     if (opts?.mode) state = apply(state, { type: "setMode", mode: opts.mode }, hostId);
     if (opts?.timer) state = apply(state, { type: "setTimer", timer: opts.timer }, hostId);
     if (opts?.password) state = apply(state, { type: "setPassword", password: opts.password }, hostId);
@@ -57,7 +58,7 @@ export const useFriends = create<FriendsStore>((set, get) => ({
 
   replace: (state) => set((cur) => ({ ...cur, ...state })),
 
-  backToMenu: () => set({ ...menuState(), actorId: "home" }),
+  backToMenu: (pool) => set({ ...menuState(pool ?? get().pool ?? "world"), actorId: "home" }),
 
   act: (action) => {
     const cur = get();

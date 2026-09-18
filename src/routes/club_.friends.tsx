@@ -2,23 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FriendsApp } from "@/components/seven/friends-app";
 import { pageHead } from "@/lib/seven/site";
 
-export const Route = createFileRoute("/friends")({
+export const Route = createFileRoute("/club_/friends")({
   validateSearch: (s: Record<string, unknown>): { room?: string } => {
     const raw = s.room;
     if (typeof raw !== "string" || !raw.trim()) return {};
     return { room: raw.trim().toUpperCase() };
   },
-  component: FriendsPage,
+  component: ClubFriendsPage,
   head: () =>
     pageHead({
-      title: "Play Seven Nil with friends — World Cup draft cups",
+      title: "Club friends — UCL draft cups · Seven Nil",
       description:
-        "Draft World Cup XIs with friends. Local pass-and-play, a Cup Final, or a full knockout bracket. Set names in the lobby.",
-      path: "/friends",
+        "Draft historic club XIs with friends. Friend vs friend, or a UCL knockout of 4 to 32 sides from the top five leagues.",
+      path: "/club/friends",
     }),
 });
 
-function FriendsPage() {
+function ClubFriendsPage() {
   const { room } = Route.useSearch();
-  return <FriendsApp pool="world" roomFromUrl={room} />;
+  return <FriendsApp pool="club" roomFromUrl={room} />;
 }
