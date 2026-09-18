@@ -4,6 +4,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Seven Nil";
+const ADSENSE_CLIENT = "ca-pub-1391099021196311";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -17,11 +18,13 @@ export const Route = createRootRoute({
           "Roll a nation and a World Cup year, draft one real player at a time, and simulate the run. Chase a seven-nil.",
       },
       { name: "theme-color", content: "#1f6c37" },
+      { name: "google-adsense-account", content: ADSENSE_CLIENT },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://pagead2.googlesyndication.com" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700;800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap",
@@ -29,6 +32,13 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+    ],
+    scripts: [
+      {
+        async: true,
+        src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,
+        crossOrigin: "anonymous",
+      },
     ],
   }),
   component: () => (
