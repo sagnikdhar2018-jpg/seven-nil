@@ -10,13 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ClubRouteImport } from './routes/club'
 import { Route as FriendsRouteImport } from './routes/friends'
+import { Route as HowToPlayRouteImport } from './routes/how-to-play'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ApiRtcRouteImport } from './routes/api/rtc'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClubRoute = ClubRouteImport.update({
@@ -29,6 +37,16 @@ const FriendsRoute = FriendsRouteImport.update({
   path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowToPlayRoute = HowToPlayRouteImport.update({
+  id: '/how-to-play',
+  path: '/how-to-play',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRtcRoute = ApiRtcRouteImport.update({
   id: '/api/rtc',
   path: '/api/rtc',
@@ -37,35 +55,69 @@ const ApiRtcRoute = ApiRtcRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/club': typeof ClubRoute
   '/friends': typeof FriendsRoute
+  '/how-to-play': typeof HowToPlayRoute
+  '/privacy': typeof PrivacyRoute
   '/api/rtc': typeof ApiRtcRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/club': typeof ClubRoute
   '/friends': typeof FriendsRoute
+  '/how-to-play': typeof HowToPlayRoute
+  '/privacy': typeof PrivacyRoute
   '/api/rtc': typeof ApiRtcRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/club': typeof ClubRoute
   '/friends': typeof FriendsRoute
+  '/how-to-play': typeof HowToPlayRoute
+  '/privacy': typeof PrivacyRoute
   '/api/rtc': typeof ApiRtcRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/club' | '/friends' | '/api/rtc'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/club'
+    | '/friends'
+    | '/how-to-play'
+    | '/privacy'
+    | '/api/rtc'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/club' | '/friends' | '/api/rtc'
-  id: '__root__' | '/' | '/club' | '/friends' | '/api/rtc'
+  to:
+    | '/'
+    | '/about'
+    | '/club'
+    | '/friends'
+    | '/how-to-play'
+    | '/privacy'
+    | '/api/rtc'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/club'
+    | '/friends'
+    | '/how-to-play'
+    | '/privacy'
+    | '/api/rtc'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   ClubRoute: typeof ClubRoute
   FriendsRoute: typeof FriendsRoute
+  HowToPlayRoute: typeof HowToPlayRoute
+  PrivacyRoute: typeof PrivacyRoute
   ApiRtcRoute: typeof ApiRtcRoute
 }
 
@@ -76,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/club': {
@@ -92,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-to-play': {
+      id: '/how-to-play'
+      path: '/how-to-play'
+      fullPath: '/how-to-play'
+      preLoaderRoute: typeof HowToPlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/rtc': {
       id: '/api/rtc'
       path: '/api/rtc'
@@ -104,8 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   ClubRoute: ClubRoute,
   FriendsRoute: FriendsRoute,
+  HowToPlayRoute: HowToPlayRoute,
+  PrivacyRoute: PrivacyRoute,
   ApiRtcRoute: ApiRtcRoute,
 }
 export const routeTree = rootRouteImport

@@ -590,3 +590,9 @@
     transition: none;
   }
 }
+
+.legal-copy a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

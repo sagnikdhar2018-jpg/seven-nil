@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { ChipGroup } from "./chips";
 import { Pitch } from "./pitch";
 import { SfxRoot } from "./sfx";
+import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { useDiceSpin } from "./use-dice-spin";
 
@@ -95,6 +96,7 @@ export function FriendsApp() {
         {phase === "lobby" ? <Lobby /> : null}
         {phase === "draft" || phase === "simulating" ? <DraftTable /> : null}
         {phase === "result" ? <ResultView /> : null}
+        {phase === "menu" || phase === "setup" ? <SiteFooter /> : null}
       </div>
       {kind !== "local" && (phase === "lobby" || phase === "draft" || phase === "result") ? (
         <NetBridge />

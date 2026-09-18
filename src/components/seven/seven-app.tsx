@@ -10,6 +10,7 @@ import { Guide } from "./guide";
 import { Pitch } from "./pitch";
 import { ResultCard } from "./result-card";
 import { MuteButton, SfxRoot } from "./sfx";
+import { SiteFooter } from "./site-footer";
 import { SquadPanel } from "./squad-panel";
 
 const COPY: Record<
@@ -137,6 +138,9 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                   <a href="/">World Cup</a>
                 </Button>
               )}
+              <Button variant="ghost" asChild>
+                <a href="/how-to-play">How to play</a>
+              </Button>
             </div>
             {runs > 0 ? (
               <p className="mt-4 text-xs font-semibold tabular-nums text-muted">
@@ -198,10 +202,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
           <Guide pool={pool} />
         </div>
 
-        <footer className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 pb-24 pt-4 text-xs font-semibold text-muted">
-          <p>Seven Nil · build · simulate · 7–0</p>
-          <p>{copy.footer}</p>
-        </footer>
+        <SiteFooter note={copy.footer} />
       </div>
     </main>
   );

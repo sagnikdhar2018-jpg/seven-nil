@@ -1,10 +1,24 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seven/site";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Seven Nil";
 const ADSENSE_CLIENT = "ca-pub-1391099021196311";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: SITE_URL,
+  applicationCategory: "GameApplication",
+  operatingSystem: "Any",
+  description:
+    "Free World Cup draft game. Roll a historic national squad, pick an XI, and simulate the tournament. Club mode covers the top five leagues from 1980.",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  image: OG_IMAGE,
+};
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,12 +29,19 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Roll a nation and a World Cup year, draft one real player at a time, and simulate the run. Chase a seven-nil.",
+          "Free World Cup draft game. Roll a nation and a year, pick one player at a time, and simulate the run. Club mode and Friends cups included.",
       },
       { name: "theme-color", content: "#1f6c37" },
       { name: "google-adsense-account", content: ADSENSE_CLIENT },
+      { name: "robots", content: "index,follow" },
+      { property: "og:site_name", content: SITE_NAME },
+      { property: "og:type", content: "website" },
+      { property: "og:image", content: OG_IMAGE },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
+      { rel: "canonical", href: SITE_URL },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -38,6 +59,10 @@ export const Route = createRootRoute({
         async: true,
         src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,
         crossOrigin: "anonymous",
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(jsonLd),
       },
     ],
   }),
