@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarRange, Copy, Dices } from "lucide-react";
+import { CalendarRange, Check, Copy, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
@@ -442,6 +442,9 @@ function Lobby({ pool }: { pool: PoolId }) {
   const kind = useFriends((s) => s.kind);
   const act = useFriends((s) => s.act);
   const timer = useFriends((s) => s.timer);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(copiedTimer.current), []);
   const me = seats.find((s) => s.id === actorId) ?? seats[0];
   const readyHumans = seats.filter((s) => s.kind === "human" && s.ready).length;
   const isHost = actorId === hostId;
@@ -465,13 +468,21 @@ function Lobby({ pool }: { pool: PoolId }) {
         <p className="mt-2 text-sm text-muted">Share the code or the invite link. Set your name before you mark ready.</p>
       </div>
       <Button
-        variant="secondary"
+        variant={copied ? "ink" : "secondary"}
+        aria-label={copied ? "Link copied" : "Copy invite link"}
         onClick={() => {
-          void navigator.clipboard?.writeText(share).catch(() => {});
+          void navigator.clipboard
+            ?.writeText(share)
+            .then(() => {
+              setCopied(true);
+              window.clearTimeout(copiedTimer.current);
+              copiedTimer.current = window.setTimeout(() => setCopied(false), 2500);
+            })
+            .catch(() => {});
         }}
       >
-        <Copy className="size-4" strokeWidth={2} />
-        Copy link
+        {copied ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2} />}
+        {copied ? "Copied" : "Copy link"}
       </Button>
       {me ? (
         <div className="card-ink flex flex-col gap-4 rounded-lg px-4 py-4">
