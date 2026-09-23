@@ -108,7 +108,7 @@ export function makeSeat(id: string, name: string, kind: Seat["kind"] = "human")
     slots: makeSlots("4-3-3"),
     ready: kind === "cpu",
     confirmed: false,
-    rerolls: 3,
+    rerolls: 5,
   };
 }
 
@@ -422,7 +422,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
   switch (action.type) {
     case "setName": {
       if (action.seatId !== actorId && !isHost) return state;
-      if (state.phase === "result" || state.phase === "simulating") return state;
+      if (!configPhase(state)) return state;
       const nextName = action.name.slice(0, 18);
       return {
         ...state,

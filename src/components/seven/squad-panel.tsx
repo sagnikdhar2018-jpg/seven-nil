@@ -74,29 +74,28 @@ export function SquadPanel() {
 
       {phase === "picking" && draw ? (
         <div className="flex flex-col gap-2 border-b border-line px-4 py-3">
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              className="flex-1 text-sm"
-              disabled={rerolls <= 0 || busy}
-              onClick={() => spin(reroll)}
-            >
-              <RotateCcw className="size-4" strokeWidth={2} />
-              Another {pool === "club" ? "club" : "team"}
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1 text-sm"
-              data-action="same-year"
-              disabled={rerolls <= 0 || busy || !canYear}
-              aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
-              onClick={() => spin(rerollYear)}
-            >
-              <CalendarRange className="size-4" strokeWidth={2} />
-              Another {pool === "club" ? "season" : "year"}
-            </Button>
-          </div>
-          <p className="text-xs font-semibold text-muted">{rerolls} left</p>
+          <Button
+            variant="secondary"
+            className="btn-choice"
+            disabled={rerolls <= 0 || busy}
+            onClick={() => spin(reroll)}
+          >
+            <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
+            Another {pool === "club" ? "club" : "team"}
+          </Button>
+          <Button
+            variant="secondary"
+            className="btn-choice"
+            data-action="same-year"
+            disabled={rerolls <= 0 || busy || !canYear}
+            aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
+            title={canYear ? "Uses one chance" : "No other season for this side"}
+            onClick={() => spin(rerollYear)}
+          >
+            <CalendarRange className="size-4 shrink-0" strokeWidth={2} />
+            Another {pool === "club" ? "season" : "year"}
+          </Button>
+          <p className="text-xs font-semibold text-muted">{rerolls} chances left · team or year</p>
         </div>
       ) : (
         <div className="border-b border-line px-4 py-3">

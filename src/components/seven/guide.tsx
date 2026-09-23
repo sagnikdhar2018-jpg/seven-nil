@@ -108,9 +108,8 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           <h3 className="font-display text-2xl leading-none">Rules</h3>
           <p className="text-sm leading-relaxed text-muted">
             One draw, one squad, one player. The formation owns the board. Classic mode shows
-            ratings; Almanac hides them. Three rerolls exist for when a squad cannot solve the slot
-            you actually need. Spend one on a new nation, or keep the same team and take another
-            year.
+            ratings; Almanac hides them. Five chances cover a bad draw. Another team and another
+            year each spend one. Names are set before the draft starts.
           </p>
         </article>
         <article className="flex flex-col gap-3">

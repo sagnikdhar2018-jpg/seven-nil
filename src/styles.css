@@ -195,6 +195,18 @@
   background: transparent;
 }
 
+.btn.btn-choice {
+  height: auto;
+  min-height: 3.25rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-size: 1rem;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  white-space: normal;
+  text-align: center;
+}
+
 .chip {
   border: 1px solid color-mix(in srgb, var(--line) 72%, var(--ink));
   background: color-mix(in srgb, var(--paper-soft) 72%, transparent);

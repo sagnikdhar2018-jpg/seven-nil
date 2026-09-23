@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarRange, Check, Copy, Dices } from "lucide-react";
+import { CalendarRange, Check, Copy, Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
@@ -615,28 +615,28 @@ function DraftTable() {
           </div>
           {draw ? (
             <div className="flex flex-col gap-2 border-b border-line px-4 py-3">
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  className="flex-1 text-sm"
-                  disabled={!myTurn || active.rerolls <= 0 || busy}
-                  onClick={() => spin(() => act({ type: "reroll" }))}
-                >
-                  Another {pool === "club" ? "club" : "team"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="flex-1 text-sm"
-                  data-action="same-year"
-                  disabled={!myTurn || active.rerolls <= 0 || busy || !canYear}
-                  aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
-                  onClick={() => spin(() => act({ type: "sameYear" }))}
-                >
-                  <CalendarRange className="size-4" strokeWidth={2} />
-                  Another {pool === "club" ? "season" : "year"}
-                </Button>
-              </div>
-              <p className="text-xs font-semibold text-muted">{active.rerolls} left</p>
+              <Button
+                variant="secondary"
+                className="btn-choice"
+                disabled={!myTurn || active.rerolls <= 0 || busy}
+                onClick={() => spin(() => act({ type: "reroll" }))}
+              >
+                <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
+                Another {pool === "club" ? "club" : "team"}
+              </Button>
+              <Button
+                variant="secondary"
+                className="btn-choice"
+                data-action="same-year"
+                disabled={!myTurn || active.rerolls <= 0 || busy || !canYear}
+                aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
+                title={canYear ? "Uses one chance" : "No other season for this side"}
+                onClick={() => spin(() => act({ type: "sameYear" }))}
+              >
+                <CalendarRange className="size-4 shrink-0" strokeWidth={2} />
+                Another {pool === "club" ? "season" : "year"}
+              </Button>
+              <p className="text-xs font-semibold text-muted">{active.rerolls} chances left · team or year</p>
             </div>
           ) : (
             <div className="border-b border-line px-4 py-3">
@@ -698,16 +698,7 @@ function DraftTable() {
             return (
               <div key={seat.id} className="card-ink flex flex-col gap-3 rounded-lg px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">{seat.formation}</p>
-                {mine ? (
-                  <NameField
-                    label={kind === "local" ? (seat.id === "home" ? "Player 1 name" : "Player 2 name") : "Your name"}
-                    value={seat.name}
-                    placeholder="Your name"
-                    onChange={(name) => act({ type: "setName", seatId: seat.id, name })}
-                  />
-                ) : (
-                  <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
-                )}
+                <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
                 <p className="font-numeral text-sm font-extrabold tabular-nums">
                   {filledCount(seat.slots)}/11
                   {seat.confirmed ? " · confirmed" : ""}

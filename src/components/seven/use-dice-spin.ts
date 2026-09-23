@@ -8,15 +8,18 @@ function prefersReduce() {
 export function useDiceSpin() {
   const [busy, setBusy] = useState(false);
   const timer = useRef(0);
+  const lock = useRef(false);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const spin = (done: () => void) => {
-    if (busy) return;
+    if (lock.current) return;
+    lock.current = true;
     unlock();
     const reduce = prefersReduce();
     playDiceRoll(reduce ? "short" : "full");
     if (reduce) {
+      lock.current = false;
       done();
       return;
     }
@@ -25,6 +28,7 @@ export function useDiceSpin() {
     timer.current = window.setTimeout(() => {
       setBusy(false);
       setDiceShowing(false);
+      lock.current = false;
       done();
     }, DICE_MS);
   };
