@@ -214,31 +214,48 @@
   white-space: nowrap;
   border-radius: 8px;
   align-items: center;
-  padding: 0.4rem 0.7rem;
-  min-height: 2.5rem;
+  padding: 0.45rem 0.8rem;
+  min-height: 2.75rem;
   font-size: 0.8125rem;
   font-weight: 800;
   display: inline-flex;
-  transition: background-color var(--motion-quick) var(--ease-out), border-color var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out);
+  transition: transform var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .chip.is-active {
   border-color: var(--win);
   background: linear-gradient(180deg, color-mix(in srgb, var(--win) 78%, #052014), var(--win));
   color: var(--surface);
+  box-shadow: 0 8px 0 color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.pitch-stage {
+  perspective: 1200px;
+  perspective-origin: 50% 18%;
+  padding: 0.35rem 0.15rem 1.6rem;
 }
 
 .pitch {
   aspect-ratio: 3 / 4;
   border: 1px solid color-mix(in srgb, var(--gold) 44%, #ffffff4d);
   background:
-    radial-gradient(circle at 50% 50%, #ffffff1a, transparent 36%),
+    linear-gradient(180deg, #ffffff22, transparent 28%),
+    radial-gradient(circle at 50% 42%, #ffffff1f, transparent 38%),
     repeating-linear-gradient(180deg, color-mix(in srgb, var(--field) 96%, white) 0 9%, var(--field-dark) 9% 18%);
   width: 100%;
-  box-shadow: var(--hard-shadow);
   border-radius: 14px;
   position: relative;
   overflow: hidden;
+  transform: rotateX(24deg);
+  transform-style: preserve-3d;
+  box-shadow:
+    0 18px 0 -10px color-mix(in srgb, var(--field-dark) 88%, black),
+    0 36px 28px #07171155;
+  transition: transform var(--motion-fast) var(--ease-out);
 }
 
 .pitch-markings {
@@ -255,7 +272,7 @@
 
 .disc {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) translateZ(28px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -264,6 +281,12 @@
   border: 0;
   padding: 0;
   color: inherit;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.disc:hover:not(:disabled),
+.disc:focus-visible {
+  transform: translate(-50%, -50%) translateZ(46px);
 }
 
 .disc-num {
@@ -279,7 +302,7 @@
   font-size: 0.875rem;
   font-family: var(--font-numeral);
   font-weight: 800;
-  box-shadow: 0 3px 8px #07171138;
+  box-shadow: 0 7px 0 #0717112e, 0 12px 14px #07171140;
 }
 
 .disc-name {
@@ -889,4 +912,21 @@
   .disc.is-legal .disc-num {
     animation: none;
   }
+  .pitch,
+  .disc,
+  .chip {
+    transition: none;
+  }
+  .pitch {
+    transform: none;
+  }
+  .disc,
+  .disc:hover:not(:disabled),
+  .disc:focus-visible {
+    transform: translate(-50%, -50%);
+  }
+  .chip:hover:not(:disabled) {
+    transform: none;
+  }
+}
 }

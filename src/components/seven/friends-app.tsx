@@ -4,7 +4,7 @@ import { CalendarRange, Check, Copy, Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
-import { emptySlotsFor, FORMATIONS } from "@/lib/seven/formations";
+import { emptySlotsFor, FORMATIONS, STYLES } from "@/lib/seven/formations";
 import {
   apply,
   friendsPath,
@@ -415,11 +415,7 @@ function LocalSetup({ pool }: { pool: PoolId }) {
               label="Style"
               value={seat.style}
               onChange={(id) => act({ type: "setStyle", seatId: seat.id, style: id })}
-              options={[
-                { id: "defensive", label: "Defensive" },
-                { id: "balanced", label: "Balanced" },
-                { id: "attacking", label: "Attacking" },
-              ]}
+              options={STYLES}
             />
           </div>
         ))}
@@ -503,11 +499,7 @@ function Lobby({ pool }: { pool: PoolId }) {
             label="Your style"
             value={me.style}
             onChange={(id) => act({ type: "setStyle", seatId: me.id, style: id })}
-            options={[
-              { id: "defensive", label: "Defensive" },
-              { id: "balanced", label: "Balanced" },
-              { id: "attacking", label: "Attacking" },
-            ]}
+            options={STYLES}
           />
           <Button variant={me.ready ? "ink" : "primary"} onClick={() => act({ type: "ready", seatId: me.id })}>
             {me.ready ? "Ready" : "Mark ready"}

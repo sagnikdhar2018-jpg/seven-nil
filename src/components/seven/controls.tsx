@@ -1,4 +1,4 @@
-import { FORMATIONS } from "@/lib/seven/formations";
+import { FORMATIONS, STYLES } from "@/lib/seven/formations";
 import type { FormationId, ModeId, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ function ChipGroup<T extends string>({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">{label}</p>
-      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
         {options.map((option) => {
           const active = option.id === value;
           return (
@@ -67,12 +67,19 @@ export function Controls() {
         label="Style"
         value={style}
         onChange={setStyle}
-        options={[
-          { id: "defensive", label: "Defensive" },
-          { id: "balanced", label: "Balanced" },
-          { id: "attacking", label: "Attacking" },
-        ]}
+        options={STYLES}
       />
+      <p className="text-sm leading-relaxed text-muted">
+        {style === "defensive"
+          ? "Sit deeper. Harder to break down."
+          : style === "counter"
+            ? "Stay compact, then break. A safer punch."
+            : style === "press"
+              ? "Hunt the ball. More shots, more space behind."
+              : style === "attacking"
+                ? "Send numbers forward."
+                : "No extreme. The XI decides the match."}
+      </p>
       <ChipGroup<ModeId>
         label="Mode"
         value={mode}

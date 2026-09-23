@@ -69,9 +69,15 @@ export function teamAxes(slots: Slot[], style: StyleId): Axis {
   if (style === "attacking") {
     att += 3.4;
     def -= 2.2;
+  } else if (style === "press") {
+    att += 2.6;
+    def -= 1.5;
   } else if (style === "defensive") {
     def += 3.4;
     att -= 2.2;
+  } else if (style === "counter") {
+    def += 2.2;
+    att += 1.4;
   }
   return {
     attack: att,

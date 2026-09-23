@@ -19,12 +19,18 @@ export type FormationId =
   | "4-4-2"
   | "4-2-3-1"
   | "4-2-4"
+  | "4-1-4-1"
+  | "4-3-1-2"
+  | "4-4-1-1"
+  | "4-2-2-2"
   | "3-5-2"
+  | "3-4-3"
+  | "3-4-2-1"
   | "5-3-2"
-  | "4-5-1"
-  | "3-4-3";
+  | "5-4-1"
+  | "4-5-1";
 
-export type StyleId = "defensive" | "balanced" | "attacking";
+export type StyleId = "defensive" | "counter" | "balanced" | "press" | "attacking";
 export type ModeId = "classic" | "almanac";
 export type Phase = "setup" | "picking" | "ready" | "simulating" | "result";
 export type PoolId = "world" | "club";

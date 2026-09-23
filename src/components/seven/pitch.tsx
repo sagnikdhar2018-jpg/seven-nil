@@ -23,7 +23,8 @@ export function Pitch({
     : new Set<string>();
 
   return (
-    <div className="pitch mx-auto max-w-md lg:max-w-none">
+    <div className="pitch-stage">
+      <div className="pitch">
       <div className="pitch-glow" aria-hidden="true" />
       <svg className="pitch-markings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <rect x="4" y="4" width="92" height="92" />
@@ -63,6 +64,7 @@ export function Pitch({
           </button>
         );
       })}
+      </div>
     </div>
   );
 }
