@@ -768,6 +768,52 @@
   color: var(--paper);
 }
 
+.pen-list {
+  display: flex;
+  max-height: 14rem;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: auto;
+}
+
+.pen-list li {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.pen-list li.is-scored span:last-child {
+  color: var(--accent);
+}
+
+.pen-list li.is-miss span:last-child {
+  color: var(--muted);
+}
+
+.potm {
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+}
+
+.rate-list {
+  display: flex;
+  max-height: 11rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: auto;
+}
+
+.rate-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .live-side {
   font-family: var(--font-display);
   font-size: clamp(1.1rem, 2.4vw, 1.6rem);

@@ -66,6 +66,20 @@ export type MatchGoal = {
   scorer: string;
 };
 
+export type PenKick = {
+  side: "home" | "away";
+  taker: string;
+  scored: boolean;
+};
+
+export type PlayerRating = {
+  name: string;
+  side: "home" | "away";
+  pos: string;
+  rating: number;
+  goals: number;
+};
+
 export type TeamRatings = {
   ovr: number;
   atk: number;
@@ -82,9 +96,11 @@ export type Match = {
   home?: string;
   away?: string;
   goals: MatchGoal[];
-  pens?: { home: number; away: number };
+  pens?: { home: number; away: number; kicks?: PenKick[] };
   homeRatings?: TeamRatings;
   awayRatings?: TeamRatings;
+  ratings?: PlayerRating[];
+  potm?: { name: string; rating: number; side: "home" | "away" };
 };
 
 export type Campaign = {

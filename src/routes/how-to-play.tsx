@@ -48,7 +48,7 @@ function HowToPlayPage() {
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Friends — World Cup</h2>
       <p>
-        Local is pass-and-play on one device. Cup Final is a two-seat knockout. Full Cup draws a bracket and fills empty seats with real nations. Computer ties are settled at once. Your matches play live. Set names in the lobby. Online rooms use a code.
+        Local is pass-and-play on one device. Cup Final is a two-seat knockout. Full Cup draws a bracket and fills empty seats with real nations. Only a match between two friends is played in full. A draw goes to penalties, one kick at a time. Set names in the lobby. Online rooms use a code.
       </p>
       <p>
         <a className="underline" href="/friends">

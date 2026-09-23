@@ -1,5 +1,5 @@
 import { ATT_POS, DEF_POS, MID_POS } from "./formations";
-import type { Campaign, Match, MatchGoal, Player, PoolId, Slot, StyleId, TeamRatings } from "./types";
+import type { Campaign, Match, MatchGoal, PenKick, Player, PlayerRating, PoolId, Slot, StyleId, TeamRatings } from "./types";
 
 const OPPONENTS = [
   { name: "Brazil", att: 91, mid: 88, def: 86, gk: 88 },
@@ -143,6 +143,82 @@ function scriptGoals(gf: number, ga: number, homeSlots: Slot[], awaySlots: Slot[
   return goals.sort((a, b) => a.minute - b.minute);
 }
 
+function takers(slots: Slot[], fallback: string) {
+  const out = slots
+    .filter((s) => s.player && s.pos !== "GK")
+    .map((s) => ({ name: lastName(s.player!.name), ovr: s.player!.ovr }));
+  if (!out.length) return [{ name: fallback, ovr: 78 }];
+  return out.sort(() => Math.random() - 0.5);
+}
+
+export function scriptPens(homeSlots: Slot[], awaySlots: Slot[], homeBias = 0) {
+  const homeT = takers(homeSlots, "Home");
+  const awayT = takers(awaySlots, "Away");
+  const kicks: PenKick[] = [];
+  let home = 0;
+  let away = 0;
+  let hi = 0;
+  let ai = 0;
+
+  const kick = (side: "home" | "away") => {
+    const list = side === "home" ? homeT : awayT;
+    const idx = side === "home" ? hi++ : ai++;
+    const taker = list[idx % list.length]!;
+    const bias = side === "home" ? homeBias : -homeBias;
+    const p = clamp(0.68 + (taker.ovr - 78) / 140 + bias / 160, 0.4, 0.9);
+    const scored = Math.random() < p;
+    kicks.push({ side, taker: taker.name, scored });
+    if (scored) {
+      if (side === "home") home += 1;
+      else away += 1;
+    }
+  };
+
+  for (let round = 0; round < 5; round++) {
+    kick("home");
+    if (home > away + (5 - round)) break;
+    kick("away");
+    const left = 5 - (round + 1);
+    if (home > away + left || away > home + left) break;
+  }
+  let guard = 0;
+  while (home === away && guard < 10) {
+    kick("home");
+    kick("away");
+    guard += 1;
+  }
+  return { home, away, kicks };
+}
+
+function ratePlayers(homeSlots: Slot[], awaySlots: Slot[], goals: MatchGoal[], kicks: PenKick[], ga: number, gf: number): PlayerRating[] {
+  const goalsFor = (side: "home" | "away", name: string) =>
+    goals.filter((g) => g.side === side && g.scorer === lastName(name)).length;
+
+  const sideRows = (slots: Slot[], side: "home" | "away", conceded: number) =>
+    slots
+      .filter((s) => s.player)
+      .map((s) => {
+        const player = s.player!;
+        const scored = goalsFor(side, player.name);
+        const pen = kicks.find((k) => k.side === side && k.taker === lastName(player.name));
+        let rating = 6.15 + (player.ovr - 75) * 0.04 + (Math.random() - 0.45) * 0.55;
+        rating += scored * 0.85;
+        if (pen?.scored) rating += 0.35;
+        if (pen && !pen.scored) rating -= 0.6;
+        if (s.pos === "GK") rating += conceded === 0 ? 0.75 : conceded >= 3 ? -0.45 : 0;
+        rating = clamp(rating, 4.2, 10);
+        return {
+          name: player.name,
+          side,
+          pos: s.pos,
+          rating: Math.round(rating * 10) / 10,
+          goals: scored,
+        };
+      });
+
+  return [...sideRows(homeSlots, "home", ga), ...sideRows(awaySlots, "away", gf)].sort((a, b) => b.rating - a.rating);
+}
+
 function playMatch(
   us: Axis,
   them: { name: string; att: number; mid: number; def: number; gk: number },
@@ -274,10 +350,14 @@ export function simulateFinal(
   );
   if (match.result === "D") {
     const edge = teamAxes(us, styleUs).gk - their.gk;
-    const win = Math.random() < 0.5 + edge / 80;
-    match.result = win ? "W" : "L";
-    match.pens = win ? { home: 5, away: 4 } : { home: 3, away: 4 };
+    const shot = scriptPens(us, them, edge / 40);
+    match.result = shot.home >= shot.away ? "W" : "L";
+    match.pens = shot;
   }
+  const ratings = ratePlayers(us, them, match.goals, match.pens?.kicks ?? [], match.ga, match.gf);
+  match.ratings = ratings;
+  const top = ratings[0];
+  if (top) match.potm = { name: top.name, rating: top.rating, side: top.side };
   return match;
 }
 
@@ -289,9 +369,11 @@ export type BracketGame = {
   ga: number;
   winner: string;
   goals: MatchGoal[];
-  pens?: { home: number; away: number };
+  pens?: { home: number; away: number; kicks?: PenKick[] };
   homeRatings?: TeamRatings;
   awayRatings?: TeamRatings;
+  ratings?: PlayerRating[];
+  potm?: { name: string; rating: number; side: "home" | "away" };
   instant?: boolean;
 };
 
@@ -328,7 +410,9 @@ export function simulateKnockout(
         pens: match.pens,
         homeRatings: displayRatings(home.slots, home.style),
         awayRatings: displayRatings(away.slots, away.style),
-        instant: !home.human && !away.human,
+        ratings: match.ratings,
+        potm: match.potm,
+        instant: !(home.human && away.human),
       });
       next.push({ ...winner, human: winner.human });
     }

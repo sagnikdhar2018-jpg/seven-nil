@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { MatchGoal, TeamRatings } from "@/lib/seven/types";
+import type { MatchGoal, PenKick, PlayerRating, TeamRatings } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BracketBoard } from "./bracket-board";
@@ -11,9 +11,11 @@ type BoardMatch = {
   gf: number;
   ga: number;
   goals: MatchGoal[];
-  pens?: { home: number; away: number };
+  pens?: { home: number; away: number; kicks?: PenKick[] };
   homeRatings?: TeamRatings;
   awayRatings?: TeamRatings;
+  ratings?: PlayerRating[];
+  potm?: { name: string; rating: number; side: "home" | "away" };
   instant?: boolean;
 };
 
@@ -116,6 +118,8 @@ export function LiveMatchBoard({
   const [minute, setMinute] = useState(0);
   const [phase, setPhase] = useState<"run" | "ht" | "ft" | "pens">("run");
   const [flash, setFlash] = useState<MatchGoal | null>(null);
+  const [penShown, setPenShown] = useState(0);
+  const [sheet, setSheet] = useState(false);
   const done = useRef(false);
   const lastGoal = useRef(-1);
   const holdUntil = useRef(0);
@@ -127,17 +131,15 @@ export function LiveMatchBoard({
     setMinute(0);
     setPhase("run");
     setFlash(null);
+    setPenShown(0);
+    setSheet(false);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || match.goals.length === 0) {
+    if (reduced) {
       setMinute(90);
+      setPenShown(match.pens?.kicks?.length ?? 0);
       setPhase(match.pens ? "pens" : "ft");
-      const t = window.setTimeout(() => {
-        if (!done.current) {
-          done.current = true;
-          onDone();
-        }
-      }, reduced ? 200 : 900);
-      return () => window.clearTimeout(t);
+      setSheet(true);
+      return;
     }
 
     let raf = 0;
@@ -171,24 +173,57 @@ export function LiveMatchBoard({
       if (current >= 90) {
         setMinute(90);
         setPhase(match.pens ? "pens" : "ft");
-        window.setTimeout(() => {
-          if (!done.current) {
-            done.current = true;
-            onDone();
-          }
-        }, match.pens ? 1400 : 900);
         return;
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [match, onDone, pace]);
+  }, [match, pace]);
+
+  useEffect(() => {
+    if (phase !== "pens") return;
+    const total = match.pens?.kicks?.length ?? 0;
+    if (penShown < total) {
+      const t = window.setTimeout(() => setPenShown((n) => n + 1), 680);
+      return () => window.clearTimeout(t);
+    }
+    const t = window.setTimeout(() => setSheet(true), 420);
+    return () => window.clearTimeout(t);
+  }, [phase, penShown, match.pens]);
+
+  useEffect(() => {
+    if (phase !== "ft") return;
+    const t = window.setTimeout(() => setSheet(true), 700);
+    return () => window.clearTimeout(t);
+  }, [phase]);
+
+  useEffect(() => {
+    if (!sheet) return;
+    const t = window.setTimeout(() => {
+      if (!done.current) {
+        done.current = true;
+        onDone();
+      }
+    }, 1700);
+    return () => window.clearTimeout(t);
+  }, [sheet, onDone]);
 
   const live = scoreAt(match.goals, minute);
   const ticker = match.goals.filter((g) => g.minute <= minute);
+  const kicks = match.pens?.kicks ?? [];
+  const shownKicks = kicks.slice(0, penShown);
+  const penScore = shownKicks.reduce(
+    (acc, k) => {
+      if (!k.scored) return acc;
+      if (k.side === "home") acc.home += 1;
+      else acc.away += 1;
+      return acc;
+    },
+    { home: 0, away: 0 },
+  );
   const clock =
-    phase === "ht" ? "HT" : phase === "pens" ? "PENS" : phase === "ft" ? "FT" : clockLabel(minute);
+    phase === "ht" ? "HT" : phase === "pens" ? "PENS" : phase === "ft" || sheet ? "FT" : clockLabel(minute);
 
   return (
     <div className="live-board">
@@ -209,10 +244,10 @@ export function LiveMatchBoard({
           </p>
           {phase === "pens" && match.pens ? (
             <p className="mt-1 text-xs font-extrabold text-accent">
-              {match.pens.home}–{match.pens.away}
+              {kicks.length ? `${penScore.home}–${penScore.away}` : `${match.pens.home}–${match.pens.away}`}
             </p>
           ) : null}
-          {flash ? (
+          {flash && phase !== "pens" ? (
             <p className="live-goal mt-2">
               {flash.minute}' {flash.scorer}
             </p>
@@ -226,6 +261,41 @@ export function LiveMatchBoard({
           away
         />
       </div>
+      {phase === "pens" && shownKicks.length ? (
+        <ol className="pen-list mt-4">
+          {shownKicks.map((kick, i) => (
+            <li key={`${kick.taker}-${i}`} className={kick.scored ? "is-scored" : "is-miss"}>
+              <span className="font-numeral tabular-nums">{i + 1}</span>
+              <span className="truncate">
+                {kick.taker}
+                <span className="text-muted"> · {kick.side === "home" ? match.home : match.away}</span>
+              </span>
+              <span>{kick.scored ? "Scores" : "Misses"}</span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {sheet && match.potm ? (
+        <div className="potm mt-4">
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Player of the match</p>
+          <div className="mt-1 flex items-end justify-between gap-3">
+            <p className="font-display text-3xl leading-none">{match.potm.name}</p>
+            <p className="font-numeral text-3xl font-extrabold tabular-nums text-accent">{match.potm.rating.toFixed(1)}</p>
+          </div>
+          {match.ratings?.length ? (
+            <ul className="rate-list mt-3">
+              {match.ratings.map((row) => (
+                <li key={`${row.side}-${row.name}`}>
+                  <span className="w-8 text-xs font-extrabold text-muted">{row.pos}</span>
+                  <span className="min-w-0 flex-1 truncate">{row.name}</span>
+                  <span className="text-xs text-muted">{row.side === "home" ? match.home : match.away}</span>
+                  <span className="font-numeral w-8 text-right font-extrabold tabular-nums">{row.rating.toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

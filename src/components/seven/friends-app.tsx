@@ -756,6 +756,8 @@ function SimView() {
     pens: g.pens,
     homeRatings: g.homeRatings,
     awayRatings: g.awayRatings,
+    ratings: g.ratings,
+    potm: g.potm,
     instant: g.instant,
   }));
 
@@ -769,7 +771,7 @@ function SimView() {
           {pool === "club" && kind === "cup" ? "Road to the final" : "The bracket"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Computer ties are already on the board. Your matches play minute by minute.
+          Only a match between two friends is played in full. Every other tie is already on the board.
         </p>
       </div>
       {games.length ? (
@@ -925,8 +927,8 @@ function FriendsGuide({ pool }: { pool: PoolId }) {
           <h3 className="font-display text-2xl leading-none">{club ? "UCL" : "Full Cup"}</h3>
           <p className="text-sm leading-relaxed text-muted">
             {club
-              ? "Knockout of 4, 8, 16, or 32. Empty seats become other European clubs. Computer ties are settled at once. Your matches play live."
-              : "Bracket of 4, 8, 16, or 32. Empty seats become real nations. Computer ties are settled at once. Your matches play live."}
+              ? "Knockout of 4, 8, 16, or 32. Empty seats become other European clubs. Only a tie between two friends is played in full, with penalties kick by kick if it is level."
+              : "Bracket of 4, 8, 16, or 32. Empty seats become real nations. Only a tie between two friends is played in full, with penalties kick by kick if it is level."}
           </p>
         </article>
       </div>

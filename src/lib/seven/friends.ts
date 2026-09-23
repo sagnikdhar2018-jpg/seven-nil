@@ -403,6 +403,8 @@ function runSimulate(state: FriendsState): FriendsState {
         pens: match.pens,
         homeRatings: match.homeRatings,
         awayRatings: match.awayRatings,
+        ratings: match.ratings,
+        potm: match.potm,
       },
     ],
   };
