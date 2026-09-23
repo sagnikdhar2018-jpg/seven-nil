@@ -321,6 +321,10 @@
   .draft-board {
     grid-template-columns: minmax(16rem, 19rem) minmax(0, 1fr) minmax(16rem, 20rem);
   }
+
+  .draft-board.is-picking {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  }
 }
 
 @keyframes board-float {

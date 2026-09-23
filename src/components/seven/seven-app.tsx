@@ -49,6 +49,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   const dreams = useSeven((s) => s.dreams);
   const filled = slots.filter((s) => s.player).length;
   const selected = useSeven((s) => s.selected);
+  const picking = phase !== "setup" || filled > 0 || Boolean(selected);
   const copy = COPY[pool];
 
   useEffect(() => {
@@ -155,12 +156,14 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
 
         <section
           id="draft"
-          className="draft-board mx-auto w-full max-w-6xl scroll-mt-6 px-5 pb-10"
+          className={`draft-board mx-auto w-full max-w-6xl scroll-mt-6 px-5 pb-10${picking ? " is-picking" : ""}`}
         >
-          <div className="draft-col flex flex-col gap-4">
-            <Controls />
-            <SquadPanel />
-          </div>
+          {picking ? null : (
+            <div className="draft-col flex flex-col gap-4">
+              <Controls />
+              <SquadPanel />
+            </div>
+          )}
           <div className="draft-col draft-pitch flex flex-col gap-4">
             <Pitch />
             {selected ? (
@@ -196,6 +199,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
             </div>
           </div>
           <div className="draft-col flex flex-col gap-4">
+            {picking ? <SquadPanel /> : null}
             <BoxScore />
             <ResultCard />
           </div>
