@@ -43,13 +43,13 @@ function RatingsToggle({ ratings }: { ratings?: TeamRatings }) {
   const [open, setOpen] = useState(false);
   if (!ratings) return null;
   return (
-    <div className="mt-3">
+    <div>
       <Button
         variant={open ? "ink" : "secondary"}
-        className="w-full text-xs"
+        className="btn-mini w-full"
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? "Hide ratings" : "Ratings"}
+        {open ? "Hide" : "Ratings"}
       </Button>
       {open ? (
         <div className="mt-2 grid grid-cols-4 gap-1 text-center">
@@ -72,37 +72,20 @@ function RateChip({ n, v }: { n: string; v: number }) {
   );
 }
 
-function SideBox({
-  name,
-  score,
-  goals,
-  ratings,
-  away,
-}: {
-  name: string;
-  score: number;
-  goals: MatchGoal[];
-  ratings?: TeamRatings;
-  away?: boolean;
-}) {
+function Scorers({ goals, away }: { goals: MatchGoal[]; away?: boolean }) {
   return (
-    <div className={cn("live-sidebox", away && "is-away")}>
-      <p className="live-side">{name}</p>
-      <p className="font-numeral mt-1 text-2xl font-extrabold tabular-nums">{score}</p>
-      <ul className="live-scorers">
-        {goals.length === 0 ? (
-          <li className="text-muted">—</li>
-        ) : (
-          goals.map((g, i) => (
-            <li key={`${g.minute}-${g.scorer}-${i}`}>
-              <span className="font-numeral tabular-nums">{g.minute}'</span>
-              <span>{g.scorer}</span>
-            </li>
-          ))
-        )}
-      </ul>
-      <RatingsToggle ratings={ratings} />
-    </div>
+    <ul className={cn("live-scorers", away && "is-away")}>
+      {goals.length === 0 ? (
+        <li className="text-muted">—</li>
+      ) : (
+        goals.map((g, i) => (
+          <li key={`${g.minute}-${g.scorer}-${i}`}>
+            <span className="font-numeral tabular-nums">{g.minute}'</span>
+            <span className="truncate">{g.scorer}</span>
+          </li>
+        ))
+      )}
+    </ul>
   );
 }
 
@@ -228,38 +211,33 @@ export function LiveMatchBoard({
   return (
     <div className="live-board">
       <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">{match.round}</p>
-      <div className="live-duel mt-3">
-        <SideBox
-          name={match.home}
-          score={live.home}
-          goals={ticker.filter((g) => g.side === "home")}
-          ratings={match.homeRatings}
-        />
+      <div className="live-scoreline mt-3">
+        <p className="live-name">{match.home}</p>
         <div className="live-mid">
-          <p className={cn("live-clock font-numeral text-sm font-extrabold tabular-nums", flash && "is-flash")}>
-            {clock}
-          </p>
+          <p className={cn("live-clock font-numeral", flash && "is-flash")}>{clock}</p>
           <p className={cn("live-nums", flash && "is-flash")}>
             {live.home}–{live.away}
           </p>
           {phase === "pens" && match.pens ? (
-            <p className="mt-1 text-xs font-extrabold text-accent">
+            <p className="text-xs font-extrabold text-accent">
               {kicks.length ? `${penScore.home}–${penScore.away}` : `${match.pens.home}–${match.pens.away}`}
             </p>
           ) : null}
-          {flash && phase !== "pens" ? (
-            <p className="live-goal mt-2">
-              {flash.minute}' {flash.scorer}
-            </p>
-          ) : null}
         </div>
-        <SideBox
-          name={match.away}
-          score={live.away}
-          goals={ticker.filter((g) => g.side === "away")}
-          ratings={match.awayRatings}
-          away
-        />
+        <p className="live-name is-away">{match.away}</p>
+      </div>
+      {flash && phase !== "pens" ? (
+        <p className="live-goal">
+          {flash.minute}' {flash.scorer}
+        </p>
+      ) : null}
+      <div className="live-split">
+        <Scorers goals={ticker.filter((g) => g.side === "home")} />
+        <Scorers goals={ticker.filter((g) => g.side === "away")} away />
+      </div>
+      <div className="live-split">
+        <RatingsToggle ratings={match.homeRatings} />
+        <RatingsToggle ratings={match.awayRatings} />
       </div>
       {phase === "pens" && shownKicks.length ? (
         <ol className="pen-list mt-4">
