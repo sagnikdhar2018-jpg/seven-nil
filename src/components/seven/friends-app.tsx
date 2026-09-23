@@ -572,8 +572,8 @@ function DraftTable() {
     : undefined;
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl gap-6 px-5 pb-24 pt-2 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)]">
-      <div className="flex flex-col gap-4">
+    <section className="draft-board mx-auto w-full max-w-6xl px-5 pb-24 pt-2">
+      <div className="draft-col flex flex-col gap-4">
         <div className="card-ink rounded-lg px-4 py-4">
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Turn</p>
           <p className="mt-1 font-display text-3xl leading-none">{shownName(active.name)}</p>
@@ -665,7 +665,7 @@ function DraftTable() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4">
+      <div className="draft-col draft-pitch flex flex-col gap-4">
         <Pitch
           slots={kind === "local" ? active.slots : viewing.slots}
           selected={selected}
@@ -681,7 +681,7 @@ function DraftTable() {
           </p>
         )}
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="draft-col flex flex-col gap-3">
         {seats
           .filter((s) => s.kind === "human")
           .map((seat) => {

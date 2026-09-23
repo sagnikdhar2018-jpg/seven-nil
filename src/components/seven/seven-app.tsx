@@ -155,13 +155,13 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
 
         <section
           id="draft"
-          className="mx-auto grid w-full max-w-6xl scroll-mt-6 gap-6 px-5 pb-10 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)]"
+          className="draft-board mx-auto w-full max-w-6xl scroll-mt-6 px-5 pb-10"
         >
-          <div className="flex flex-col gap-4">
+          <div className="draft-col flex flex-col gap-4">
             <Controls />
             <SquadPanel />
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="draft-col draft-pitch flex flex-col gap-4">
             <Pitch />
             {selected ? (
               <p className="text-center text-sm font-semibold text-accent">
@@ -195,7 +195,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               </Button>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="draft-col flex flex-col gap-4">
             <BoxScore />
             <ResultCard />
           </div>
