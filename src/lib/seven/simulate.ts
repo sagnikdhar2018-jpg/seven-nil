@@ -87,9 +87,16 @@ export function teamAxes(slots: Slot[], style: StyleId): Axis {
   };
 }
 
-export function displayRatings(slots: Slot[], style: StyleId): TeamRatings {
-  const a = teamAxes(slots, style);
-  return clampRatings(a.attack, a.midfield, a.defence);
+export function displayRatings(slots: Slot[], _style: StyleId): TeamRatings {
+  const filled = slots.filter((s): s is Slot & { player: Player } => Boolean(s.player));
+  const mean = (rows: typeof filled) =>
+    rows.length ? rows.reduce((sum, slot) => sum + slot.player.ovr, 0) / rows.length : null;
+  const all = mean(filled);
+  const atk = mean(filled.filter((slot) => ATT_POS.includes(slot.pos)));
+  const mid = mean(filled.filter((slot) => MID_POS.includes(slot.pos)));
+  const def = mean(filled.filter((slot) => DEF_POS.includes(slot.pos) && slot.pos !== "GK"));
+  const show = (n: number | null) => Math.max(1, Math.min(99, Math.round(n ?? all ?? 1)));
+  return { ovr: show(all), atk: show(atk), mid: show(mid), def: show(def) };
 }
 
 export function clampRatings(atk: number, mid: number, def: number): TeamRatings {
@@ -247,7 +254,9 @@ function playMatch(
     ga,
     result,
     goals: scriptGoals(gf, ga, homeSlots, awaySlots),
-    homeRatings: clampRatings(us.attack, us.midfield, us.defence),
+    homeRatings: homeSlots.some((slot) => slot.player)
+      ? displayRatings(homeSlots, "balanced")
+      : clampRatings(us.attack, us.midfield, us.defence),
     awayRatings: clampRatings(them.att, them.mid, them.def),
   };
 }
