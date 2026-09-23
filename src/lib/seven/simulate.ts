@@ -1,4 +1,7 @@
 import { ATT_POS, DEF_POS, MID_POS } from "./formations";
+import { autoFillFrom } from "./draft";
+import { takenKeysFromSlots } from "./person";
+import { playersForSide } from "./squads";
 import type { Campaign, Match, MatchGoal, PenKick, Player, PlayerRating, PoolId, Slot, StyleId, TeamRatings } from "./types";
 
 const OPPONENTS = [
@@ -128,8 +131,15 @@ function lastName(name: string) {
 }
 
 function scorers(slots: Slot[], fallback: string) {
-  const names = slots.filter((s) => s.player && s.pos !== "GK").map((s) => lastName(s.player!.name));
-  return names.length ? names : [fallback];
+  const weighted: string[] = [];
+  for (const slot of slots) {
+    if (!slot.player || slot.pos === "GK") continue;
+    const weight =
+      slot.pos === "ST" ? 6 : slot.pos === "RW" || slot.pos === "LW" ? 4 : slot.pos === "AM" ? 3 : MID_POS.includes(slot.pos) ? 2 : 1;
+    const name = lastName(slot.player.name);
+    for (let i = 0; i < weight; i++) weighted.push(name);
+  }
+  return weighted.length ? weighted : [fallback];
 }
 
 function uniqueMinutes(count: number) {
@@ -143,9 +153,9 @@ function uniqueMinutes(count: number) {
   return mins.sort((a, b) => a - b);
 }
 
-function scriptGoals(gf: number, ga: number, homeSlots: Slot[], awaySlots: Slot[]): MatchGoal[] {
+function scriptGoals(gf: number, ga: number, homeSlots: Slot[], awaySlots: Slot[], awayName = "Away"): MatchGoal[] {
   const home = scorers(homeSlots, "Home");
-  const away = scorers(awaySlots, "Away");
+  const away = scorers(awaySlots, awayName);
   const goals: MatchGoal[] = [];
   for (const minute of uniqueMinutes(gf)) {
     goals.push({ minute, side: "home", scorer: home[Math.floor(Math.random() * home.length)]! });
@@ -253,7 +263,7 @@ function playMatch(
     gf,
     ga,
     result,
-    goals: scriptGoals(gf, ga, homeSlots, awaySlots),
+    goals: scriptGoals(gf, ga, homeSlots, awaySlots, them.name),
     homeRatings: homeSlots.some((slot) => slot.player)
       ? displayRatings(homeSlots, "balanced")
       : clampRatings(us.attack, us.midfield, us.defence),
@@ -295,7 +305,12 @@ export function simulateCampaign(slots: Slot[], style: StyleId, pool: PoolId = "
   for (let i = 0; i < KNOCKOUT.length; i++) {
     const round = KNOCKOUT[i]!;
     const opp = foes[i]!;
-    const match = playMatch(axes, opp, round, slots, [], homeName);
+    const nation = playersForSide(opp.name, pool);
+    const oppXi = autoFillFrom("4-3-3", takenKeysFromSlots(slots), nation);
+    const match = playMatch(axes, opp, round, slots, oppXi.slots, homeName);
+    if (oppXi.slots.some((slot) => slot.player)) {
+      match.awayRatings = displayRatings(oppXi.slots, "balanced");
+    }
     if (match.result === "D") {
       const pens = Math.random() < 0.5 + (axes.gk - 80) / 80;
       match.result = pens ? "W" : "L";

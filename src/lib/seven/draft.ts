@@ -67,14 +67,14 @@ export function drawSameTeam(
   };
 }
 
-export function autoFillXi(
+export function autoFillFrom(
   formation: FormationId,
   claimed: string[],
-  pool: PoolId = "world",
+  players: Player[],
 ): { slots: Slot[]; claimed: string[] } {
   const taken = new Set(claimed);
   const slots = makeSlots(formation);
-  const ranked = [...(pool === "club" ? CLUB_PLAYERS : ALL_PLAYERS)].sort((a, b) => b.ovr - a.ovr);
+  const ranked = [...players].sort((a, b) => b.ovr - a.ovr);
   for (const slot of slots) {
     const pick = ranked.find((p) => !isPersonTaken(p.name, taken) && emptySlotsFor([slot], p.pos).length > 0);
     if (!pick) continue;
@@ -82,6 +82,14 @@ export function autoFillXi(
     taken.add(personKey(pick.name));
   }
   return { slots, claimed: [...taken] };
+}
+
+export function autoFillXi(
+  formation: FormationId,
+  claimed: string[],
+  pool: PoolId = "world",
+): { slots: Slot[]; claimed: string[] } {
+  return autoFillFrom(formation, claimed, pool === "club" ? CLUB_PLAYERS : ALL_PLAYERS);
 }
 
 export function cpuPickOne(slots: Slot[], claimed: string[], history: string[]): {

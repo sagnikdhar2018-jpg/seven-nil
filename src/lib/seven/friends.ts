@@ -1,6 +1,7 @@
 import { canFill, emptySlotsFor, makeSlots } from "./formations";
-import { autoFillXi, drawLegal, drawSameTeam, filledCount } from "./draft";
+import { autoFillFrom, drawLegal, drawSameTeam, filledCount } from "./draft";
 import { personKey } from "./person";
+import { playersForSide } from "./squads";
 import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
 import type { DrawnSquad, FormationId, ModeId, Player, PoolId, Slot, StyleId } from "./types";
 
@@ -353,7 +354,8 @@ function fillCpu(state: FriendsState): FriendsState {
   let claimed = [...state.claimed];
   const seats = state.seats.map((seat) => {
     if (seat.kind !== "cpu") return seat;
-    const filled = autoFillXi(seat.formation, claimed, state.pool);
+    const own = playersForSide(seat.name, state.pool);
+    const filled = autoFillFrom(seat.formation, claimed, own);
     claimed = filled.claimed;
     return { ...seat, slots: filled.slots, confirmed: true };
   });
