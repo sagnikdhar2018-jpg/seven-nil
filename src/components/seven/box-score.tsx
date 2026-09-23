@@ -1,6 +1,7 @@
 import { displayRatings } from "@/lib/seven/simulate";
 import type { Slot, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
+import { cn } from "@/lib/utils";
 
 export function LineupBox({
   slots,
@@ -46,7 +47,7 @@ export function LineupBox({
             className="flex items-baseline justify-between gap-2 border-b border-line py-2 last:border-0"
           >
             <span className="w-10 text-xs font-extrabold tracking-wide text-muted">{slot.pos}</span>
-            <span className="flex-1 truncate text-sm font-extrabold text-ink">
+            <span className={cn("flex-1 truncate text-sm font-extrabold", slot.player && slot.player.ovr > 90 ? "name-gold" : "text-ink")}>
               {slot.player ? slot.player.name : "—"}
             </span>
             <span className="font-numeral text-sm font-extrabold tabular-nums text-accent">

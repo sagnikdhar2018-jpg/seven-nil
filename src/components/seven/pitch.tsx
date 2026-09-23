@@ -58,7 +58,7 @@ export function Pitch({
             <span className="disc-num">
               {slot.player ? slot.player.num : slot.pos}
             </span>
-            <span className="disc-name">
+            <span className={cn("disc-name", slot.player && slot.player.ovr > 90 && "name-gold")}>
               {slot.player ? slot.player.name.split(" ").slice(-1)[0] : slot.pos}
             </span>
           </button>

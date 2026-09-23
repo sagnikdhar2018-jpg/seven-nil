@@ -418,7 +418,7 @@ export function simulateKnockout(
         awayRatings: displayRatings(away.slots, away.style),
         ratings: match.ratings,
         potm: match.potm,
-        instant: !(home.human && away.human),
+        instant: !home.human && !away.human,
       });
       next.push({ ...winner, human: winner.human });
     }

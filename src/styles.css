@@ -750,13 +750,12 @@
 .bracket {
   display: flex;
   align-items: stretch;
-  gap: 1.15rem;
   min-width: max-content;
 }
 
 .bracket-col {
   display: flex;
-  width: 12.25rem;
+  width: 14.6rem;
   flex-direction: column;
 }
 
@@ -774,7 +773,82 @@
   flex: 1;
   flex-direction: column;
   justify-content: space-around;
+  gap: 0.85rem;
+}
+
+.tie-pair {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
   gap: 0.7rem;
+}
+
+.tie-pair.has-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.15rem;
+  grid-template-rows: 1fr 1fr;
+  align-items: stretch;
+  column-gap: 0;
+  row-gap: 0;
+}
+
+.tie-pair.has-link.is-single {
+  grid-template-rows: 1fr;
+}
+
+.tie-pair.has-link .tie:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.tie-pair.has-link .tie:nth-child(2) {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+}
+
+.tie-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  position: relative;
+}
+
+.tie-pair.is-single .tie-link {
+  grid-row: 1;
+}
+
+.tie-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 25%;
+  height: 50%;
+  border-top: 2px solid var(--ink);
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.tie-pair.is-single .tie-link::before {
+  top: 50%;
+  height: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.name-gold {
+  color: #8a5a10;
+}
+
+.theme-terrace .name-gold {
+  color: #f2bd43;
+}
+
+.disc-name.name-gold {
+  color: #f6d56a;
+  background: #3a2a08;
 }
 
 .tie {
