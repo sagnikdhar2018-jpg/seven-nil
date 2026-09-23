@@ -25,6 +25,7 @@ import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
 import { useSeven } from "@/lib/seven/store";
 import type { FormationId, ModeId, PoolId, StyleId } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
+import { BracketBoard } from "./bracket-board";
 import { ChipGroup } from "./chips";
 import { LineupBox } from "./box-score";
 import { LiveCup } from "./live-match";
@@ -46,13 +47,13 @@ function modeList(pool: PoolId): { id: FriendKind; n: string; name: string; desc
     return [
       { id: "local", n: "01", name: "Friend vs friend", desc: "Two club XIs on this device, then one European night" },
       { id: "final", n: "02", name: "Rivalry", desc: "Online 1v1. Draft historic clubs, play a final" },
-      { id: "cup", n: "03", name: "UCL", desc: "Knockout of 4 to 32. Humans and CPU, Champions League path" },
+      { id: "cup", n: "03", name: "UCL", desc: "Knockout of 4 to 32. Real clubs fill the bracket" },
     ];
   }
   return [
     { id: "local", n: "01", name: "Local", desc: "Two players on the same device, taking turns" },
     { id: "final", n: "02", name: "Cup Final", desc: "Each player builds their team and plays the Final" },
-    { id: "cup", n: "03", name: "Full Cup", desc: "Bracket of 4 to 32 teams, humans and CPU" },
+    { id: "cup", n: "03", name: "Full Cup", desc: "Bracket of 4 to 32. Empty seats become real nations" },
   ];
 }
 
@@ -755,19 +756,20 @@ function SimView() {
     pens: g.pens,
     homeRatings: g.homeRatings,
     awayRatings: g.awayRatings,
+    instant: g.instant,
   }));
 
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-24 pt-2">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
         <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
           {pool === "club" ? (kind === "cup" ? "UCL live" : "European night") : "Live knockout"}
         </p>
         <h1 className="home-headline mt-2">
-          {pool === "club" && kind === "cup" ? "Road to the final" : "Round by round"}
+          {pool === "club" && kind === "cup" ? "Road to the final" : "The bracket"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Round of 32 through the Final, minute by minute. Champion on the board: {shownName(champion ?? "—")}
+          Computer ties are already on the board. Your matches play minute by minute.
         </p>
       </div>
       {games.length ? (
@@ -791,7 +793,7 @@ function ResultView() {
   const backToMenu = useFriends((s) => s.backToMenu);
 
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-24 pt-2">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
         <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Campaign</p>
         <p className="result-stamp mt-2">{shownName(champion ?? "Champion")}</p>
@@ -807,21 +809,7 @@ function ResultView() {
           </p>
         </div>
       ) : null}
-      {bracket.length ? (
-        <div className="card-ink rounded-lg px-5 py-5">
-          {bracket.map((game, i) => (
-            <div key={`${game.round}-${i}`} className="match-row">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">{game.round}</span>
-              <span className="truncate text-sm font-extrabold">
-                {game.home} vs {game.away}
-              </span>
-              <span className="font-numeral text-base font-extrabold tabular-nums">
-                {game.gf}–{game.ga}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {bracket.length ? <BracketBoard games={bracket} liveIndex={bracket.length} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         {seats
           .filter((s) => s.kind === "human")
@@ -937,8 +925,8 @@ function FriendsGuide({ pool }: { pool: PoolId }) {
           <h3 className="font-display text-2xl leading-none">{club ? "UCL" : "Full Cup"}</h3>
           <p className="text-sm leading-relaxed text-muted">
             {club
-              ? "Knockout of 4, 8, 16, or 32. CPU fills empty slots as other European sides. Round of 32 through the Final, live."
-              : "Bracket of 4, 8, 16, or 32. CPU fills empty slots when the group is small. Upsets, a dangerous seed, and a champion that had to survive."}
+              ? "Knockout of 4, 8, 16, or 32. Empty seats become other European clubs. Computer ties are settled at once. Your matches play live."
+              : "Bracket of 4, 8, 16, or 32. Empty seats become real nations. Computer ties are settled at once. Your matches play live."}
           </p>
         </article>
       </div>

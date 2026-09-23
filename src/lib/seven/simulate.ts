@@ -292,6 +292,7 @@ export type BracketGame = {
   pens?: { home: number; away: number };
   homeRatings?: TeamRatings;
   awayRatings?: TeamRatings;
+  instant?: boolean;
 };
 
 export function roundNameFor(size: number) {
@@ -303,9 +304,9 @@ export function roundNameFor(size: number) {
 }
 
 export function simulateKnockout(
-  teams: { name: string; slots: Slot[]; style: StyleId }[],
+  teams: { name: string; slots: Slot[]; style: StyleId; human?: boolean }[],
 ): { games: BracketGame[]; champion: string } {
-  let live = [...teams];
+  let live = teams.map((t) => ({ ...t, human: Boolean(t.human) }));
   const games: BracketGame[] = [];
   while (live.length >= 2) {
     const next: typeof live = [];
@@ -315,19 +316,21 @@ export function simulateKnockout(
       const away = live[i + 1]!;
       const match = simulateFinal(home.slots, away.slots, home.style, away.style, away.name, label, home.name);
       const homeWins = match.result === "W";
+      const winner = homeWins ? home : away;
       games.push({
         round: label,
         home: home.name,
         away: away.name,
         gf: match.gf,
         ga: match.ga,
-        winner: homeWins ? home.name : away.name,
+        winner: winner.name,
         goals: match.goals,
         pens: match.pens,
         homeRatings: displayRatings(home.slots, home.style),
         awayRatings: displayRatings(away.slots, away.style),
+        instant: !home.human && !away.human,
       });
-      next.push(homeWins ? home : away);
+      next.push({ ...winner, human: winner.human });
     }
     live = next;
   }

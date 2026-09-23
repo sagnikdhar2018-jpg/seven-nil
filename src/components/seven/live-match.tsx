@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MatchGoal, TeamRatings } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BracketBoard } from "./bracket-board";
 
 type BoardMatch = {
   round: string;
@@ -13,6 +14,7 @@ type BoardMatch = {
   pens?: { home: number; away: number };
   homeRatings?: TeamRatings;
   awayRatings?: TeamRatings;
+  instant?: boolean;
 };
 
 function scoreAt(goals: MatchGoal[], minute: number) {
@@ -235,43 +237,29 @@ export function LiveCup({
   games: BoardMatch[];
   onDone: () => void;
 }) {
-  const [index, setIndex] = useState(0);
-  const match = games[index];
-  const round = match?.round;
-  const played = games.slice(0, index);
+  const liveGames = games.filter((g) => !g.instant);
+  const [liveIndex, setLiveIndex] = useState(0);
+  const finished = useRef(false);
+  const match = liveGames[liveIndex];
 
-  if (!match) return null;
+  useEffect(() => {
+    if (liveIndex < liveGames.length) return;
+    if (finished.current) return;
+    finished.current = true;
+    onDone();
+  }, [liveIndex, liveGames.length, onDone]);
+
+  if (!games.length) return null;
 
   return (
     <div className="flex flex-col gap-5">
-      <LiveMatchBoard
-        key={`${match.round}-${match.home}-${match.away}-${index}`}
-        match={match}
-        onDone={() => {
-          if (index + 1 >= games.length) onDone();
-          else setIndex(index + 1);
-        }}
-      />
-      {played.length ? (
-        <div className="card-ink rounded-lg px-4 py-3">
-          {games
-            .filter((g) => g.round === round)
-            .map((g, i) => {
-              const done = i < played.filter((p) => p.round === round).length || g === match;
-              const shown = games.indexOf(g) < index;
-              return (
-                <div key={`${g.home}-${g.away}`} className="match-row">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">{g.round}</span>
-                  <span className="truncate text-sm font-extrabold">
-                    {g.home} vs {g.away}
-                  </span>
-                  <span className="font-numeral text-base font-extrabold tabular-nums">
-                    {shown || (done && games.indexOf(g) <= index) ? `${g.gf}–${g.ga}` : "vs"}
-                  </span>
-                </div>
-              );
-            })}
-        </div>
+      <BracketBoard games={games} liveIndex={liveIndex} />
+      {match ? (
+        <LiveMatchBoard
+          key={`${match.round}-${match.home}-${match.away}-${liveIndex}`}
+          match={match}
+          onDone={() => setLiveIndex(liveIndex + 1)}
+        />
       ) : null}
     </div>
   );

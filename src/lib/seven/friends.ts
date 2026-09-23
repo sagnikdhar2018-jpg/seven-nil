@@ -209,11 +209,52 @@ const CLUB_CPU = [
   "City",
 ];
 
-function cpuName(index: number, pool: PoolId) {
-  if (pool !== "club") return `CPU ${index + 1}`;
-  const base = CLUB_CPU[index % CLUB_CPU.length]!;
-  const lap = Math.floor(index / CLUB_CPU.length);
-  return lap === 0 ? base : `${base} ${lap + 1}`;
+const WORLD_CPU = [
+  "Brazil",
+  "Argentina",
+  "France",
+  "Germany",
+  "Spain",
+  "Italy",
+  "England",
+  "Netherlands",
+  "Portugal",
+  "Croatia",
+  "Uruguay",
+  "Belgium",
+  "Morocco",
+  "Japan",
+  "Colombia",
+  "Mexico",
+  "Senegal",
+  "USA",
+  "Denmark",
+  "Switzerland",
+  "Poland",
+  "Sweden",
+  "Nigeria",
+  "Ghana",
+  "Cameroon",
+  "Korea",
+  "Australia",
+  "Ecuador",
+  "Chile",
+  "Serbia",
+  "Turkey",
+];
+
+function cpuName(index: number, pool: PoolId, taken: Set<string>) {
+  const list = pool === "club" ? CLUB_CPU : WORLD_CPU;
+  for (let step = 0; step < list.length; step++) {
+    const name = list[(index + step) % list.length]!;
+    const key = name.toLowerCase();
+    if (taken.has(key)) continue;
+    taken.add(key);
+    return name;
+  }
+  const spare = `${list[index % list.length]} ${index + 2}`;
+  taken.add(spare.toLowerCase());
+  return spare;
 }
 
 function humans(state: FriendsState) {
@@ -318,7 +359,12 @@ function runSimulate(state: FriendsState): FriendsState {
   const filled = fillCpu(state);
   if (filled.kind === "cup") {
     const { games, champion } = simulateKnockout(
-      filled.seats.map((s) => ({ name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"), slots: s.slots, style: s.style })),
+      filled.seats.map((s) => ({
+        name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"),
+        slots: s.slots,
+        style: s.style,
+        human: s.kind === "human",
+      })),
     );
     return { ...filled, phase: "simulating", bracket: games, champion, resultMatch: null };
   }
@@ -437,9 +483,10 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       let seats = state.seats;
       if (state.kind === "cup") {
         const need = state.bracketSize - seats.length;
+        const taken = new Set(seats.map((s) => s.name.trim().toLowerCase()).filter(Boolean));
         const extras: Seat[] = [];
         for (let i = 0; i < need; i++) {
-          extras.push(makeSeat(`cpu-${i + 1}`, cpuName(i, state.pool), "cpu"));
+          extras.push(makeSeat(`cpu-${i + 1}`, cpuName(i, state.pool, taken), "cpu"));
         }
         seats = [...seats, ...extras];
       }
