@@ -594,7 +594,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "join": {
       if (state.phase !== "lobby") return state;
       if (!action.seat.name.trim()) return state;
-      if (state.password && action.password !== state.password) return state;
+      if (state.password && state.password.trim().toLowerCase() !== (action.password ?? "").trim().toLowerCase()) return state;
       if (state.seats.some((s) => s.id === action.seat.id)) return state;
       const cap = state.kind === "final" ? 2 : Math.min(8, state.bracketSize);
       if (humans(state).length >= cap) return state;

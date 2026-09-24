@@ -45,6 +45,7 @@ type Wire =
   | { t: "act"; action: FriendsAction; actorId: string }
   | { t: "need" }
   | { t: "kicked" }
+  | { t: "need-password" }
   | { t: "refused"; reason: string };
 
 function modeList(pool: PoolId): { id: FriendKind; n: string; name: string; desc: string }[] {
@@ -93,6 +94,39 @@ function NameField({
         }}
       />
     </label>
+  );
+}
+
+function PasswordGate({ wrong, onSubmit }: { wrong: boolean; onSubmit: (value: string) => void }) {
+  const [value, setValue] = useState("");
+  return (
+    <form
+      className="card-ink flex flex-col gap-3 rounded-lg px-4 py-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(value);
+      }}
+    >
+      <p className="font-display text-2xl leading-none">Room password</p>
+      <p className="text-sm text-muted">
+        {wrong
+          ? "That password is wrong. Ask the host and try again."
+          : "The host locked this room. Enter the password to join."}
+      </p>
+      <input
+        className="field-input normal-case tracking-normal"
+        value={value}
+        maxLength={24}
+        placeholder="Password"
+        type="text"
+        autoComplete="off"
+        autoFocus
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <Button type="submit" disabled={!value.trim()}>
+        Enter room
+      </Button>
+    </form>
   );
 }
 
@@ -351,12 +385,14 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                           ]}
                         />
                         <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-                          Password optional
+                          Password
                           <input
                             className="field-input normal-case tracking-normal"
                             value={password}
                             maxLength={24}
-                            placeholder="leave blank"
+                            placeholder="Players must enter this"
+                            type="text"
+                            autoComplete="off"
                             onChange={(e) => setPassword(e.target.value)}
                           />
                         </label>
@@ -410,12 +446,14 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Join with a code</p>
           <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-            Password if the room has one
+            Room password
             <input
               className="field-input normal-case tracking-normal"
               value={password}
               maxLength={24}
-              placeholder="leave blank"
+              placeholder="Required if the host set one"
+              type="text"
+              autoComplete="off"
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
@@ -532,6 +570,8 @@ function Lobby({ pool }: { pool: PoolId }) {
   const players = seats.filter((s) => s.kind === "human");
   const readyHumans = players.filter((s) => s.ready).length;
   const isHost = actorId === hostId;
+  const passwordPrompt = useFriends((s) => s.passwordPrompt);
+  const setJoinSecret = useFriends((s) => s.setJoinSecret);
   const share =
     typeof window !== "undefined" ? `${window.location.origin}${friendsPath(pool)}?room=${code}` : code;
   const partnerShare = `${share}&partner=1`;
@@ -560,6 +600,21 @@ function Lobby({ pool }: { pool: PoolId }) {
               : "Share the code or the invite link. Names are set before anyone joins."}
         </p>
       </div>
+      {passwordPrompt > 0 && !me && !isHost ? (
+        <PasswordGate
+          wrong={passwordPrompt === 2}
+          onSubmit={(value) => {
+            const next = value.trim().slice(0, 24);
+            if (!next) return;
+            try {
+              sessionStorage.setItem("sn-join-password", next);
+            } catch {
+              // ignore
+            }
+            setJoinSecret(next);
+          }}
+        />
+      ) : null}
       <Button
         variant={copied ? "ink" : "secondary"}
         aria-label={copied ? "Link copied" : "Copy invite link"}
@@ -1216,8 +1271,10 @@ function NetBridge() {
   const actorId = useFriends((s) => s.actorId);
   const hostId = useFriends((s) => s.hostId);
   const storePassword = useFriends((s) => s.password);
+  const joinSecret = useFriends((s) => s.joinSecret);
   const seatName = useFriends((s) => s.seats.find((s) => s.id === actorId)?.name ?? "");
   const password =
+    joinSecret ||
     storePassword ||
     (typeof window !== "undefined" ? (sessionStorage.getItem("sn-join-password") ?? "") : "");
   const storedName =
@@ -1254,6 +1311,11 @@ function NetInner({
     return p2p.onMessage((from, data) => {
       const msg = data as Wire;
       if (!msg || typeof msg !== "object" || !("t" in msg)) return;
+      if (msg.t === "need-password") {
+        const had = useFriends.getState().joinSecret.trim().length > 0;
+        useFriends.getState().setPasswordPrompt(had ? 2 : 1);
+        return;
+      }
       if (msg.t === "refused") {
         try {
           sessionStorage.setItem("sn-notice", msg.reason);
@@ -1277,6 +1339,13 @@ function NetInner({
         return;
       }
       if (msg.t === "hello" && isHost) {
+        const room = useFriends.getState();
+        const given = (msg.password ?? "").trim().toLowerCase();
+        const expected = room.password.trim().toLowerCase();
+        if (expected && given !== expected) {
+          p2p.send({ t: "need-password" }, from);
+          return;
+        }
         peerSeats.current.set(from, msg.id);
         const next = apply(
           useFriends.getState(),
@@ -1290,6 +1359,7 @@ function NetInner({
         );
         replace(next);
         if (!next.seats.some((seat) => seat.id === msg.id)) {
+          peerSeats.current.delete(from);
           p2p.send(
             { t: "refused", reason: msg.partner ? "This room already has a partner." : "The room is full." },
             from,

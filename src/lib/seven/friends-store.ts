@@ -28,6 +28,10 @@ type FriendsStore = FriendsState & {
   backToMenu: (pool?: PoolId) => void;
   act: (action: FriendsAction) => FriendsState;
   lastAction: { action: FriendsAction; actorId: string } | null;
+  passwordPrompt: 0 | 1 | 2;
+  joinSecret: string;
+  setPasswordPrompt: (value: 0 | 1 | 2) => void;
+  setJoinSecret: (value: string) => void;
 };
 
 function menuState(pool: PoolId = "world"): FriendsState {
@@ -38,6 +42,10 @@ export const useFriends = create<FriendsStore>((set, get) => ({
   ...menuState(),
   actorId: "home",
   lastAction: null,
+  passwordPrompt: 0,
+  joinSecret: "",
+  setPasswordPrompt: (value) => set({ passwordPrompt: value }),
+  setJoinSecret: (value) => set({ joinSecret: value }),
 
   hydrateLocal: (kind, pool = "world") => {
     const state = freshFriends(kind, "home", "Home", pool);
@@ -66,9 +74,20 @@ export const useFriends = create<FriendsStore>((set, get) => ({
     set({ ...state, actorId });
   },
 
-  replace: (state) => set((cur) => ({ ...cur, ...state })),
+  replace: (state) =>
+    set((cur) => {
+      const seated = state.seats?.some((seat) => seat.id === cur.actorId) ?? false;
+      return { ...cur, ...state, passwordPrompt: seated ? 0 : cur.passwordPrompt };
+    }),
 
-  backToMenu: (pool) => set({ ...menuState(pool ?? get().pool ?? "world"), actorId: "home" }),
+  backToMenu: (pool) =>
+    set({
+      ...menuState(pool ?? get().pool ?? "world"),
+      actorId: "home",
+      lastAction: null,
+      passwordPrompt: 0,
+      joinSecret: "",
+    }),
 
   act: (action) => {
     const cur = get();
