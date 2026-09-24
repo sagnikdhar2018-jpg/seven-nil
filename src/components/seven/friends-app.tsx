@@ -124,7 +124,7 @@ function PasswordGate({ wrong, onSubmit }: { wrong: boolean; onSubmit: (value: s
         onChange={(event) => setValue(event.target.value)}
       />
       <Button type="submit" disabled={!value.trim()}>
-        Enter room
+        Confirm password
       </Button>
     </form>
   );
@@ -234,6 +234,7 @@ function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
     loadPlayerName() ||
     "";
   if (!joinName.trim()) return;
+  if (sessionStorage.getItem(`sn-door-${room}`) !== "1") return;
   const partner = new URLSearchParams(window.location.search).get("partner") === "1";
   if (partner) sessionStorage.setItem("sn-join-partner", "1");
   const guest = {
@@ -255,6 +256,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const [open, setOpen] = useState<FriendKind | null>(null);
   const [join, setJoin] = useState(() => (roomFromUrl ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase());
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState(() => loadPlayerName());
   const [mode, setMode] = useState<ModeId>("classic");
   const [timer, setTimer] = useState<TimerSec>(30);
@@ -268,6 +270,8 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const kinds = modeList(pool);
   const path = friendsPath(pool);
   const nameReady = displayName.trim().length > 0;
+  const passwordOk =
+    !password.trim() || password.trim().toLowerCase() === confirmPassword.trim().toLowerCase();
 
   useEffect(() => {
     try {
@@ -288,6 +292,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const startHost = (kind: FriendKind) => {
     const name = displayName.trim().slice(0, 18);
     if (!name) return;
+    if (password.trim() && password.trim().toLowerCase() !== confirmPassword.trim().toLowerCase()) return;
     const id = `p-${Math.random().toString(36).slice(2, 10)}`;
     savePlayerName(name);
     becomeHost(kind, id, name, { mode, timer, password, bracketSize, pool, organize: kind === "cup" && organize });
@@ -302,6 +307,10 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
     if (!name || code.length < 4) return;
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
+    sessionStorage.setItem(`sn-door-${code}`, "1");
+    sessionStorage.removeItem("sn-join-password");
+    useFriends.getState().setJoinSecret("");
+    useFriends.getState().setPasswordPrompt(0);
     const partner = new URLSearchParams(window.location.search).get("partner") === "1";
     if (partner) sessionStorage.setItem("sn-join-partner", "1");
     else sessionStorage.removeItem("sn-join-partner");
@@ -327,6 +336,18 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
             {pool === "club" ? "Friend vs friend · UCL knockout" : "3 modes · local and online"}
           </p>
         </div>
+
+        {roomFromUrl ? (
+          <div className="card-ink flex flex-col gap-3 rounded-lg px-4 py-4">
+            <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Room {roomFromUrl}</p>
+            <p className="text-sm text-muted">
+              Confirm your name before the lobby opens. If this room has a password, you confirm that next.
+            </p>
+            <Button disabled={!nameReady || roomFromUrl.length < 4} onClick={joinRoom}>
+              Confirm name
+            </Button>
+          </div>
+        ) : null}
 
         {kicked ? (
           <p className="text-sm font-semibold text-accent">The host removed you from the room.</p>
@@ -396,6 +417,20 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                             onChange={(e) => setPassword(e.target.value)}
                           />
                         </label>
+                        {password.trim() ? (
+                          <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+                            Confirm password
+                            <input
+                              className="field-input normal-case tracking-normal"
+                              value={confirmPassword}
+                              maxLength={24}
+                              placeholder="Type it again"
+                              type="text"
+                              autoComplete="off"
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                          </label>
+                        ) : null}
                       </>
                     ) : null}
                     {item.id === "cup" ? (
@@ -424,7 +459,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                     ) : null}
                     <Button
                       data-action={item.id === "local" ? "start-local" : "create-room"}
-                      disabled={item.id !== "local" && !nameReady}
+                      disabled={item.id !== "local" && (!nameReady || !passwordOk)}
                       onClick={() => (item.id === "local" ? hydrateLocal("local", pool) : startHost(item.id))}
                     >
                       {item.id === "local" ? "Start on this device" : "Create room"}
@@ -445,18 +480,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
 
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Join with a code</p>
-          <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-            Room password
-            <input
-              className="field-input normal-case tracking-normal"
-              value={password}
-              maxLength={24}
-              placeholder="Required if the host set one"
-              type="text"
-              autoComplete="off"
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
+          <p className="text-sm text-muted">Confirm your name first. The password is asked only if the host set one, and only before the room opens.</p>
           <div className="flex gap-2">
             <input
               className="field-input"
@@ -467,7 +491,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
               onChange={(e) => setJoin(e.target.value.toUpperCase())}
             />
             <Button variant="ink" className="shrink-0" disabled={!nameReady || join.length < 4} onClick={joinRoom}>
-              Start
+              Confirm
             </Button>
           </div>
         </div>
@@ -587,6 +611,40 @@ function Lobby({ pool }: { pool: PoolId }) {
         ? "Rivalry lobby"
         : "Cup Final lobby";
 
+  const inside = Boolean(me) || isHost;
+  if (!inside) {
+    return (
+      <section className="mx-auto flex w-full max-w-xl flex-col gap-6 px-5 pb-24 pt-2">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{lobbyLabel}</p>
+          <p className="room-code mt-2">{code}</p>
+          <p className="mt-2 text-sm text-muted">
+            {passwordPrompt > 0
+              ? "Your name is confirmed. Confirm the password to open the lobby."
+              : "Your name is confirmed. Opening the room…"}
+          </p>
+        </div>
+        {passwordPrompt > 0 ? (
+          <PasswordGate
+            wrong={passwordPrompt === 2}
+            onSubmit={(value) => {
+              const next = value.trim().slice(0, 24);
+              if (!next) return;
+              try {
+                sessionStorage.setItem("sn-join-password", next);
+              } catch {
+                // ignore
+              }
+              setJoinSecret(next);
+            }}
+          />
+        ) : (
+          <ConnectingNote />
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-xl flex-col gap-6 px-5 pb-24 pt-2">
       <div>
@@ -600,21 +658,6 @@ function Lobby({ pool }: { pool: PoolId }) {
               : "Share the code or the invite link. Names are set before anyone joins."}
         </p>
       </div>
-      {passwordPrompt > 0 && !me && !isHost ? (
-        <PasswordGate
-          wrong={passwordPrompt === 2}
-          onSubmit={(value) => {
-            const next = value.trim().slice(0, 24);
-            if (!next) return;
-            try {
-              sessionStorage.setItem("sn-join-password", next);
-            } catch {
-              // ignore
-            }
-            setJoinSecret(next);
-          }}
-        />
-      ) : null}
       <Button
         variant={copied ? "ink" : "secondary"}
         aria-label={copied ? "Link copied" : "Copy invite link"}
@@ -667,11 +710,8 @@ function Lobby({ pool }: { pool: PoolId }) {
         </div>
       ) : me ? (
         <div className="card-ink flex flex-col gap-4 rounded-lg px-4 py-4">
-          <NameField
-            value={me.name}
-            placeholder="Your name"
-            onChange={(name) => act({ type: "setName", seatId: me.id, name })}
-          />
+          <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Your name</p>
+          <p className="font-display text-3xl leading-none">{shownName(me.name)}</p>
           <ChipGroup<FormationId>
             label="Your formation"
             value={me.formation}
