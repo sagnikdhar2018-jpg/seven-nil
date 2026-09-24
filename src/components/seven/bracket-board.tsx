@@ -78,8 +78,9 @@ function columns(games: BracketTie[]): Col[] {
 
 function wings(games: BracketTie[]) {
   const cols = columns(games);
-  if (cols.length <= 1) return { left: [] as Col[], right: [] as Col[], final: cols[0]?.games ?? [] };
-  const rounds = cols.slice(0, -1);
+  const finalCol = cols.find((col) => col.name === "Final");
+  const rounds = cols.filter((col) => col.name !== "Final");
+  if (!rounds.length) return { left: [] as Col[], right: [] as Col[], final: finalCol?.games ?? [] };
   const left = rounds.map((col) => ({
     name: col.name,
     games: col.games.slice(0, Math.ceil(col.games.length / 2)),
@@ -90,13 +91,17 @@ function wings(games: BracketTie[]) {
       games: col.games.slice(Math.ceil(col.games.length / 2)),
     }))
     .reverse();
-  return { left, right, final: cols[cols.length - 1]!.games };
+  return { left, right, final: finalCol?.games ?? [] };
 }
 
 function markStates(games: BracketTie[], liveIndex: number) {
   const map = new Map<BracketTie, "done" | "live" | "wait">();
   let seen = 0;
   for (const game of games) {
+    if (!game.winner) {
+      map.set(game, "wait");
+      continue;
+    }
     if (game.instant) {
       map.set(game, "done");
       continue;
@@ -212,9 +217,9 @@ export function BracketBoard({
         <div className="wc-center">
           <h3>Final</h3>
           {finalGame ? (
-            <Tie game={finalGame} state={states.get(finalGame) ?? "done"} />
+            <Tie game={finalGame} state={states.get(finalGame) ?? "wait"} />
           ) : (
-            <p className="text-sm text-muted">Final</p>
+            <p className="text-sm text-muted">Not played yet</p>
           )}
         </div>
         <div className="wc-wing is-right">

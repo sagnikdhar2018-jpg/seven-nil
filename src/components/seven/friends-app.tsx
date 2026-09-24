@@ -1097,7 +1097,8 @@ function SimView() {
       awayRatings: show ? g.awayRatings : undefined,
       ratings: show ? g.ratings : undefined,
       potm: show ? g.potm : undefined,
-      instant: show ? g.instant : true,
+      instant: g.instant,
+      winner: g.winner,
     };
   });
 
@@ -1111,11 +1112,15 @@ function SimView() {
           {pool === "club" && kind === "cup" ? "Road to the final" : "The bracket"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Only a match between two friends is played in full. Every other tie is already on the board.
+          Computer ties in this round are already settled. The next round stays blank until your match is played.
         </p>
       </div>
       {games.length ? (
-        <LiveCup games={games} onDone={() => act({ type: "simDone" })} />
+        <LiveCup
+          key={bracket.find((game) => !game.instant)?.round ?? "done"}
+          games={games}
+          onDone={() => act({ type: "simDone", round: bracket.find((game) => !game.instant)?.round })}
+        />
       ) : (
         <p className="text-sm text-muted">Building the bracket…</p>
       )}

@@ -3,7 +3,7 @@ import { autoFillFrom, drawLegal, drawOtherSide, drawSameTeam, filledCount } fro
 import { coachBoost, coachById, drawCoaches, styleForCoach } from "./coaches";
 import { personKey } from "./person";
 import { playersForSide } from "./squads";
-import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
+import { simulateFinal, firstRound, continueKnockout, type BracketGame, type KnockoutSide } from "./simulate";
 import type { DrawnSquad, FormationId, ModeId, Player, PoolId, Slot, StyleId } from "./types";
 
 export type FriendKind = "local" | "final" | "cup";
@@ -75,7 +75,7 @@ export type FriendsAction =
   | { type: "setCoach"; seatId: string; coachId: string }
   | { type: "confirm"; seatId: string }
   | { type: "simulate" }
-  | { type: "simDone" };
+  | { type: "simDone"; round?: string };
 
 export function shownName(name: string, fallback = "Player") {
   const n = name.trim();
@@ -190,6 +190,21 @@ function concealSeat(seat: Seat): Seat {
 
 function concealGame(game: BracketGame, viewerName: string): BracketGame {
   if (viewerName && (game.home === viewerName || game.away === viewerName)) return game;
+  if (!game.instant) {
+    return {
+      ...game,
+      gf: 0,
+      ga: 0,
+      winner: "",
+      goals: [],
+      pens: undefined,
+      homeRatings: undefined,
+      awayRatings: undefined,
+      ratings: undefined,
+      potm: undefined,
+      instant: false,
+    };
+  }
   return {
     ...game,
     goals: [],
@@ -471,20 +486,45 @@ function boostOf(seat: Seat) {
   return coach ? coachBoost(coach) : undefined;
 }
 
+function cupSides(state: FriendsState): KnockoutSide[] {
+  return state.seats
+    .filter((seat) => seat.kind === "human" || seat.kind === "cpu")
+    .map((seat) => ({
+      name: shownName(seat.name, seat.kind === "cpu" ? seat.name : "Player"),
+      slots: seat.slots,
+      style: seat.style,
+      human: seat.kind === "human",
+      boost: boostOf(seat),
+    }));
+}
+
+/** Reveal the round that was just watched, then open the next round. Stop when a player still has to play. */
+function settleCup(state: FriendsState, reveal: boolean): FriendsState {
+  const sides = cupSides(state);
+  let games = state.bracket;
+  if (reveal) {
+    const pending = games.find((game) => game.winner && !game.instant)?.round;
+    games = games.map((game) => (game.round === pending && game.winner ? { ...game, instant: true } : game));
+  }
+  let guard = 0;
+  while (guard++ < 6) {
+    const step = continueKnockout(games, sides);
+    if (step.champion) return { ...state, bracket: step.games, champion: step.champion, phase: "result" };
+    if (!step.advanced) return { ...state, bracket: games, champion: null, phase: "simulating" };
+    games = step.games;
+    const last = games[games.length - 1]?.round;
+    if (games.some((game) => game.round === last && !game.instant)) {
+      return { ...state, bracket: games, champion: null, phase: "simulating" };
+    }
+  }
+  return { ...state, bracket: games, champion: null, phase: "simulating" };
+}
+
 function runSimulate(state: FriendsState): FriendsState {
   const filled = fillCpu(state);
   if (filled.kind === "cup") {
-    const playing = filled.seats.filter((s) => s.kind !== "organizer" && s.kind !== "partner");
-    const { games, champion } = simulateKnockout(
-      playing.map((s) => ({
-        name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"),
-        slots: s.slots,
-        style: s.style,
-        human: s.kind === "human",
-        boost: boostOf(s),
-      })),
-    );
-    return { ...filled, phase: "simulating", bracket: games, champion, resultMatch: null };
+    const games = firstRound(cupSides(filled));
+    return settleCup({ ...filled, phase: "simulating", bracket: games, champion: null, resultMatch: null }, false);
   }
   const home = filled.seats.find((s) => s.kind === "human" || s.kind === "cpu");
   const away = filled.seats.filter((s) => s.kind === "human" || s.kind === "cpu")[1];
@@ -765,9 +805,21 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (!isHost) return state;
       if (!allHumansFull(state)) return state;
       return runSimulate(state);
-    case "simDone":
+    case "simDone": {
       if (state.phase !== "simulating") return state;
-      return { ...state, phase: "result" };
+      if (state.kind === "final" || state.bracket.length < 2) return { ...state, phase: "result" };
+      const pending = state.bracket.find((game) => game.winner && !game.instant)?.round;
+      if (!pending || action.round !== pending) return state;
+      const me = state.seats.find((seat) => seat.id === actorId);
+      const myName = me && me.kind === "human" ? shownName(me.name) : "";
+      const games = state.bracket.map((game) => {
+        if (game.round !== pending || game.instant) return game;
+        const mine = state.kind === "local" || game.home === myName || game.away === myName;
+        return mine ? { ...game, instant: true } : game;
+      });
+      if (games.every((game, index) => game.instant === state.bracket[index]?.instant)) return state;
+      return settleCup({ ...state, bracket: games }, false);
+    }
     default:
       return state;
   }

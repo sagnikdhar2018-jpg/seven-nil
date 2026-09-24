@@ -507,50 +507,88 @@ export function roundNameFor(size: number) {
   return "Round of 32";
 }
 
-export function simulateKnockout(
-  teams: { name: string; slots: Slot[]; style: StyleId; human?: boolean; boost?: { att: number; def: number } }[],
-): { games: BracketGame[]; champion: string } {
-  let live = seedBracket(teams);
-  const games: BracketGame[] = [];
-  while (live.length >= 2) {
-    const next: typeof live = [];
-    const label = roundNameFor(live.length);
-    for (let i = 0; i < live.length; i += 2) {
-      const home = live[i]!;
-      const away = live[i + 1]!;
-      const match = simulateFinal(
-        home.slots,
-        away.slots,
-        home.style,
-        away.style,
-        away.name,
-        label,
-        home.name,
-        home.boost,
-        away.boost,
-      );
-      const homeWins = match.result === "W";
-      const winner = homeWins ? home : away;
-      games.push({
-        round: label,
-        home: home.name,
-        away: away.name,
-        gf: match.gf,
-        ga: match.ga,
-        winner: winner.name,
-        goals: match.goals,
-        pens: match.pens,
-        homeRatings: displayRatings(home.slots, home.style),
-        awayRatings: displayRatings(away.slots, away.style),
-        ratings: match.ratings,
-        potm: match.potm,
-        instant: !home.human && !away.human,
-      });
-      next.push({ ...winner, human: winner.human });
-    }
-    live = next;
+export type KnockoutSide = {
+  name: string;
+  slots: Slot[];
+  style: StyleId;
+  human?: boolean;
+  boost?: { att: number; def: number };
+};
+
+/** The first round only. Computer ties are settled. A match with a player is scripted but not revealed. */
+export function firstRound(teams: KnockoutSide[]): BracketGame[] {
+  return playRound(seedBracket(teams));
+}
+
+/** Add the next round once every tie in the latest round has been revealed. */
+export function continueKnockout(
+  games: BracketGame[],
+  teams: KnockoutSide[],
+): { games: BracketGame[]; champion: string | null; advanced: boolean } {
+  const last = games[games.length - 1]?.round;
+  const round = last ? games.filter((game) => game.round === last) : [];
+  if (!round.length || round.some((game) => !game.winner || !game.instant)) {
+    return { games, champion: null, advanced: false };
   }
-  return { games, champion: live[0]?.name ?? teams[0]!.name };
+  if (round.length === 1) return { games, champion: round[0]!.winner, advanced: false };
+  const byName = new Map(teams.map((team) => [team.name, team]));
+  const winners = round.map((game) => byName.get(game.winner)).filter((team): team is KnockoutSide => Boolean(team));
+  if (winners.length < 2) return { games, champion: winners[0]?.name ?? null, advanced: false };
+  return { games: [...games, ...playRound(winners)], champion: null, advanced: true };
+}
+
+function playRound(live: KnockoutSide[]): BracketGame[] {
+  const label = roundNameFor(live.length);
+  const games: BracketGame[] = [];
+  for (let i = 0; i < live.length; i += 2) {
+    const home = live[i];
+    const away = live[i + 1];
+    if (!home || !away) break;
+    const match = simulateFinal(
+      home.slots,
+      away.slots,
+      home.style,
+      away.style,
+      away.name,
+      label,
+      home.name,
+      home.boost,
+      away.boost,
+    );
+    const winner = match.result === "W" ? home : away;
+    games.push({
+      round: label,
+      home: home.name,
+      away: away.name,
+      gf: match.gf,
+      ga: match.ga,
+      winner: winner.name,
+      goals: match.goals,
+      pens: match.pens,
+      homeRatings: displayRatings(home.slots, home.style),
+      awayRatings: displayRatings(away.slots, away.style),
+      ratings: match.ratings,
+      potm: match.potm,
+      instant: !home.human && !away.human,
+    });
+  }
+  return games;
+}
+
+export function simulateKnockout(teams: KnockoutSide[]): { games: BracketGame[]; champion: string } {
+  let games = firstRound(teams);
+  let champion = "";
+  for (let guard = 0; guard < 6; guard++) {
+    const revealed = games.map((game) => ({ ...game, instant: true }));
+    const step = continueKnockout(revealed, teams);
+    games = step.games;
+    if (step.champion) {
+      champion = step.champion;
+      break;
+    }
+    if (!step.advanced) break;
+  }
+  return { games, champion: champion || teams[0]?.name || "" };
 }
 
 function seedBracket<T extends { name: string; slots: Slot[]; human?: boolean }>(teams: T[]) {

@@ -17,6 +17,7 @@ type BoardMatch = {
   ratings?: PlayerRating[];
   potm?: { name: string; rating: number; side: "home" | "away" };
   instant?: boolean;
+  winner?: string;
 };
 
 function scoreAt(goals: MatchGoal[], minute: number) {
@@ -285,7 +286,7 @@ export function LiveCup({
   games: BoardMatch[];
   onDone: () => void;
 }) {
-  const liveGames = games.filter((g) => !g.instant);
+  const liveGames = games.filter((g) => !g.instant && g.winner);
   const [liveIndex, setLiveIndex] = useState(0);
   const finished = useRef(false);
   const match = liveGames[liveIndex];

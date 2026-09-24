@@ -196,7 +196,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           Take the scarce role first. Attackers are common in the draw. A real left-back is not.
         </blockquote>
         <blockquote className="border-l-4 border-ink pl-3 text-ink">
-          Only a match between two people is played minute by minute. The rest of the bracket is settled at once.
+          Only a match between two people is played minute by minute. The next round stays closed until that match is finished.
         </blockquote>
         <figure className="mt-2">
           <img
