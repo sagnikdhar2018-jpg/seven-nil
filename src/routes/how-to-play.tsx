@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalShell } from "@/components/seven/legal-shell";
-import { SITE_URL, pageHead } from "@/lib/seven/site";
+import { SITE_URL, UPDATED, faqSchema, pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/how-to-play")({
   component: HowToPlayPage,
@@ -13,17 +13,53 @@ export const Route = createFileRoute("/how-to-play")({
       schemas: [
         {
           "@type": "HowTo",
-          name: "How to play Seven Nil",
-          description: "Roll a historic squad, pick one player, place an XI, and simulate the tournament.",
+          name: "How to play the World Cup draft",
+          description:
+            "Roll a real national team from a real tournament year, take one footballer, and repeat until eleven shirts are filled.",
           totalTime: "PT15M",
+          dateModified: UPDATED,
           step: [
-            { "@type": "HowToStep", position: 1, name: "Choose a formation", text: "Pick a formation and Classic or Almanac." },
-            { "@type": "HowToStep", position: 2, name: "Roll", text: "A nation and a tournament year appear." },
-            { "@type": "HowToStep", position: 3, name: "Pick one player", text: "Take one footballer who fits an empty role." },
-            { "@type": "HowToStep", position: 4, name: "Simulate", text: "Fill eleven shirts, then simulate the cup." },
+            {
+              "@type": "HowToStep",
+              position: 1,
+              name: "Pick a formation and a style",
+              text: "Classic keeps ratings visible. Almanac hides them.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 2,
+              name: "Roll",
+              text: "A nation and a World Cup year appear, with the squad from that summer.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 3,
+              name: "Pick one player",
+              text: "Take one player who fits an empty slot. You can redraw, including the same nation in another year.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 4,
+              name: "Place the eleven",
+              text: "Confirm the XI. Simulate the group and knockout path.",
+            },
           ],
           url: `${SITE_URL}/how-to-play`,
         },
+        faqSchema([
+          {
+            q: "Is this an official FIFA game?",
+            a: "No. It is an independent draft toy. Not affiliated with FIFA, UEFA, or any club.",
+          },
+          {
+            q: "Do I need an account?",
+            a: "No. Progress stays on your device. Friends only needs a display name.",
+          },
+          {
+            q: "Can I keep the same team and change the year?",
+            a: "Yes. After a roll, use Another year (World Cup) or Another season (clubs) if that side has another squad.",
+          },
+        ]),
       ],
     }),
 });

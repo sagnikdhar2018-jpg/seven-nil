@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SevenApp } from "@/components/seven/seven-app";
 import { WORLD_FAQ } from "@/components/seven/guide";
-import { SITE_URL, UPDATED, pageHead } from "@/lib/seven/site";
+import { SITE_URL, UPDATED, faqSchema, itemListSchema, pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -12,14 +12,12 @@ export const Route = createFileRoute("/")({
         "Seven Nil is a free World Cup draft. Roll a nation and a year, pick one real player at a time, and simulate the tournament.",
       path: "/",
       schemas: [
-        {
-          "@type": "FAQPage",
-          mainEntity: WORLD_FAQ.map((item) => ({
-            "@type": "Question",
-            name: item.q,
-            acceptedAnswer: { "@type": "Answer", text: item.a },
-          })),
-        },
+        faqSchema(WORLD_FAQ),
+        itemListSchema("Seven Nil modes", [
+          { name: "World Cup", url: SITE_URL, description: "One nation, one tournament year" },
+          { name: "Clubs", url: `${SITE_URL}/club`, description: "One top-five club, one season from 1980" },
+          { name: "Friends", url: `${SITE_URL}/friends`, description: "A final, or a cup seeded by ranking" },
+        ]),
         {
           "@type": "Article",
           headline: "Seven Nil — Free World Cup draft game",

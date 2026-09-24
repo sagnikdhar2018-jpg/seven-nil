@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SevenApp } from "@/components/seven/seven-app";
-import { pageHead } from "@/lib/seven/site";
+import { CLUB_FAQ } from "@/components/seven/guide";
+import { faqSchema, pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/club")({
   component: ClubPage,
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/club")({
       description:
         "Roll historic club sides from England, Spain, Italy, Germany, and France since 1980. Draft one footballer per season, then take the XI into Europe.",
       path: "/club",
+      schemas: [faqSchema(CLUB_FAQ)],
     }),
 });
 

@@ -53,7 +53,7 @@ export const WORLD_FAQ = [
   },
 ];
 
-const CLUB_FAQ = [
+export const CLUB_FAQ = [
   {
     q: "What is Club mode?",
     a: "A separate draft from the World Cup game. You roll historic club sides from England, Spain, Italy, Germany, and France, from 1980 to now.",

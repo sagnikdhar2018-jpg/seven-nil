@@ -31,6 +31,31 @@ export const personRef = {
   sameAs: ["https://github.com/sagnikdhar2018-jpg"],
 };
 
+export function faqSchema(items: { q: string; a: string }[]) {
+  return {
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+}
+
+export function itemListSchema(name: string, items: { name: string; url?: string; description?: string }[]) {
+  return {
+    "@type": "ItemList",
+    name,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      ...(item.url ? { url: item.url } : {}),
+      ...(item.description ? { description: item.description } : {}),
+    })),
+  };
+}
+
 export function pageHead({
   title,
   description,
@@ -46,10 +71,24 @@ export function pageHead({
   const graph = [
     {
       "@type": "BreadcrumbList",
+      "@id": `${url}#crumbs`,
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
         ...(path === "/" ? [] : [{ "@type": "ListItem", position: 2, name: title, item: url }]),
       ],
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: title,
+      description,
+      inLanguage: "en",
+      dateModified: UPDATED,
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      about: { "@id": `${SITE_URL}/#game` },
+      breadcrumb: { "@id": `${url}#crumbs` },
+      publisher: { "@id": `${SITE_URL}/#org` },
     },
     ...schemas,
   ];
