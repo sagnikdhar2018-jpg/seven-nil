@@ -530,6 +530,8 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "ready": {
       if (action.seatId !== actorId && !isHost) return state;
       if (!configPhase(state)) return state;
+      const seat = state.seats.find((s) => s.id === action.seatId);
+      if (!seat?.name.trim()) return state;
       return {
         ...state,
         seats: state.seats.map((s) => (s.id === action.seatId ? { ...s, ready: !s.ready } : s)),
@@ -537,6 +539,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     }
     case "join": {
       if (state.phase !== "lobby") return state;
+      if (!action.seat.name.trim()) return state;
       if (state.password && action.password !== state.password) return state;
       if (state.seats.some((s) => s.id === action.seat.id)) return state;
       const cap = state.kind === "final" ? 2 : Math.min(8, state.bracketSize);
@@ -546,6 +549,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "start": {
       if (!isHost) return state;
       const readyHumans = humans(state).filter((s) => s.ready || state.kind === "local");
+      if (readyHumans.some((s) => !s.name.trim())) return state;
       if (state.kind === "final" && readyHumans.length < 2) return state;
       if (state.kind === "cup" && readyHumans.length < 1) return state;
       if (state.kind === "local" && state.seats.length < 2) return state;

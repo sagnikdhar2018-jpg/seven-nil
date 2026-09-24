@@ -64,12 +64,14 @@ function NameField({
   label = "Your name",
   value,
   onChange,
-  placeholder = "Your name",
+  placeholder = "Enter your name",
+  autoFocus = false,
 }: {
   label?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  autoFocus?: boolean;
 }) {
   return (
     <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
@@ -81,6 +83,7 @@ function NameField({
         placeholder={placeholder}
         autoComplete="nickname"
         data-action="player-name"
+        autoFocus={autoFocus}
         onChange={(e) => {
           const next = e.target.value.slice(0, 18);
           onChange(next);
@@ -140,7 +143,7 @@ export function FriendsApp({
           playLabel={pool === "club" ? "Clubs" : "World Cup"}
           playHref={pool === "club" ? "/club" : "/"}
         />
-        {phase === "menu" ? <Selector pool={pool} /> : null}
+        {phase === "menu" ? <Selector pool={pool} roomFromUrl={roomFromUrl} /> : null}
         {phase === "setup" ? <LocalSetup pool={pool} /> : null}
         {phase === "lobby" ? <Lobby pool={pool} /> : null}
         {phase === "draft" ? <DraftTable /> : null}
@@ -168,7 +171,8 @@ function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
   const joinName =
     (typeof sessionStorage !== "undefined" && sessionStorage.getItem("sn-join-name")) ||
     loadPlayerName() ||
-    "Player";
+    "";
+  if (!joinName.trim()) return;
   const guest = {
     ...existing,
     kind: "final" as const,
@@ -184,11 +188,11 @@ function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
   }
 }
 
-function Selector({ pool }: { pool: PoolId }) {
+function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string }) {
   const [open, setOpen] = useState<FriendKind | null>(null);
-  const [join, setJoin] = useState("");
+  const [join, setJoin] = useState(() => (roomFromUrl ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase());
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState(() => loadPlayerName() || "Host");
+  const [displayName, setDisplayName] = useState(() => loadPlayerName());
   const [mode, setMode] = useState<ModeId>("classic");
   const [timer, setTimer] = useState<TimerSec>(30);
   const [bracketSize, setBracketSize] = useState<BracketSize>(8);
@@ -197,10 +201,12 @@ function Selector({ pool }: { pool: PoolId }) {
   const navigate = useNavigate();
   const kinds = modeList(pool);
   const path = friendsPath(pool);
+  const nameReady = displayName.trim().length > 0;
 
   const startHost = (kind: FriendKind) => {
+    const name = displayName.trim().slice(0, 18);
+    if (!name) return;
     const id = `p-${Math.random().toString(36).slice(2, 10)}`;
-    const name = shownName(displayName, "Host");
     savePlayerName(name);
     becomeHost(kind, id, name, { mode, timer, password, bracketSize, pool });
     const code = useFriends.getState().code;
@@ -210,11 +216,15 @@ function Selector({ pool }: { pool: PoolId }) {
 
   const joinRoom = () => {
     const code = join.replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase();
-    if (code.length < 4) return;
-    const name = shownName(displayName, "Player");
+    const name = displayName.trim().slice(0, 18);
+    if (!name || code.length < 4) return;
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
     sessionStorage.setItem("sn-join-password", password);
+    if ((roomFromUrl ?? "").toUpperCase() === code) {
+      bootFromUrl(code, pool);
+      return;
+    }
     void navigate({ to: path, search: { room: code } });
   };
 
@@ -232,6 +242,11 @@ function Selector({ pool }: { pool: PoolId }) {
             {pool === "club" ? "Friend vs friend · UCL knockout" : "3 modes · local and online"}
           </p>
         </div>
+
+        <NameField value={displayName} onChange={setDisplayName} autoFocus={!nameReady} />
+        {!nameReady ? (
+          <p className="text-xs font-semibold text-accent">Enter your name before you create or join a room.</p>
+        ) : null}
 
         <div className="ms-list">
           {kinds.map((item) => {
@@ -253,13 +268,11 @@ function Selector({ pool }: { pool: PoolId }) {
                 </button>
                 {expanded ? (
                   <div className="card-ink flex flex-col gap-4 rounded-lg px-4 py-4">
-                    {item.id !== "local" ? (
-                      <NameField value={displayName} onChange={setDisplayName} placeholder="Host" />
-                    ) : (
+                    {item.id === "local" ? (
                       <p className="text-xs leading-relaxed text-muted">
                         Set both names on the next screen — you can still change them while you play.
                       </p>
-                    )}
+                    ) : null}
                     <ChipGroup<ModeId>
                       label="Mode"
                       value={mode}
@@ -308,6 +321,7 @@ function Selector({ pool }: { pool: PoolId }) {
                     ) : null}
                     <Button
                       data-action={item.id === "local" ? "start-local" : "create-room"}
+                      disabled={item.id !== "local" && !nameReady}
                       onClick={() => (item.id === "local" ? hydrateLocal("local", pool) : startHost(item.id))}
                     >
                       {item.id === "local" ? "Start on this device" : "Create room"}
@@ -326,7 +340,6 @@ function Selector({ pool }: { pool: PoolId }) {
 
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Join with a code</p>
-          <NameField value={displayName} onChange={setDisplayName} placeholder="Your name" />
           <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
             Password if the room has one
             <input
@@ -346,7 +359,7 @@ function Selector({ pool }: { pool: PoolId }) {
               value={join}
               onChange={(e) => setJoin(e.target.value.toUpperCase())}
             />
-            <Button variant="ink" className="shrink-0" disabled={join.length < 4} onClick={joinRoom}>
+            <Button variant="ink" className="shrink-0" disabled={!nameReady || join.length < 4} onClick={joinRoom}>
               Start
             </Button>
           </div>
@@ -466,7 +479,7 @@ function Lobby({ pool }: { pool: PoolId }) {
       <div>
         <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{lobbyLabel}</p>
         <p className="room-code mt-2">{code}</p>
-        <p className="mt-2 text-sm text-muted">Share the code or the invite link. Set your name before you mark ready.</p>
+        <p className="mt-2 text-sm text-muted">Share the code or the invite link. Names are set before anyone joins.</p>
       </div>
       <Button
         variant={copied ? "ink" : "secondary"}
@@ -504,7 +517,11 @@ function Lobby({ pool }: { pool: PoolId }) {
             onChange={(id) => act({ type: "setStyle", seatId: me.id, style: id })}
             options={STYLES}
           />
-          <Button variant={me.ready ? "ink" : "primary"} onClick={() => act({ type: "ready", seatId: me.id })}>
+          <Button
+            variant={me.ready ? "ink" : "primary"}
+            disabled={!me.name.trim()}
+            onClick={() => act({ type: "ready", seatId: me.id })}
+          >
             {me.ready ? "Ready" : "Mark ready"}
           </Button>
         </div>
