@@ -366,6 +366,14 @@
   .draft-board.is-picking {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
   }
+
+  .draft-board.is-live {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  }
+
+  .draft-board.is-simultaneous {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(16rem, 20rem);
+  }
 }
 
 @keyframes board-float {

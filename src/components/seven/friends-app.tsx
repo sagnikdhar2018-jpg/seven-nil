@@ -548,28 +548,84 @@ const MANAGER_BARS = [
 
 function DraftTable() {
   const seats = useFriends((s) => s.seats);
-  const activeSeat = useFriends((s) => s.activeSeat);
-  const draw = useFriends((s) => s.draw);
-  const selected = useFriends((s) => s.selected);
+  const kind = useFriends((s) => s.kind);
+  const actorId = useFriends((s) => s.actorId);
+  const pool = useFriends((s) => s.pool);
+  const mode = useFriends((s) => s.mode);
+  const act = useFriends((s) => s.act);
+  const backToMenu = useFriends((s) => s.backToMenu);
+  const boards = seats.filter((seat) => seat.kind === "human" && (kind === "local" || seat.id === actorId));
+  const viewing = seats.find((seat) => seat.id === actorId) ?? boards[0];
+
+  return (
+    <section className={cn("draft-board mx-auto w-full max-w-6xl px-5 pb-24 pt-2", boards.length > 1 ? "is-simultaneous" : "is-live")}>
+      {boards.map((seat) => (
+        <SeatDraft key={seat.id} seatId={seat.id} />
+      ))}
+      <div className="draft-col flex flex-col gap-3">
+        <p className="text-sm text-muted">Everyone drafts at once. A name taken by anyone is gone.</p>
+        {seats
+          .filter((s) => s.kind === "human")
+          .map((seat) => {
+            const mine = kind === "local" || seat.id === actorId;
+            const full = filledCount(seat.slots) >= 11;
+            const coach = coachById(seat.coachId);
+            return (
+              <div key={seat.id} className="card-ink flex flex-col gap-3 rounded-lg px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">{seat.formation}</p>
+                <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
+                <p className="font-numeral text-sm font-extrabold tabular-nums">
+                  {filledCount(seat.slots)}/11
+                  {coach ? ` · ${coach.name}` : ""}
+                  {seat.confirmed ? " · confirmed" : ""}
+                </p>
+                {mine && full ? (
+                  <Button
+                    variant={seat.confirmed ? "ink" : "primary"}
+                    data-action={`confirm-${seat.id}`}
+                    disabled={seat.confirmed || !seat.coachId}
+                    onClick={() => act({ type: "confirm", seatId: seat.id })}
+                  >
+                    {seat.confirmed ? "XI locked" : seat.coachId ? "Confirm XI" : "Pick a manager first"}
+                  </Button>
+                ) : null}
+              </div>
+            );
+          })}
+        {viewing ? (
+          <LineupBox
+            slots={viewing.slots}
+            style={viewing.style}
+            classic={mode === "classic"}
+            title={`${shownName(viewing.name)} XI`}
+          />
+        ) : null}
+        <Button variant="ghost" data-action="leave-draft" onClick={() => backToMenu(pool)}>
+          Leave
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function SeatDraft({ seatId }: { seatId: string }) {
+  const seats = useFriends((s) => s.seats);
   const mode = useFriends((s) => s.mode);
   const claimed = useFriends((s) => s.claimed);
   const act = useFriends((s) => s.act);
   const kind = useFriends((s) => s.kind);
   const timer = useFriends((s) => s.timer);
-  const turnStartedAt = useFriends((s) => s.turnStartedAt);
   const actorId = useFriends((s) => s.actorId);
-  const hostId = useFriends((s) => s.hostId);
   const history = useFriends((s) => s.history);
   const pool = useFriends((s) => s.pool);
   const { busy, spin } = useDiceSpin();
-  const backToMenu = useFriends((s) => s.backToMenu);
-  const active = seats[activeSeat];
+  const active = seats.find((seat) => seat.id === seatId);
   if (!active) return null;
-  const viewingId = kind === "local" ? active.id : actorId;
-  const viewing = seats.find((s) => s.id === viewingId) ?? active;
+  const draw = active.draw;
+  const selected = active.selected;
   const myTurn = kind === "local" || actorId === active.id;
   const classic = mode === "classic";
-  const filled = filledCount(viewing.slots);
+  const filled = filledCount(active.slots);
   const canYear = draw ? canDrawSameTeam(draw.squad, history, pool) : false;
   const roster = draw?.squad.players ?? [];
   const legalIds = new Set(
@@ -585,19 +641,18 @@ function DraftTable() {
   const managerTurn = filledCount(active.slots) >= 11 && !active.coachId;
 
   return (
-    <section className="draft-board mx-auto w-full max-w-6xl px-5 pb-24 pt-2">
-      <div className="draft-col flex flex-col gap-4">
+    <div className="draft-col flex flex-col gap-4">
         <div className="card-ink rounded-lg px-4 py-4">
-          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Turn</p>
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Drafting together</p>
           <p className="mt-1 font-display text-3xl leading-none">{shownName(active.name)}</p>
           <p className="mt-2 text-sm text-muted">
             {filledCount(active.slots)}/11 · {active.formation}
             {active.coachId ? ` · ${coachById(active.coachId)?.name ?? "Manager"}` : ""}
           </p>
           <TurnClock
-            startedAt={turnStartedAt}
+            startedAt={active.since}
             seconds={timer}
-            onExpire={kind === "local" || actorId === hostId ? () => act({ type: "autoPick" }) : undefined}
+            onExpire={myTurn && !active.confirmed ? () => act({ type: "autoPick", seatId: active.id }) : undefined}
           />
         </div>
         <div className="card-ink flex flex-col overflow-hidden rounded-lg">
@@ -630,7 +685,7 @@ function DraftTable() {
                   variant="secondary"
                   className="btn-choice"
                   disabled={!myTurn || (active.coachRerolls ?? 0) <= 0 || busy}
-                  onClick={() => spin(() => act({ type: "rerollCoach" }))}
+                  onClick={() => spin(() => act({ type: "rerollCoach", seatId: active.id }))}
                 >
                   <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
                   Change managers
@@ -639,7 +694,7 @@ function DraftTable() {
               </div>
             ) : (
               <div className="border-b border-line px-4 py-3">
-                <Button className="w-full" disabled={!myTurn || busy} onClick={() => spin(() => act({ type: "rollCoach" }))}>
+                <Button className="w-full" disabled={!myTurn || busy} onClick={() => spin(() => act({ type: "rollCoach", seatId: active.id }))}>
                   <Dices className="size-5" strokeWidth={2} />
                   Roll a manager
                 </Button>
@@ -652,8 +707,8 @@ function DraftTable() {
               canYear={canYear}
               busy={busy}
               locked={!myTurn}
-              onTeam={() => spin(() => act({ type: "reroll" }))}
-              onYear={() => spin(() => act({ type: "sameYear" }))}
+              onTeam={() => spin(() => act({ type: "reroll", seatId: active.id }))}
+              onYear={() => spin(() => act({ type: "sameYear", seatId: active.id }))}
             />
           ) : (
             <div className="border-b border-line px-4 py-3">
@@ -661,7 +716,7 @@ function DraftTable() {
                 className="w-full"
                 data-action="roll"
                 disabled={!myTurn || filledCount(active.slots) >= 11 || busy}
-                onClick={() => spin(() => act({ type: "roll" }))}
+                onClick={() => spin(() => act({ type: "roll", seatId: active.id }))}
               >
                 <Dices className="size-5" strokeWidth={2} />
                 Roll
@@ -679,7 +734,7 @@ function DraftTable() {
                       type="button"
                       className="flex w-full flex-col gap-2 border-b border-line px-4 py-3 text-left last:border-b-0 hover:bg-paper disabled:opacity-50"
                       disabled={!myTurn}
-                      onClick={() => act({ type: "setCoach", coachId: coach.id })}
+                      onClick={() => act({ type: "setCoach", seatId: active.id, coachId: coach.id })}
                     >
                       <span className="flex items-baseline justify-between gap-3">
                         <span className="font-extrabold text-ink">{coach.name}</span>
@@ -715,7 +770,7 @@ function DraftTable() {
                   best={bestId === player.id}
                   classic={classic}
                   disabled={!myTurn}
-                  onPick={(p) => act({ type: "pick", player: p })}
+                  onPick={(p) => act({ type: "pick", seatId: active.id, player: p })}
                 />
               ))
             ) : (
@@ -727,13 +782,11 @@ function DraftTable() {
             )}
           </div>
         </div>
-      </div>
-      <div className="draft-col draft-pitch flex flex-col gap-4">
         <Pitch
-          slots={kind === "local" ? active.slots : viewing.slots}
+          slots={active.slots}
           selected={selected}
-          style={viewing.style}
-          onPlace={(id) => act({ type: "place", slotId: id })}
+          style={active.style}
+          onPlace={(id) => act({ type: "place", seatId: active.id, slotId: id })}
         />
         {selected ? (
           <p className="text-center text-sm font-semibold text-accent">
@@ -741,56 +794,10 @@ function DraftTable() {
           </p>
         ) : (
           <p className="text-center text-sm text-muted">
-            {managerTurn
-              ? myTurn
-                ? "Your 12th pick is the manager."
-                : `Waiting on ${shownName(active.name)} to pick a manager.`
-              : myTurn
-                ? `${shownName(active.name)} to pick.`
-                : `Waiting on ${shownName(active.name)}.`}
+            {managerTurn ? "Your 12th pick is the manager." : "Pick when you are ready. The others are drafting too."}
           </p>
         )}
       </div>
-      <div className="draft-col flex flex-col gap-3">
-        {seats
-          .filter((s) => s.kind === "human")
-          .map((seat) => {
-            const mine = kind === "local" || seat.id === actorId;
-            const full = filledCount(seat.slots) >= 11;
-            const coach = coachById(seat.coachId);
-            return (
-              <div key={seat.id} className="card-ink flex flex-col gap-3 rounded-lg px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">{seat.formation}</p>
-                <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
-                <p className="font-numeral text-sm font-extrabold tabular-nums">
-                  {filledCount(seat.slots)}/11
-                  {coach ? ` · ${coach.name}` : ""}
-                  {seat.confirmed ? " · confirmed" : ""}
-                </p>
-                {mine && full ? (
-                  <Button
-                    variant={seat.confirmed ? "ink" : "primary"}
-                    data-action={`confirm-${seat.id}`}
-                    disabled={seat.confirmed || !seat.coachId}
-                    onClick={() => act({ type: "confirm", seatId: seat.id })}
-                  >
-                    {seat.confirmed ? "XI locked" : seat.coachId ? "Confirm XI" : "Pick a manager first"}
-                  </Button>
-                ) : null}
-              </div>
-            );
-          })}
-        <LineupBox
-          slots={viewing.slots}
-          style={viewing.style}
-          classic={classic}
-          title={`${shownName(viewing.name)} XI`}
-        />
-        <Button variant="ghost" data-action="leave-draft" onClick={() => backToMenu(pool)}>
-          Leave
-        </Button>
-      </div>
-    </section>
   );
 }
 
@@ -974,7 +981,7 @@ function FriendsGuide({ pool }: { pool: PoolId }) {
         <p className="mt-4 text-base leading-relaxed text-muted">
           {club
             ? "Join with a code, put your name on the shirt, and draft historic club sides from the top five leagues. Taken footballers are locked across every year. Confirm the XI, then play a European night or a full UCL knockout."
-            : "Join with a code, put your name on the shirt, choose a formation and style, mark ready, and build separate XIs in turn order. You can rename yourself in the lobby and during the draft. On each turn the active player draws a nation and a World Cup year, then claims one valid footballer. That footballer is then locked for everyone else. The 12th pick is a manager. When the XI is full, confirm it."}
+            : "Join with a code, put your name on the shirt, choose a formation and style, mark ready, and build separate XIs at the same time. You can rename yourself in the lobby and during the draft. Each player draws their own nation and year, then claims one valid footballer. That footballer is locked for everyone else. The 12th pick is a manager. When the XI is full, confirm it."}
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-3">

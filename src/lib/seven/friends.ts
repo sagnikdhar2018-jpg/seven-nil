@@ -24,6 +24,9 @@ export type Seat = {
   coachId: string | null;
   coachOffer: string[] | null;
   coachRerolls: number;
+  draw: DrawnSquad | null;
+  selected: Player | null;
+  since: number;
 };
 
 export type FriendsState = {
@@ -59,15 +62,15 @@ export type FriendsAction =
   | { type: "ready"; seatId: string }
   | { type: "join"; seat: Seat; password?: string }
   | { type: "start" }
-  | { type: "roll" }
-  | { type: "reroll" }
-  | { type: "sameYear" }
-  | { type: "pick"; player: Player }
-  | { type: "place"; slotId: string }
-  | { type: "autoPick" }
-  | { type: "rollCoach" }
-  | { type: "rerollCoach" }
-  | { type: "setCoach"; coachId: string }
+  | { type: "roll"; seatId: string }
+  | { type: "reroll"; seatId: string }
+  | { type: "sameYear"; seatId: string }
+  | { type: "pick"; seatId: string; player: Player }
+  | { type: "place"; seatId: string; slotId: string }
+  | { type: "autoPick"; seatId: string }
+  | { type: "rollCoach"; seatId: string }
+  | { type: "rerollCoach"; seatId: string }
+  | { type: "setCoach"; seatId: string; coachId: string }
   | { type: "confirm"; seatId: string }
   | { type: "simulate" }
   | { type: "simDone" };
@@ -120,6 +123,9 @@ export function makeSeat(id: string, name: string, kind: Seat["kind"] = "human")
     coachId: null,
     coachOffer: null,
     coachRerolls: 3,
+    draw: null,
+    selected: null,
+    since: 0,
   };
 }
 
@@ -283,121 +289,98 @@ function needsTurn(seat: Seat) {
   return !seat.coachId;
 }
 
-function nextNeedyIndex(state: FriendsState, from: number) {
-  const n = state.seats.length;
-  for (let i = 1; i <= n; i++) {
-    const idx = (from + i) % n;
-    const seat = state.seats[idx]!;
-    if (needsTurn(seat)) return idx;
-  }
-  return from;
-}
-
 function allHumansFull(state: FriendsState) {
   return humans(state).every((s) => !needsTurn(s));
 }
 
-function passTurn(state: FriendsState): FriendsState {
-  if (allHumansFull(state)) {
-    return { ...state, draw: null, selected: null, phase: "draft" };
-  }
-  const activeSeat = nextNeedyIndex(state, state.activeSeat);
-  return {
-    ...state,
-    activeSeat,
-    draw: null,
-    selected: null,
-    turnStartedAt: Date.now(),
-  };
+function seatAt(state: FriendsState, seatId: string) {
+  return state.seats.find((seat) => seat.id === seatId);
 }
 
-function placePlayer(state: FriendsState, player: Player, slotId: string): FriendsState {
-  const seat = state.seats[state.activeSeat];
+function writeSeat(state: FriendsState, seatId: string, seat: Seat): FriendsState {
+  return { ...state, seats: state.seats.map((current) => (current.id === seatId ? seat : current)) };
+}
+
+function controls(state: FriendsState, actorId: string, seatId: string) {
+  return state.kind === "local" || actorId === seatId;
+}
+
+function placePlayer(state: FriendsState, seatId: string, player: Player, slotId: string): FriendsState {
+  const seat = seatAt(state, seatId);
   if (!seat) return state;
   const slot = seat.slots.find((s) => s.id === slotId);
   if (!slot || slot.player || !canFill(slot.pos, player.pos)) return state;
   if (state.claimed.includes(personKey(player.name))) return state;
   const slots = seat.slots.map((s) => (s.id === slotId ? { ...s, player } : s));
-  const seats = state.seats.map((s, i) => (i === state.activeSeat ? { ...s, slots } : s));
-  const next = passTurn({
-    ...state,
-    seats,
-    claimed: [...state.claimed, personKey(player.name)],
-    selected: null,
-    draw: null,
-  });
+  const next = writeSeat(
+    { ...state, claimed: [...state.claimed, personKey(player.name)] },
+    seatId,
+    { ...seat, slots, selected: null, draw: null, since: Date.now() },
+  );
   if (humans(next).every((s) => s.confirmed)) return runSimulate(next);
   return next;
 }
 
-function autoPickPlayer(state: FriendsState): FriendsState {
-  const seat = state.seats[state.activeSeat];
-  if (!seat || seat.kind !== "human") return state;
+function autoPickPlayer(state: FriendsState, seatId: string): FriendsState {
+  const seat = seatAt(state, seatId);
+  if (!seat || seat.kind !== "human" || seat.confirmed) return state;
   if (filledCount(seat.slots) >= 11) {
     if (seat.coachId) return state;
     let cur = state;
     if (!seat.coachOffer?.length) {
       const offer = drawCoaches(3).map((coach) => coach.id);
-      cur = {
-        ...state,
-        seats: state.seats.map((s, i) => (i === state.activeSeat ? { ...s, coachOffer: offer } : s)),
-      };
+      cur = writeSeat(state, seatId, { ...seat, coachOffer: offer });
     }
-    const offer = cur.seats[cur.activeSeat]?.coachOffer ?? [];
+    const offer = seatAt(cur, seatId)?.coachOffer ?? [];
     const id = offer[Math.floor(Math.random() * offer.length)];
-    return id ? assignCoach(cur, id) : cur;
+    return id ? assignCoach(cur, seatId, id) : cur;
   }
 
-  if (state.selected) {
-    const options = emptySlotsFor(seat.slots, state.selected.pos);
-    if (options[0]) return placePlayer(state, state.selected, options[0].id);
+  if (seat.selected) {
+    const options = emptySlotsFor(seat.slots, seat.selected.pos);
+    if (options[0]) return placePlayer(state, seatId, seat.selected, options[0].id);
   }
 
   let cur = state;
   for (let i = 0; i < 8; i++) {
-    if (!cur.draw || cur.draw.remaining.length === 0) {
-      const next = drawLegal(
-        cur.seats[cur.activeSeat]!.slots,
-        cur.history,
-        cur.claimed,
-        cur.pool,
+    const current = seatAt(cur, seatId);
+    if (!current) return cur;
+    if (!current.draw || current.draw.remaining.length === 0) {
+      const next = drawLegal(current.slots, cur.history, cur.claimed, cur.pool);
+      cur = writeSeat(
+        { ...cur, history: next.history },
+        seatId,
+        { ...current, draw: { squad: next.squad, remaining: next.remaining }, selected: null },
       );
-      cur = {
-        ...cur,
-        draw: { squad: next.squad, remaining: next.remaining },
-        history: next.history,
-        selected: null,
-      };
     }
-    const remaining = cur.draw?.remaining ?? [];
-    if (remaining.length === 0) continue;
+    const live = seatAt(cur, seatId);
+    const remaining = live?.draw?.remaining ?? [];
+    if (!live || remaining.length === 0) continue;
     const player = remaining[Math.floor(Math.random() * remaining.length)]!;
-    const options = emptySlotsFor(cur.seats[cur.activeSeat]!.slots, player.pos);
+    const options = emptySlotsFor(live.slots, player.pos);
     if (!options[0]) continue;
-    return placePlayer(cur, player, options[0].id);
+    return placePlayer(cur, seatId, player, options[0].id);
   }
   return cur;
 }
 
-function assignCoach(state: FriendsState, coachId: string): FriendsState {
-  const seat = state.seats[state.activeSeat];
+function assignCoach(state: FriendsState, seatId: string, coachId: string): FriendsState {
+  const seat = seatAt(state, seatId);
   const coach = coachById(coachId);
   if (!seat || !coach || !seat.coachOffer?.includes(coachId)) return state;
   const players = seat.slots.map((slot) => slot.player).filter((player): player is Player => Boolean(player));
   const slots = reshapeXi(players, coach.formation);
-  const seats = state.seats.map((s, i) =>
-    i === state.activeSeat
-      ? {
-          ...s,
-          slots,
-          coachId: coach.id,
-          coachOffer: null,
-          formation: coach.formation,
-          style: styleForCoach(coach.play),
-        }
-      : s,
-  );
-  return passTurn({ ...state, seats, draw: null, selected: null });
+  return writeSeat(state, seatId, {
+    ...seat,
+    slots,
+    coachId: coach.id,
+    coachOffer: null,
+    formation: coach.formation,
+    style: styleForCoach(coach.play),
+    draw: null,
+    selected: null,
+    since: Date.now(),
+  });
 }
 
 function withCoach(seat: Seat, claimed: string[], pool: PoolId): { seat: Seat; claimed: string[] } {
@@ -500,8 +483,6 @@ function configPhase(state: FriendsState) {
 
 export function apply(state: FriendsState, action: FriendsAction, actorId: string): FriendsState {
   const isHost = actorId === state.hostId || state.kind === "local";
-  const active = state.seats[state.activeSeat];
-  const isActive = Boolean(active && active.id === actorId) || state.kind === "local";
 
   switch (action.type) {
     case "setName": {
@@ -578,103 +559,99 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
         }
         seats = [...seats, ...extras];
       }
-      const first = seats.findIndex((s) => s.kind === "human");
+      const started = Date.now();
       return {
         ...state,
-        seats,
+        seats: seats.map((seat) => (seat.kind === "human" ? { ...seat, since: started, draw: null, selected: null } : seat)),
         phase: "draft",
-        activeSeat: first < 0 ? 0 : first,
+        activeSeat: 0,
         draw: null,
         selected: null,
-        turnStartedAt: Date.now(),
+        turnStartedAt: started,
       };
     }
     case "roll": {
-      if (state.phase !== "draft" || !isActive || !active) return state;
-      if (active.kind !== "human") return state;
-      if (state.draw) return state;
-      if (filledCount(active.slots) >= 11) return state;
-      const next = drawLegal(active.slots, state.history, state.claimed, state.pool);
-      return {
-        ...state,
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat || !controls(state, actorId, action.seatId)) return state;
+      if (seat.kind !== "human" || seat.draw || seat.confirmed) return state;
+      if (filledCount(seat.slots) >= 11) return state;
+      const next = drawLegal(seat.slots, state.history, state.claimed, state.pool);
+      return writeSeat({ ...state, history: next.history }, action.seatId, {
+        ...seat,
         draw: { squad: next.squad, remaining: next.remaining },
-        history: next.history,
         selected: null,
-      };
+        since: Date.now(),
+      });
     }
     case "reroll": {
-      if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
-      if (active.rerolls <= 0) return state;
-      const next = drawOtherSide(active.slots, state.history, state.claimed, state.pool, state.draw.squad.nation);
-      const seats = state.seats.map((s, i) =>
-        i === state.activeSeat ? { ...s, rerolls: s.rerolls - 1 } : s,
-      );
-      return {
-        ...state,
-        seats,
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat?.draw || !controls(state, actorId, action.seatId)) return state;
+      if (seat.rerolls <= 0) return state;
+      const next = drawOtherSide(seat.slots, state.history, state.claimed, state.pool, seat.draw.squad.nation);
+      return writeSeat({ ...state, history: next.history }, action.seatId, {
+        ...seat,
+        rerolls: seat.rerolls - 1,
         draw: { squad: next.squad, remaining: next.remaining },
-        history: next.history,
         selected: null,
-      };
+        since: Date.now(),
+      });
     }
     case "sameYear": {
-      if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
-      if (active.rerolls <= 0) return state;
-      const next = drawSameTeam(active.slots, state.history, state.draw.squad, state.claimed, state.pool);
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat?.draw || !controls(state, actorId, action.seatId)) return state;
+      if (seat.rerolls <= 0) return state;
+      const next = drawSameTeam(seat.slots, state.history, seat.draw.squad, state.claimed, state.pool);
       if (!next) return state;
-      const seats = state.seats.map((s, i) =>
-        i === state.activeSeat ? { ...s, rerolls: s.rerolls - 1 } : s,
-      );
-      return {
-        ...state,
-        seats,
+      return writeSeat({ ...state, history: next.history }, action.seatId, {
+        ...seat,
+        rerolls: seat.rerolls - 1,
         draw: { squad: next.squad, remaining: next.remaining },
-        history: next.history,
         selected: null,
-      };
+        since: Date.now(),
+      });
     }
     case "pick": {
-      if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat?.draw || !controls(state, actorId, action.seatId)) return state;
       if (state.claimed.includes(personKey(action.player.name))) return state;
-      const options = emptySlotsFor(active.slots, action.player.pos);
+      const options = emptySlotsFor(seat.slots, action.player.pos);
       if (options.length === 0) return state;
-      if (options.length > 1) return { ...state, selected: action.player };
-      return placePlayer(state, action.player, options[0]!.id);
+      if (options.length > 1) return writeSeat(state, action.seatId, { ...seat, selected: action.player });
+      return placePlayer(state, action.seatId, action.player, options[0]!.id);
     }
     case "place": {
-      if (state.phase !== "draft" || !isActive || !state.selected) return state;
-      return placePlayer(state, state.selected, action.slotId);
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat?.selected || !controls(state, actorId, action.seatId)) return state;
+      return placePlayer(state, action.seatId, seat.selected, action.slotId);
     }
     case "autoPick": {
-      if (!isHost) return state;
       if (state.phase !== "draft") return state;
-      return autoPickPlayer(state);
+      if (!controls(state, actorId, action.seatId) && !isHost) return state;
+      return autoPickPlayer(state, action.seatId);
     }
     case "rollCoach": {
-      if (state.phase !== "draft" || !isActive || !active) return state;
-      if (filledCount(active.slots) < 11 || active.coachId || active.coachOffer) return state;
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat || !controls(state, actorId, action.seatId)) return state;
+      if (filledCount(seat.slots) < 11 || seat.coachId || seat.coachOffer) return state;
       const offer = drawCoaches(3).map((coach) => coach.id);
-      return {
-        ...state,
-        draw: null,
-        selected: null,
-        seats: state.seats.map((s, i) => (i === state.activeSeat ? { ...s, coachOffer: offer } : s)),
-      };
+      return writeSeat(state, action.seatId, { ...seat, coachOffer: offer, draw: null, selected: null, since: Date.now() });
     }
     case "rerollCoach": {
-      if (state.phase !== "draft" || !isActive || !active?.coachOffer) return state;
-      if (active.coachRerolls <= 0 || active.coachId) return state;
-      const offer = drawCoaches(3, active.coachOffer).map((coach) => coach.id);
-      return {
-        ...state,
-        seats: state.seats.map((s, i) =>
-          i === state.activeSeat ? { ...s, coachRerolls: s.coachRerolls - 1, coachOffer: offer } : s,
-        ),
-      };
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat?.coachOffer || !controls(state, actorId, action.seatId)) return state;
+      if (seat.coachRerolls <= 0 || seat.coachId) return state;
+      const offer = drawCoaches(3, seat.coachOffer).map((coach) => coach.id);
+      return writeSeat(state, action.seatId, {
+        ...seat,
+        coachRerolls: seat.coachRerolls - 1,
+        coachOffer: offer,
+        since: Date.now(),
+      });
     }
     case "setCoach": {
-      if (state.phase !== "draft" || !isActive || !active) return state;
-      return assignCoach(state, action.coachId);
+      const seat = seatAt(state, action.seatId);
+      if (state.phase !== "draft" || !seat || !controls(state, actorId, action.seatId)) return state;
+      return assignCoach(state, action.seatId, action.coachId);
     }
     case "confirm": {
       if (action.seatId !== actorId && !isHost) return state;
