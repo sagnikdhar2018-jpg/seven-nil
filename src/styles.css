@@ -318,7 +318,6 @@
 
 .draft-pitch {
   z-index: 0;
-  overflow: hidden;
 }
 
 @media (min-width: 1024px) {

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Dices, Moon, RotateCcw, Sun, Undo2 } from "lucide-react";
+import { Dices, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PoolId } from "@/lib/seven/types";
 import { CLUB_SQUADS } from "@/lib/seven/club-squads";
@@ -42,8 +42,6 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   const setTheme = useSeven((s) => s.setTheme);
   const phase = useSeven((s) => s.phase);
   const simulate = useSeven((s) => s.simulate);
-  const undoLast = useSeven((s) => s.undoLast);
-  const resetDraft = useSeven((s) => s.resetDraft);
   const slots = useSeven((s) => s.slots);
   const runs = useSeven((s) => s.runs);
   const dreams = useSeven((s) => s.dreams);
@@ -171,32 +169,14 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 Place {selected.name} on a highlighted role
               </p>
             ) : null}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                disabled={filled === 0 || phase === "simulating"}
-                onClick={undoLast}
-              >
-                <Undo2 className="size-4" strokeWidth={2} />
-                Undo
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={phase === "simulating"}
-                onClick={resetDraft}
-              >
-                <RotateCcw className="size-4" strokeWidth={2} />
-                Reset
-              </Button>
-              <Button
-                className="ml-auto"
-                data-action="simulate"
-                disabled={filled < 11 || phase === "simulating" || phase === "result"}
-                onClick={simulate}
-              >
-                Simulate
-              </Button>
-            </div>
+            <Button
+              className="w-full"
+              data-action="simulate"
+              disabled={filled < 11 || phase === "simulating" || phase === "result"}
+              onClick={simulate}
+            >
+              Simulate
+            </Button>
           </div>
           <div className="draft-col flex flex-col gap-4">
             {picking ? <SquadPanel /> : null}
