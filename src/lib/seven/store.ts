@@ -4,7 +4,7 @@ import { drawLegal, drawSameTeam, filledCount } from "./draft";
 import { personKey, takenKeysFromSlots } from "./person";
 import { loadSave, writeSave, type BoardSave, type SevenSave } from "./persist";
 import { simulateCampaign } from "./simulate";
-import { coachBoost, coachById, styleForCoach } from "./coaches";
+import { coachBoost, coachById, drawCoaches, styleForCoach } from "./coaches";
 import type {
   Campaign,
   DrawnSquad,
@@ -35,10 +35,14 @@ type SevenState = {
   dreams: number;
   hydrated: boolean;
   coachId: string | null;
+  coachOffer: string[] | null;
+  coachRerolls: number;
   hydrate: (pool?: PoolId) => void;
   setFormation: (id: FormationId) => void;
   setStyle: (id: StyleId) => void;
   setCoach: (id: string) => void;
+  rollCoach: () => void;
+  rerollCoach: () => void;
   setMode: (id: ModeId) => void;
   setPool: (pool: PoolId) => void;
   setTheme: (theme: "panini" | "terrace") => void;
@@ -70,6 +74,8 @@ function snapFrom(state: {
   campaign: Campaign | null;
   revealTo: number;
   coachId?: string | null;
+  coachOffer?: string[] | null;
+  coachRerolls?: number;
 }): BoardSave {
   return {
     formation: state.formation,
@@ -82,6 +88,8 @@ function snapFrom(state: {
     campaign: state.campaign,
     revealTo: state.revealTo,
     coachId: state.coachId ?? null,
+    coachOffer: state.coachOffer ?? null,
+    coachRerolls: state.coachRerolls ?? 3,
   };
 }
 
@@ -111,6 +119,8 @@ function boardToState(pool: PoolId) {
     mode: saved.mode,
     theme: saved.theme,
     coachId: board?.coachId ?? null,
+    coachOffer: board?.coachOffer ?? null,
+    coachRerolls: board?.coachRerolls ?? 3,
   };
 }
 
@@ -142,6 +152,8 @@ export const useSeven = create<SevenState>((set, get) => ({
   dreams: 0,
   hydrated: false,
   coachId: null,
+  coachOffer: null,
+  coachRerolls: 3,
 
   hydrate: (pool) => {
     const target = pool ?? get().pool;
@@ -179,12 +191,31 @@ export const useSeven = create<SevenState>((set, get) => ({
     const current = get();
     if (!coach) return;
     if (filledCount(current.slots) < 11) return;
+    if (!current.coachOffer?.includes(id)) return;
     if (current.phase === "picking" || current.phase === "simulating" || current.phase === "result") return;
     const players = current.slots.map((slot) => slot.player).filter((player): player is Player => Boolean(player));
     const slots = reshapeXi(players, coach.formation);
     const style = styleForCoach(coach.play);
-    set({ coachId: coach.id, formation: coach.formation, slots, style });
+    set({ coachId: coach.id, formation: coach.formation, slots, style, coachOffer: null });
     persist({ style });
+    persistBoard(get().pool, snapFrom(get()));
+  },
+
+  rollCoach: () => {
+    const state = get();
+    if (filledCount(state.slots) < 11 || state.coachId || state.coachOffer) return;
+    if (state.phase === "simulating" || state.phase === "result" || state.phase === "picking") return;
+    set({ coachOffer: drawCoaches(3).map((coach) => coach.id) });
+    persistBoard(get().pool, snapFrom(get()));
+  },
+
+  rerollCoach: () => {
+    const state = get();
+    if (!state.coachOffer || state.coachRerolls <= 0 || state.coachId) return;
+    set({
+      coachRerolls: state.coachRerolls - 1,
+      coachOffer: drawCoaches(3, state.coachOffer).map((coach) => coach.id),
+    });
     persistBoard(get().pool, snapFrom(get()));
   },
 
@@ -303,6 +334,8 @@ export const useSeven = create<SevenState>((set, get) => ({
       campaign: null,
       revealTo: 0,
       coachId: null,
+      coachOffer: null,
+      coachRerolls: 3,
     });
     persistBoard(get().pool, snapFrom(get()));
   },

@@ -6,7 +6,6 @@ import type { PoolId } from "@/lib/seven/types";
 import { CLUB_SQUADS } from "@/lib/seven/club-squads";
 import { useSeven } from "@/lib/seven/store";
 import { BoxScore } from "./box-score";
-import { CoachPicker } from "./coach-picker";
 import { Controls } from "./controls";
 import { Guide } from "./guide";
 import { Pitch } from "./pitch";
@@ -183,7 +182,6 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 Place {selected.name} on a highlighted role
               </p>
             ) : null}
-            {filled >= 11 && phase !== "simulating" && phase !== "result" && phase !== "picking" ? <CoachPicker /> : null}
             <Button
               className="w-full"
               data-action="simulate"

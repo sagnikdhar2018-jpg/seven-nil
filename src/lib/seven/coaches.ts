@@ -208,6 +208,19 @@ export const COACHES: Coach[] = RAW.map(([name, known, years, formation, play, p
   stats: { possession, quickCounter, longBall, overload, pressing, compactness },
 }));
 
+export function drawCoaches(count: number, exclude: string[] = []): Coach[] {
+  const blocked = new Set(exclude);
+  const pool = COACHES.filter((coach) => !blocked.has(coach.id));
+  const bag = (pool.length >= count ? pool : COACHES).slice();
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const swap = bag[i]!;
+    bag[i] = bag[j]!;
+    bag[j] = swap;
+  }
+  return bag.slice(0, count);
+}
+
 export function coachById(id: string | null | undefined): Coach | undefined {
   if (!id) return undefined;
   return COACHES.find((coach) => coach.id === id);

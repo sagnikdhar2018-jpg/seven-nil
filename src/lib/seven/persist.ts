@@ -21,6 +21,8 @@ export type BoardSave = {
   campaign: Campaign | null;
   revealTo: number;
   coachId?: string | null;
+  coachOffer?: string[] | null;
+  coachRerolls?: number;
 };
 
 export type SevenSave = {
