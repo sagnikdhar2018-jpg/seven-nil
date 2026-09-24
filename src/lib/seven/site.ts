@@ -13,7 +13,9 @@ export const orgRef = {
   email: CONTACT_EMAIL,
   logo: {
     "@type": "ImageObject",
-    url: `${SITE_URL}/favicon.svg`,
+    url: `${SITE_URL}/favicon-192.png`,
+    width: 192,
+    height: 192,
   },
   sameAs: [GITHUB],
   description:
