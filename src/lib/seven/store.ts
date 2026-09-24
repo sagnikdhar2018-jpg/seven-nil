@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { canFill, emptySlotsFor, makeSlots, reshapeXi } from "./formations";
-import { drawLegal, drawSameTeam, filledCount } from "./draft";
+import { drawLegal, drawOtherSide, drawSameTeam, filledCount } from "./draft";
 import { personKey, takenKeysFromSlots } from "./person";
 import { loadSave, writeSave, type BoardSave, type SevenSave } from "./persist";
 import { simulateCampaign } from "./simulate";
@@ -260,9 +260,14 @@ export const useSeven = create<SevenState>((set, get) => ({
 
   reroll: () => {
     const state = get();
-    if (state.rerolls <= 0) return;
-    if (state.phase !== "picking") return;
-    const next = drawLegal(state.slots, state.history, takenKeysFromSlots(state.slots), state.pool);
+    if (state.rerolls <= 0 || state.phase !== "picking" || !state.draw) return;
+    const next = drawOtherSide(
+      state.slots,
+      state.history,
+      takenKeysFromSlots(state.slots),
+      state.pool,
+      state.draw.squad.nation,
+    );
     set({
       rerolls: state.rerolls - 1,
       draw: { squad: next.squad, remaining: next.remaining },

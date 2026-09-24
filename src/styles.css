@@ -1232,3 +1232,32 @@
     transform: none;
   }
 }
+
+.reroll-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.45rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 0.35rem;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.reroll-btn:disabled {
+  opacity: 0.45;
+}
+
+.reroll-btn.is-hot,
+.reroll-btn:active:not(:disabled) {
+  background: #d64532;
+  border-color: #d64532;
+  color: #fff;
+}

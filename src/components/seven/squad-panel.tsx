@@ -1,4 +1,4 @@
-import { CalendarRange, Dices, RotateCcw } from "lucide-react";
+import { Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canDrawSameTeam } from "@/lib/seven/draft";
 import { PLAY_LABEL, coachById } from "@/lib/seven/coaches";
@@ -6,6 +6,7 @@ import { emptySlotsFor } from "@/lib/seven/formations";
 import { isPersonTaken, takenKeysFromSlots } from "@/lib/seven/person";
 import { useSeven } from "@/lib/seven/store";
 import { PlayerPickRow } from "./player-pick";
+import { RerollChoices } from "./reroll-choices";
 import { useDiceSpin } from "./use-dice-spin";
 
 const COACH_BARS = [
@@ -118,30 +119,14 @@ export function SquadPanel() {
           )}
         </div>
       ) : phase === "picking" && draw ? (
-        <div className="flex flex-col gap-2 border-b border-line px-4 py-3">
-          <Button
-            variant="secondary"
-            className="btn-choice"
-            disabled={rerolls <= 0 || busy}
-            onClick={() => spin(reroll)}
-          >
-            <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
-            Another {pool === "club" ? "club" : "team"}
-          </Button>
-          <Button
-            variant="secondary"
-            className="btn-choice"
-            data-action="same-year"
-            disabled={rerolls <= 0 || busy || !canYear}
-            aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
-            title={canYear ? "Uses one chance" : "No other season for this side"}
-            onClick={() => spin(rerollYear)}
-          >
-            <CalendarRange className="size-4 shrink-0" strokeWidth={2} />
-            Another {pool === "club" ? "season" : "year"}
-          </Button>
-          <p className="text-xs font-semibold text-muted">{rerolls} chances left · team or year</p>
-        </div>
+        <RerollChoices
+          left={rerolls}
+          pool={pool}
+          canYear={canYear}
+          busy={busy}
+          onTeam={() => spin(reroll)}
+          onYear={() => spin(rerollYear)}
+        />
       ) : (
         <div className="border-b border-line px-4 py-3">
           <Button

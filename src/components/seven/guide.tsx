@@ -134,7 +134,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           <p className="text-sm leading-relaxed text-muted">
             One draw, one squad, one player. The formation owns the board. Classic mode shows
             ratings; Almanac hides them. Five chances cover a bad draw. Another team and another
-            year each spend one. Names are set before the draft starts.
+            cup each spend one. Another cup keeps the side and changes the year. Names are set before the draft starts.
           </p>
         </article>
         <article className="flex flex-col gap-3">
@@ -168,7 +168,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           <li>53 national tournament squads, from 1958 through 2026.</li>
           <li>73 club seasons from the top five leagues, starting in 1980.</li>
           <li>1,520 player ratings. A score above 90 is written in gold.</li>
-          <li>Five redraws. Another year and another team each spend one.</li>
+          <li>Five redraws. Another cup and another team each spend one.</li>
           <li>11 players. One open role, one pick.</li>
         </ul>
         <p>
@@ -246,7 +246,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           </tbody>
         </table>
         <ul className="list-disc space-y-1 pl-5">
-          <li>Five redraws. Another year and another team each spend one.</li>
+          <li>Five redraws. Another cup and another team each spend one.</li>
           <li>World Cup rooms and club rooms never share a player.</li>
           <li>Only a match between two people is played minute by minute.</li>
         </ul>

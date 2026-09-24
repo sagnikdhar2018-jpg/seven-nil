@@ -57,7 +57,7 @@ export const Route = createFileRoute("/how-to-play")({
           },
           {
             q: "Can I keep the same team and change the year?",
-            a: "Yes. After a roll, use Another year (World Cup) or Another season (clubs) if that side has another squad.",
+            a: "Yes. After a roll, Another team draws a new side. Another cup keeps that side and changes the year. Clubs use Another club and Another season. Each one spends a re-roll.",
           },
         ]),
       ],
@@ -125,7 +125,7 @@ function HowToPlayPage() {
       <h3 className="font-semibold">Do I need an account?</h3>
       <p>No. Progress stays on your device. Friends only needs a display name.</p>
       <h3 className="font-semibold">Can I keep the same team and change the year?</h3>
-      <p>Yes. After a roll, use Another year (World Cup) or Another season (clubs) if that side has another squad.</p>
+      <p>Yes. After a roll, Another team draws a new side. Another cup keeps that side and changes the year. Clubs use Another club and Another season. Each one spends a re-roll.</p>
     </LegalShell>
   );
 }

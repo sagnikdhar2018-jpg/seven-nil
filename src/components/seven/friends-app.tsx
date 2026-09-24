@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarRange, Check, Copy, Dices, RotateCcw } from "lucide-react";
+import { Check, Copy, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
@@ -22,6 +22,7 @@ import {
 import { rankedSides } from "@/lib/seven/rankings";
 import { useFriends } from "@/lib/seven/friends-store";
 import { isPersonTaken } from "@/lib/seven/person";
+import { RerollChoices } from "./reroll-choices";
 import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
 import { useSeven } from "@/lib/seven/store";
 import type { FormationId, ModeId, PoolId, StyleId } from "@/lib/seven/types";
@@ -607,30 +608,15 @@ function DraftTable() {
             <span className="font-numeral text-sm font-extrabold tabular-nums text-muted">{filled}/11</span>
           </div>
           {draw ? (
-            <div className="flex flex-col gap-2 border-b border-line px-4 py-3">
-              <Button
-                variant="secondary"
-                className="btn-choice"
-                disabled={!myTurn || active.rerolls <= 0 || busy}
-                onClick={() => spin(() => act({ type: "reroll" }))}
-              >
-                <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
-                Another {pool === "club" ? "club" : "team"}
-              </Button>
-              <Button
-                variant="secondary"
-                className="btn-choice"
-                data-action="same-year"
-                disabled={!myTurn || active.rerolls <= 0 || busy || !canYear}
-                aria-label={pool === "club" ? "Same club, another season" : "Same team, another year"}
-                title={canYear ? "Uses one chance" : "No other season for this side"}
-                onClick={() => spin(() => act({ type: "sameYear" }))}
-              >
-                <CalendarRange className="size-4 shrink-0" strokeWidth={2} />
-                Another {pool === "club" ? "season" : "year"}
-              </Button>
-              <p className="text-xs font-semibold text-muted">{active.rerolls} chances left · team or year</p>
-            </div>
+            <RerollChoices
+              left={active.rerolls}
+              pool={pool}
+              canYear={canYear}
+              busy={busy}
+              locked={!myTurn}
+              onTeam={() => spin(() => act({ type: "reroll" }))}
+              onYear={() => spin(() => act({ type: "sameYear" }))}
+            />
           ) : (
             <div className="border-b border-line px-4 py-3">
               <Button

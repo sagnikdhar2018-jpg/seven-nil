@@ -1,5 +1,5 @@
 import { canFill, emptySlotsFor, makeSlots } from "./formations";
-import { autoFillFrom, drawLegal, drawSameTeam, filledCount } from "./draft";
+import { autoFillFrom, drawLegal, drawOtherSide, drawSameTeam, filledCount } from "./draft";
 import { personKey } from "./person";
 import { playersForSide } from "./squads";
 import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
@@ -526,7 +526,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     case "reroll": {
       if (state.phase !== "draft" || !isActive || !active || !state.draw) return state;
       if (active.rerolls <= 0) return state;
-      const next = drawLegal(active.slots, state.history, state.claimed, state.pool);
+      const next = drawOtherSide(active.slots, state.history, state.claimed, state.pool, state.draw.squad.nation);
       const seats = state.seats.map((s, i) =>
         i === state.activeSeat ? { ...s, rerolls: s.rerolls - 1 } : s,
       );

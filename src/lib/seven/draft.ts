@@ -38,6 +38,25 @@ export function drawLegal(
   };
 }
 
+export function drawOtherSide(
+  slots: Slot[],
+  history: string[],
+  claimed: string[] = [],
+  pool: PoolId = "world",
+  avoidNation?: string,
+) {
+  const taken = takenKeys(claimed, slots);
+  for (let i = 0; i < 48; i++) {
+    const squad = randomSquad(history, pool);
+    if (avoidNation && squad.nation === avoidNation) continue;
+    const remaining = squad.players.filter((p) => selectable(slots, p, taken));
+    if (remaining.length > 0) {
+      return { squad, remaining, history: [...history, squad.id] };
+    }
+  }
+  return drawLegal(slots, history, claimed, pool);
+}
+
 export function canDrawSameTeam(squad: Squad, history: string[], pool: PoolId = "world") {
   return otherYears(squad, history, pool).length > 0;
 }
