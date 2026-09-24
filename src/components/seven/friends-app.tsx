@@ -893,7 +893,7 @@ function TurnClock({
 function FriendsGuide({ pool }: { pool: PoolId }) {
   const club = pool === "club";
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 pb-24 pt-4">
+    <section className="below-fold mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 pb-24 pt-4">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
           {club ? "Club friends guide" : "Friends guide"}

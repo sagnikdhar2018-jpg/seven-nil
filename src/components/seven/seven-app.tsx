@@ -184,7 +184,9 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               className="w-full"
               data-action="simulate"
               disabled={filled < 11 || phase === "simulating" || phase === "result"}
-              onClick={simulate}
+              onClick={() => {
+                requestAnimationFrame(() => simulate());
+              }}
             >
               Simulate
             </Button>

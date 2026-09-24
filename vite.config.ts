@@ -157,6 +157,11 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  build: {
+    // Don't preload the JS bundles from <head>. That download was competing
+    // with CSS and pushing Largest Contentful Paint past 2.5s on mobile.
+    modulePreload: false,
+  },
   optimizeDeps: {
     include: ["mqtt", "trystero/mqtt"],
   },

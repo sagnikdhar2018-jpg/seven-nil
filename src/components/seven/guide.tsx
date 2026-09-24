@@ -80,7 +80,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
   const steps = pool === "club" ? CLUB_STEPS : WORLD_STEPS;
   const faq = pool === "club" ? CLUB_FAQ : WORLD_FAQ;
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col gap-16 px-5 pb-10 pt-8">
+    <section className="below-fold mx-auto flex w-full max-w-5xl flex-col gap-16 px-5 pb-10 pt-8">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Game guide</p>
         <h2 className="home-headline mt-2">
