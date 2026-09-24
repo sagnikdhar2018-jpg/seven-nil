@@ -64,7 +64,6 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
-      { rel: "canonical", href: SITE_URL },
       { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
       { rel: "icon", type: "image/png", href: "/favicon-192.png", sizes: "192x192" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
