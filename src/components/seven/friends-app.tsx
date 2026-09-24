@@ -11,9 +11,9 @@ import {
   friendsPath,
   loadPlayerName,
   makeSeat,
-  pickState,
   savePlayerName,
   shownName,
+  viewFor,
   type BracketSize,
   type FriendKind,
   type FriendsAction,
@@ -196,6 +196,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const [mode, setMode] = useState<ModeId>("classic");
   const [timer, setTimer] = useState<TimerSec>(30);
   const [bracketSize, setBracketSize] = useState<BracketSize>(8);
+  const [organize, setOrganize] = useState(false);
   const hydrateLocal = useFriends((s) => s.hydrateLocal);
   const becomeHost = useFriends((s) => s.becomeHost);
   const navigate = useNavigate();
@@ -208,7 +209,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
     if (!name) return;
     const id = `p-${Math.random().toString(36).slice(2, 10)}`;
     savePlayerName(name);
-    becomeHost(kind, id, name, { mode, timer, password, bracketSize, pool });
+    becomeHost(kind, id, name, { mode, timer, password, bracketSize, pool, organize: kind === "cup" && organize });
     const code = useFriends.getState().code;
     sessionStorage.setItem(`sn-host-${code}`, id);
     void navigate({ to: path, search: { room: code }, replace: true });
@@ -307,6 +308,17 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                       </>
                     ) : null}
                     {item.id === "cup" ? (
+                      <ChipGroup<"play" | "watch">
+                        label="Your role"
+                        value={organize ? "watch" : "play"}
+                        onChange={(id) => setOrganize(id === "watch")}
+                        options={[
+                          { id: "play", label: "I'll play" },
+                          { id: "watch", label: "Organize only" },
+                        ]}
+                      />
+                    ) : null}
+                    {item.id === "cup" ? (
                       <ChipGroup<BracketSize>
                         label="Teams"
                         value={bracketSize}
@@ -328,8 +340,10 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                     </Button>
                     <p className="text-xs leading-relaxed text-muted">
                       {item.id === "local"
-                        ? "Pass the device. Each roll is one pick, then the other person goes."
-                        : "When the timer hits zero, a legal footballer is picked for you."}
+                        ? "Pass the device. Each person drafts their own XI."
+                        : item.id === "cup" && organize
+                          ? "You run the tournament and watch every XI. Players cannot see each other's teams."
+                          : "When the timer hits zero, a legal footballer is picked for you."}
                     </p>
                   </div>
                 ) : null}
@@ -454,6 +468,7 @@ function Lobby({ pool }: { pool: PoolId }) {
   const hostId = useFriends((s) => s.hostId);
   const actorId = useFriends((s) => s.actorId);
   const kind = useFriends((s) => s.kind);
+  const organizer = useFriends((s) => s.organizer);
   const act = useFriends((s) => s.act);
   const timer = useFriends((s) => s.timer);
   const [copied, setCopied] = useState(false);
@@ -464,7 +479,7 @@ function Lobby({ pool }: { pool: PoolId }) {
   const isHost = actorId === hostId;
   const share =
     typeof window !== "undefined" ? `${window.location.origin}${friendsPath(pool)}?room=${code}` : code;
-  const needReady = kind === "cup" ? 1 : 2;
+  const needReady = organizer ? 2 : kind === "cup" ? 1 : 2;
   const lobbyLabel =
     kind === "cup"
       ? pool === "club"
@@ -479,7 +494,13 @@ function Lobby({ pool }: { pool: PoolId }) {
       <div>
         <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{lobbyLabel}</p>
         <p className="room-code mt-2">{code}</p>
-        <p className="mt-2 text-sm text-muted">Share the code or the invite link. Names are set before anyone joins.</p>
+        <p className="mt-2 text-sm text-muted">
+          {organizer && actorId === hostId
+            ? "You are the organizer. You will not play. Players cannot see each other's teams."
+            : organizer
+              ? "An organizer is watching. You will not see the other teams."
+              : "Share the code or the invite link. Names are set before anyone joins."}
+        </p>
       </div>
       <Button
         variant={copied ? "ink" : "secondary"}
@@ -498,7 +519,14 @@ function Lobby({ pool }: { pool: PoolId }) {
         {copied ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2} />}
         {copied ? "Copied" : "Copy link"}
       </Button>
-      {me ? (
+      {me?.kind === "organizer" ? (
+        <div className="card-ink rounded-lg px-4 py-4">
+          <p className="font-display text-2xl leading-none">Spectating</p>
+          <p className="mt-2 text-sm text-muted">
+            The draw, every XI, and every match stay on your screen. You are not in the tournament.
+          </p>
+        </div>
+      ) : me ? (
         <div className="card-ink flex flex-col gap-4 rounded-lg px-4 py-4">
           <NameField
             value={me.name}
@@ -533,11 +561,12 @@ function Lobby({ pool }: { pool: PoolId }) {
           <li key={seat.id} className="flex items-center justify-between border-b border-line py-3 last:border-0">
             <span className="text-sm font-extrabold">
               {shownName(seat.name)}
-              {seat.id === hostId ? " · host" : ""}
+              {seat.kind === "organizer" ? " · organizer" : ""}
+              {seat.id === hostId && seat.kind !== "organizer" ? " · host" : ""}
               {seat.id === actorId ? " · you" : ""}
             </span>
             <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {seat.ready ? "Ready" : "Waiting"}
+              {seat.kind === "organizer" ? "Watching" : seat.ready ? "Ready" : "Waiting"}
             </span>
           </li>
         ))}
@@ -567,11 +596,16 @@ function DraftTable() {
   const seats = useFriends((s) => s.seats);
   const kind = useFriends((s) => s.kind);
   const actorId = useFriends((s) => s.actorId);
+  const hostId = useFriends((s) => s.hostId);
+  const organizer = useFriends((s) => s.organizer);
   const pool = useFriends((s) => s.pool);
   const mode = useFriends((s) => s.mode);
   const act = useFriends((s) => s.act);
   const backToMenu = useFriends((s) => s.backToMenu);
-  const boards = seats.filter((seat) => seat.kind === "human" && (kind === "local" || seat.id === actorId));
+  const spectating = organizer && actorId === hostId;
+  const boards = seats.filter(
+    (seat) => seat.kind === "human" && (kind === "local" || spectating || seat.id === actorId),
+  );
   const viewing = seats.find((seat) => seat.id === actorId) ?? boards[0];
 
   return (
@@ -580,23 +614,29 @@ function DraftTable() {
         <SeatDraft key={seat.id} seatId={seat.id} />
       ))}
       <div className="draft-col flex flex-col gap-3">
-        <p className="text-sm text-muted">Everyone drafts at once. A name taken by anyone is gone.</p>
+        <p className="text-sm text-muted">
+          {spectating
+            ? "You can see every XI. The players cannot."
+            : "Everyone drafts at once. Other teams stay hidden."}
+        </p>
         {seats
           .filter((s) => s.kind === "human")
           .map((seat) => {
-            const mine = kind === "local" || seat.id === actorId;
+            const reveal = kind === "local" || spectating || seat.id === actorId;
             const full = filledCount(seat.slots) >= 11;
-            const coach = coachById(seat.coachId);
+            const coach = reveal ? coachById(seat.coachId) : undefined;
             return (
               <div key={seat.id} className="card-ink flex flex-col gap-3 rounded-lg px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">{seat.formation}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {reveal ? seat.formation : "Hidden"}
+                </p>
                 <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
                 <p className="font-numeral text-sm font-extrabold tabular-nums">
                   {filledCount(seat.slots)}/11
                   {coach ? ` · ${coach.name}` : ""}
                   {seat.confirmed ? " · confirmed" : ""}
                 </p>
-                {mine && full ? (
+                {reveal && full && seat.id === actorId ? (
                   <Button
                     variant={seat.confirmed ? "ink" : "primary"}
                     data-action={`confirm-${seat.id}`}
@@ -609,7 +649,7 @@ function DraftTable() {
               </div>
             );
           })}
-        {viewing ? (
+        {viewing && viewing.kind !== "organizer" ? (
           <LineupBox
             slots={viewing.slots}
             style={viewing.style}
@@ -821,24 +861,34 @@ function SeatDraft({ seatId }: { seatId: string }) {
 function SimView() {
   const bracket = useFriends((s) => s.bracket);
   const champion = useFriends((s) => s.champion);
+  const seats = useFriends((s) => s.seats);
   const pool = useFriends((s) => s.pool);
   const kind = useFriends((s) => s.kind);
+  const actorId = useFriends((s) => s.actorId);
+  const hostId = useFriends((s) => s.hostId);
+  const organizer = useFriends((s) => s.organizer);
   const act = useFriends((s) => s.act);
   const backToMenu = useFriends((s) => s.backToMenu);
-  const games = bracket.map((g) => ({
-    round: g.round,
-    home: g.home,
-    away: g.away,
-    gf: g.gf,
-    ga: g.ga,
-    goals: g.goals ?? [],
-    pens: g.pens,
-    homeRatings: g.homeRatings,
-    awayRatings: g.awayRatings,
-    ratings: g.ratings,
-    potm: g.potm,
-    instant: g.instant,
-  }));
+  const spectating = organizer && actorId === hostId;
+  const myName = shownName(seats.find((seat) => seat.id === actorId)?.name ?? "");
+  const games = bracket.map((g) => {
+    const mine = g.home === myName || g.away === myName;
+    const show = kind === "local" || spectating || mine;
+    return {
+      round: g.round,
+      home: g.home,
+      away: g.away,
+      gf: g.gf,
+      ga: g.ga,
+      goals: show ? (g.goals ?? []) : [],
+      pens: show ? g.pens : g.pens ? { home: g.pens.home, away: g.pens.away } : undefined,
+      homeRatings: show ? g.homeRatings : undefined,
+      awayRatings: show ? g.awayRatings : undefined,
+      ratings: show ? g.ratings : undefined,
+      potm: show ? g.potm : undefined,
+      instant: show ? g.instant : true,
+    };
+  });
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-24 pt-2">
@@ -873,7 +923,10 @@ function ResultView() {
   const pool = useFriends((s) => s.pool);
   const kind = useFriends((s) => s.kind);
   const actorId = useFriends((s) => s.actorId);
+  const hostId = useFriends((s) => s.hostId);
+  const organizer = useFriends((s) => s.organizer);
   const backToMenu = useFriends((s) => s.backToMenu);
+  const spectating = organizer && actorId === hostId;
   const [pop, setPop] = useState(true);
   const winner = shownName(champion ?? "");
   const youWon = seats.some((seat) => {
@@ -901,7 +954,7 @@ function ResultView() {
       {bracket.length ? <BracketBoard games={bracket} liveIndex={bracket.length} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         {seats
-          .filter((s) => s.kind === "human")
+          .filter((s) => s.kind === "human" && (spectating || kind === "local" || s.id === actorId))
           .map((seat) => (
             <div key={seat.id} className="card-ink rounded-lg px-4 py-4">
               <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
@@ -1077,6 +1130,9 @@ function NetInner({
   const p2p = useP2PRoom({ room, name: selfName, selfId: selfIdHint });
   const replace = useFriends((s) => s.replace);
   const becomeGuest = useFriends((s) => s.becomeGuest);
+  const peerSeats = useRef(new Map<string, string>());
+  const peersRef = useRef(p2p.peers);
+  peersRef.current = p2p.peers;
 
   useEffect(() => {
     return p2p.onMessage((from, data) => {
@@ -1087,25 +1143,26 @@ function NetInner({
         return;
       }
       if (msg.t === "hello" && isHost) {
+        peerSeats.current.set(from, msg.id);
         const next = apply(
           useFriends.getState(),
           { type: "join", seat: makeSeat(msg.id, msg.name), password: msg.password },
           useFriends.getState().hostId,
         );
         replace(next);
-        p2p.send({ t: "state", state: pickState(next) });
+        p2p.send({ t: "state", state: viewFor(next, msg.id) }, from);
         return;
       }
       if (msg.t === "act" && isHost) {
         const next = apply(useFriends.getState(), msg.action, msg.actorId);
         replace(next);
-        p2p.send({ t: "state", state: pickState(next) });
         return;
       }
       if (msg.t === "need" && isHost) {
-        p2p.send({ t: "state", state: pickState(useFriends.getState()) });
+        const seatId = peerSeats.current.get(from);
+        if (!seatId) return;
+        p2p.send({ t: "state", state: viewFor(useFriends.getState(), seatId) }, from);
       }
-      void from;
     });
   }, [p2p.onMessage, p2p.send, isHost, replace]);
 
@@ -1118,8 +1175,13 @@ function NetInner({
 
   useEffect(() => {
     if (!isHost || !p2p.joined || p2p.peers.length === 0) return;
-    p2p.send({ t: "state", state: pickState(useFriends.getState()) });
-  }, [isHost, p2p.joined, p2p.peers.length, p2p.send]);
+    const state = useFriends.getState();
+    for (const peer of p2p.peers) {
+      const seatId = peerSeats.current.get(peer.id);
+      if (!seatId) continue;
+      p2p.send({ t: "state", state: viewFor(state, seatId) }, peer.id);
+    }
+  }, [isHost, p2p.joined, p2p.peers, p2p.send]);
 
   useEffect(() => {
     if (!isHost) {
@@ -1131,7 +1193,11 @@ function NetInner({
     }
     return useFriends.subscribe((state) => {
       if (state.phase === "menu" || state.phase === "setup") return;
-      p2p.send({ t: "state", state: pickState(state) });
+      for (const peer of peersRef.current) {
+        const seatId = peerSeats.current.get(peer.id);
+        if (!seatId) continue;
+        p2p.send({ t: "state", state: viewFor(state, seatId) }, peer.id);
+      }
     });
   }, [isHost, p2p.joined, p2p.send, p2p.onMessage, p2p.selfId]);
 

@@ -16,6 +16,7 @@ type HostOpts = {
   password?: string;
   bracketSize?: BracketSize;
   pool?: PoolId;
+  organize?: boolean;
 };
 
 type FriendsStore = FriendsState & {
@@ -49,6 +50,15 @@ export const useFriends = create<FriendsStore>((set, get) => ({
     if (opts?.timer) state = apply(state, { type: "setTimer", timer: opts.timer }, hostId);
     if (opts?.password) state = apply(state, { type: "setPassword", password: opts.password }, hostId);
     if (opts?.bracketSize) state = apply(state, { type: "setBracket", size: opts.bracketSize }, hostId);
+    if (opts?.organize && kind === "cup") {
+      state = {
+        ...state,
+        organizer: true,
+        seats: state.seats.map((seat) =>
+          seat.id === hostId ? { ...seat, kind: "organizer", ready: true, confirmed: true } : seat,
+        ),
+      };
+    }
     set({ ...state, actorId: hostId });
   },
 

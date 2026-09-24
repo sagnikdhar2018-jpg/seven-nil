@@ -14,7 +14,7 @@ export type FriendsPhase = "menu" | "setup" | "lobby" | "draft" | "simulating" |
 export type Seat = {
   id: string;
   name: string;
-  kind: "human" | "cpu";
+  kind: "human" | "cpu" | "organizer";
   formation: FormationId;
   style: StyleId;
   slots: Slot[];
@@ -38,6 +38,7 @@ export type FriendsState = {
   timer: TimerSec;
   bracketSize: BracketSize;
   hostId: string;
+  organizer: boolean;
   phase: FriendsPhase;
   seats: Seat[];
   activeSeat: number;
@@ -153,6 +154,7 @@ export function freshFriends(
     timer: 30,
     bracketSize: 8,
     hostId,
+    organizer: false,
     phase: kind === "local" ? "setup" : "lobby",
     seats,
     activeSeat: 0,
@@ -167,6 +169,52 @@ export function freshFriends(
   };
 }
 
+function concealSeat(seat: Seat): Seat {
+  return {
+    ...seat,
+    slots: seat.slots.map((slot) =>
+      slot.player
+        ? {
+            ...slot,
+            player: { id: "hidden", name: "", nation: "", year: 0, num: 0, pos: [slot.pos], ovr: 0 },
+          }
+        : slot,
+    ),
+    draw: null,
+    selected: null,
+    coachId: null,
+    coachOffer: null,
+  };
+}
+
+function concealGame(game: BracketGame, viewerName: string): BracketGame {
+  if (viewerName && (game.home === viewerName || game.away === viewerName)) return game;
+  return {
+    ...game,
+    goals: [],
+    pens: game.pens ? { home: game.pens.home, away: game.pens.away } : undefined,
+    homeRatings: undefined,
+    awayRatings: undefined,
+    ratings: undefined,
+    potm: undefined,
+    instant: true,
+  };
+}
+
+/** Players receive their own XI only. An organize-only host keeps every team. */
+export function viewFor(state: FriendsState, viewerId: string): FriendsState {
+  const snap = pickState(state);
+  if (state.kind === "local") return snap;
+  if (state.organizer && viewerId === state.hostId) return snap;
+  const me = state.seats.find((seat) => seat.id === viewerId);
+  const myName = me && me.kind !== "organizer" ? shownName(me.name) : "";
+  return {
+    ...snap,
+    seats: snap.seats.map((seat) => (seat.id === viewerId || seat.kind === "organizer" ? seat : concealSeat(seat))),
+    bracket: snap.bracket.map((game) => concealGame(game, myName)),
+  };
+}
+
 export function pickState(s: FriendsState): FriendsState {
   return {
     kind: s.kind,
@@ -177,6 +225,7 @@ export function pickState(s: FriendsState): FriendsState {
     timer: s.timer,
     bracketSize: s.bracketSize,
     hostId: s.hostId,
+    organizer: s.organizer,
     phase: s.phase,
     seats: s.seats,
     activeSeat: s.activeSeat,
@@ -422,8 +471,9 @@ function boostOf(seat: Seat) {
 function runSimulate(state: FriendsState): FriendsState {
   const filled = fillCpu(state);
   if (filled.kind === "cup") {
+    const playing = filled.seats.filter((s) => s.kind !== "organizer");
     const { games, champion } = simulateKnockout(
-      filled.seats.map((s) => ({
+      playing.map((s) => ({
         name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"),
         slots: s.slots,
         style: s.style,
@@ -551,11 +601,12 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       const readyHumans = humans(state).filter((s) => s.ready || state.kind === "local");
       if (readyHumans.some((s) => !s.name.trim())) return state;
       if (state.kind === "final" && readyHumans.length < 2) return state;
-      if (state.kind === "cup" && readyHumans.length < 1) return state;
+      if (state.kind === "cup" && readyHumans.length < (state.organizer ? 2 : 1)) return state;
       if (state.kind === "local" && state.seats.length < 2) return state;
       let seats = state.seats;
       if (state.kind === "cup") {
-        const need = state.bracketSize - seats.length;
+        const playing = seats.filter((s) => s.kind !== "organizer");
+        const need = state.bracketSize - playing.length;
         const taken = new Set(seats.map((s) => s.name.trim().toLowerCase()).filter(Boolean));
         const extras: Seat[] = [];
         for (let i = 0; i < need; i++) {
