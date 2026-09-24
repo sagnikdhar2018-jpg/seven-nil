@@ -109,7 +109,10 @@ export function pageHead({
       { name: "twitter:description", content: description },
       { name: "twitter:image", content: OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: url }],
+    links: [
+      { rel: "canonical", href: url },
+      { rel: "sitemap", type: "application/xml", href: `${SITE_URL}/sitemap.xml` },
+    ],
     scripts: [
       {
         type: "application/ld+json",
