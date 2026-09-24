@@ -101,12 +101,18 @@ function persistBoard(pool: PoolId, board: BoardSave) {
 function boardToState(pool: PoolId) {
   const saved = loadSave();
   const board = saved.boards?.[pool];
-  const formation = board?.formation ?? saved.formation;
+  const coach = coachById(board?.coachId);
+  const formation = coach?.formation ?? board?.formation ?? saved.formation;
+  let slots = board?.slots?.length ? board.slots : makeSlots(formation);
+  if (coach && slots.filter((slot) => slot.player).length >= 11) {
+    const players = slots.map((slot) => slot.player).filter((player): player is Player => Boolean(player));
+    slots = reshapeXi(players, coach.formation);
+  }
   return {
     pool,
     formation,
     phase: board?.phase ?? ("setup" as Phase),
-    slots: board?.slots?.length ? board.slots : makeSlots(formation),
+    slots,
     draw: board?.draw ?? null,
     rerolls: board?.rerolls ?? 5,
     history: board?.history ?? [],

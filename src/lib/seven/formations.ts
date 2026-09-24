@@ -259,26 +259,71 @@ export function makeSlots(formation: FormationId): Slot[] {
   }));
 }
 
-/** Move a finished XI onto a coach's shape. Best position fit first. */
+const LINE: Record<Pos, number> = {
+  GK: 0,
+  CB: 1,
+  RB: 1,
+  LB: 1,
+  RWB: 1,
+  LWB: 1,
+  DM: 2,
+  CM: 3,
+  RM: 3,
+  LM: 3,
+  AM: 4,
+  RW: 5,
+  LW: 5,
+  ST: 5,
+};
+
+/** How natural a slot is. Primary role wins. Rating is only a tie-break. */
+function comfort(player: Player, slot: Pos): number {
+  let best = -200;
+  player.pos.forEach((pos, index) => {
+    if (pos === "GK" || slot === "GK") {
+      best = Math.max(best, pos === slot ? 300 : -200);
+      return;
+    }
+    if (pos === slot) {
+      best = Math.max(best, index === 0 ? 220 : 140);
+      return;
+    }
+    const from = LINE[pos];
+    const to = LINE[slot];
+    const d = Math.abs(from - to);
+    let band = d === 0 ? 90 : d === 1 ? 46 : d === 2 ? 12 : 0;
+    if (d === 1) {
+      const forward = to > from ? 1 : -1;
+      const likes = from >= 4 ? 1 : from <= 2 ? -1 : 0;
+      band += forward * likes * 8;
+    }
+    best = Math.max(best, band - index * 6);
+  });
+  return best + player.ovr / 5000;
+}
+
+/** Move a finished XI onto a coach's shape, each player nearest his own role. */
 export function reshapeXi(players: Player[], formation: FormationId): Slot[] {
   const slots = makeSlots(formation);
-  const left = players.slice();
-  for (const slot of slots) {
-    let best = 0;
-    let bestScore = -1;
+  const left = players.map((player, index) => ({ player, index }));
+  const open = slots.map((_, index) => index);
+  while (left.length && open.length) {
+    let bestL = 0;
+    let bestS = 0;
+    let bestScore = -Infinity;
     for (let i = 0; i < left.length; i++) {
-      const player = left[i]!;
-      let score = 1;
-      if (player.pos.includes(slot.pos)) score = 4;
-      else if (canFill(slot.pos, player.pos)) score = 2;
-      score += player.ovr / 1000;
-      if (score > bestScore) {
-        bestScore = score;
-        best = i;
+      for (let j = 0; j < open.length; j++) {
+        const score = comfort(left[i]!.player, slots[open[j]!]!.pos);
+        if (score > bestScore) {
+          bestScore = score;
+          bestL = i;
+          bestS = j;
+        }
       }
     }
-    const picked = left.splice(best, 1)[0];
-    if (picked) slot.player = picked;
+    const player = left.splice(bestL, 1)[0]!.player;
+    const slotAt = open.splice(bestS, 1)[0]!;
+    slots[slotAt]!.player = player;
   }
   return slots;
 }
