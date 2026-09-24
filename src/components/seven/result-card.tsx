@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSeven } from "@/lib/seven/store";
+import { coachById, PLAY_LABEL } from "@/lib/seven/coaches";
 import { ChampionPop } from "./bracket-board";
 import { LiveMatchBoard } from "./live-match";
 
@@ -13,6 +14,7 @@ export function ResultCard() {
   const resetDraft = useSeven((s) => s.resetDraft);
   const slots = useSeven((s) => s.slots);
   const pool = useSeven((s) => s.pool);
+  const coach = coachById(useSeven((s) => s.coachId));
   const [pop, setPop] = useState(true);
 
   if (!campaign || (phase !== "simulating" && phase !== "result")) return null;
@@ -29,6 +31,11 @@ export function ResultCard() {
             {pool === "club" ? "Europe" : "Knockout"}
           </p>
           <p className="result-stamp mt-2">{done ? campaign.exit : current?.round ?? "Live"}</p>
+          {coach ? (
+            <p className="mt-1 text-xs font-semibold text-muted">
+              {coach.name} · {PLAY_LABEL[coach.play]} · {coach.formation}
+            </p>
+          ) : null}
         </div>
         {done ? (
           <div className="text-right">

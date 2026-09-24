@@ -20,6 +20,7 @@ export type BoardSave = {
   selected: Player | null;
   campaign: Campaign | null;
   revealTo: number;
+  coachId?: string | null;
 };
 
 export type SevenSave = {

@@ -6,6 +6,7 @@ import type { PoolId } from "@/lib/seven/types";
 import { CLUB_SQUADS } from "@/lib/seven/club-squads";
 import { useSeven } from "@/lib/seven/store";
 import { BoxScore } from "./box-score";
+import { CoachPicker } from "./coach-picker";
 import { Controls } from "./controls";
 import { Guide } from "./guide";
 import { Pitch } from "./pitch";
@@ -46,6 +47,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   const runs = useSeven((s) => s.runs);
   const dreams = useSeven((s) => s.dreams);
   const filled = slots.filter((s) => s.player).length;
+  const coachId = useSeven((s) => s.coachId);
   const selected = useSeven((s) => s.selected);
   const picking = phase !== "setup" || filled > 0 || Boolean(selected);
   const copy = COPY[pool];
@@ -181,10 +183,11 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 Place {selected.name} on a highlighted role
               </p>
             ) : null}
+            {filled >= 11 && phase !== "simulating" && phase !== "result" && phase !== "picking" ? <CoachPicker /> : null}
             <Button
               className="w-full"
               data-action="simulate"
-              disabled={filled < 11 || phase === "simulating" || phase === "result"}
+              disabled={filled < 11 || !coachId || phase === "simulating" || phase === "result"}
               onClick={() => {
                 requestAnimationFrame(() => simulate());
               }}

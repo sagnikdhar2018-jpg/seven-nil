@@ -52,7 +52,7 @@ function avg(nums: number[], fallback: number) {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-export function teamAxes(slots: Slot[], style: StyleId): Axis {
+export function teamAxes(slots: Slot[], style: StyleId, boost?: { att: number; def: number }): Axis {
   const filled = slots.filter((s) => s.player) as (Slot & { player: Player })[];
   const attack = avg(
     filled.filter((s) => ATT_POS.includes(s.pos)).map((s) => s.player.ovr),
@@ -82,6 +82,10 @@ export function teamAxes(slots: Slot[], style: StyleId): Axis {
   } else if (style === "counter") {
     def += 2.2;
     att += 1.4;
+  }
+  if (boost) {
+    att += boost.att;
+    def += boost.def;
   }
   return {
     attack: att,
@@ -346,8 +350,13 @@ const KNOCKOUT = [
   "Final",
 ] as const;
 
-export function simulateCampaign(slots: Slot[], style: StyleId, pool: PoolId = "world"): Campaign {
-  const axes = teamAxes(slots, style);
+export function simulateCampaign(
+  slots: Slot[],
+  style: StyleId,
+  pool: PoolId = "world",
+  boost?: { att: number; def: number },
+): Campaign {
+  const axes = teamAxes(slots, style, boost);
   const foes = pickOpponents(5, pool);
   const matches: Match[] = [];
   const homeName = pool === "club" ? "Your XI" : "Your XI";

@@ -1,4 +1,4 @@
-import type { FormationId, Pos, Slot, StyleId } from "./types";
+import type { FormationId, Player, Pos, Slot, StyleId } from "./types";
 
 export const FORMATIONS: FormationId[] = [
   "4-3-3",
@@ -257,6 +257,30 @@ export function makeSlots(formation: FormationId): Slot[] {
     y: slot.y,
     player: null,
   }));
+}
+
+/** Move a finished XI onto a coach's shape. Best position fit first. */
+export function reshapeXi(players: Player[], formation: FormationId): Slot[] {
+  const slots = makeSlots(formation);
+  const left = players.slice();
+  for (const slot of slots) {
+    let best = 0;
+    let bestScore = -1;
+    for (let i = 0; i < left.length; i++) {
+      const player = left[i]!;
+      let score = 1;
+      if (player.pos.includes(slot.pos)) score = 4;
+      else if (canFill(slot.pos, player.pos)) score = 2;
+      score += player.ovr / 1000;
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    const picked = left.splice(best, 1)[0];
+    if (picked) slot.player = picked;
+  }
+  return slots;
 }
 
 export function canFill(slotPos: Pos, playerPos: Pos[]): boolean {
