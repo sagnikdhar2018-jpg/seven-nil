@@ -1,4 +1,4 @@
-import { displayRatings } from "@/lib/seven/simulate";
+import { chemistry, displayRatings } from "@/lib/seven/simulate";
 import type { Slot, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ export function LineupBox({
 }) {
   const filled = slots.filter((s) => s.player).length;
   const ratings = filled >= 11 ? displayRatings(slots, style) : null;
+  const chem = filled >= 11 ? chemistry(slots) : null;
 
   return (
     <div className="card-ink rounded-lg px-4 py-4">
@@ -40,6 +41,14 @@ export function LineupBox({
       ) : (
         <p className="mt-3 text-xs text-muted">Ratings lock in at 11.</p>
       )}
+      {chem != null && classic ? (
+        <p className="mt-2 text-sm font-extrabold text-ink">
+          Chemistry <span className="font-numeral tabular-nums text-accent">{chem}</span>
+          <span className="ml-2 font-semibold text-muted">
+            {chem >= 75 ? "They know each other." : chem >= 50 ? "A mixed side." : "Little link-up."}
+          </span>
+        </p>
+      ) : null}
       <ul className="mt-2">
         {slots.map((slot) => (
           <li

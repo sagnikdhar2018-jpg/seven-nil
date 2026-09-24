@@ -375,7 +375,7 @@
   border: 0;
   padding: 0;
   color: inherit;
-  transition: transform var(--motion-fast) var(--ease-out);
+  transition: transform var(--motion-fast) var(--ease-out), left var(--motion-fast) var(--ease-out), top var(--motion-fast) var(--ease-out);
 }
 
 .disc:hover:not(:disabled),

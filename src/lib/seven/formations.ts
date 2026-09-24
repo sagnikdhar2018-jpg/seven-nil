@@ -229,6 +229,26 @@ const COMPAT: Record<Pos, Pos[]> = {
   ST: ["ST", "AM"],
 };
 
+export function styledSpot(x: number, y: number, pos: Pos, style: StyleId): { x: number; y: number } {
+  const clampN = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+  if (style === "balanced" || pos === "GK") return { x, y };
+  if (style === "defensive") {
+    const drop = y < 36 ? 11 : y < 62 ? 7 : 3;
+    return { x, y: clampN(y + drop, 8, 92) };
+  }
+  if (style === "attacking") {
+    const push = y > 68 ? 7 : 11;
+    return { x, y: clampN(y - push, 8, 92) };
+  }
+  if (style === "press") {
+    const push = y > 64 ? 11 : 5;
+    return { x, y: clampN(y - push, 8, 92) };
+  }
+  const tuck = x < 48 ? 7 : x > 52 ? -7 : 0;
+  const drop = y < 28 ? -4 : 8;
+  return { x: clampN(x + tuck, 8, 92), y: clampN(y + drop, 8, 92) };
+}
+
 export function makeSlots(formation: FormationId): Slot[] {
   return SHAPES[formation].map((slot, index) => ({
     id: `${formation}-${index}`,

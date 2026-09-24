@@ -90,6 +90,52 @@ export function teamAxes(slots: Slot[], style: StyleId): Axis {
   };
 }
 
+export function chemistry(slots: Slot[]): number {
+  const filled = slots.filter((slot): slot is Slot & { player: Player } => Boolean(slot.player));
+  if (filled.length < 2) return 62;
+  let link = 0;
+  let pairs = 0;
+  for (let i = 0; i < filled.length; i++) {
+    for (let j = i + 1; j < filled.length; j++) {
+      pairs += 1;
+      const a = filled[i]!.player;
+      const b = filled[j]!.player;
+      let bond = 0;
+      if (a.nation === b.nation) bond += 0.6;
+      if (a.nation === b.nation && Math.abs(a.year - b.year) <= 2) bond += 0.4;
+      link += Math.min(1, bond);
+    }
+  }
+  const together = pairs ? link / pairs : 0;
+  const fit =
+    filled.reduce((sum, slot) => sum + (slot.player.pos.includes(slot.pos) ? 1 : 0.4), 0) / filled.length;
+  return Math.round(together * 70 + fit * 30);
+}
+
+function sideQuality(
+  slots: Slot[],
+  style: StyleId,
+  fallback?: { att: number; mid: number; def: number; gk: number },
+) {
+  const hasPlayers = slots.some((slot) => slot.player);
+  const ovr = hasPlayers
+    ? displayRatings(slots, style).ovr
+    : fallback
+      ? (fallback.att + fallback.mid + fallback.def + fallback.gk) / 4
+      : 78;
+  const chem = hasPlayers ? chemistry(slots) : 76;
+  let quality = ovr * 0.74 + chem * 0.26;
+  if (style === "attacking") quality += 1.1;
+  else if (style === "press") quality += 0.7;
+  else if (style === "counter") quality += 0.8;
+  else if (style === "defensive") quality += 0.4;
+  return quality;
+}
+
+function swing() {
+  return (Math.random() + Math.random() + Math.random() - 1.5) * 0.9;
+}
+
 export function displayRatings(slots: Slot[], _style: StyleId): TeamRatings {
   const filled = slots.filter((s): s is Slot & { player: Player } => Boolean(s.player));
   const mean = (rows: typeof filled) =>
@@ -249,11 +295,19 @@ function playMatch(
   homeSlots: Slot[] = [],
   awaySlots: Slot[] = [],
   homeName = "You",
+  homeStyle: StyleId = "balanced",
+  awayStyle: StyleId = "balanced",
 ): Match {
-  const ourChance = (us.attack + us.midfield * 0.35 - them.def * 0.7 - them.gk * 0.25) / 18;
-  const theirChance = (them.att + them.mid * 0.3 - us.defence * 0.7 - us.gk * 0.25) / 18;
-  const gf = clamp(poisson(clamp(1.15 + ourChance, 0.15, 4.4)), 0, 8);
-  const ga = clamp(poisson(clamp(1.05 + theirChance, 0.1, 4.1)), 0, 8);
+  const usQ = sideQuality(homeSlots, homeStyle, {
+    att: us.attack,
+    mid: us.midfield,
+    def: us.defence,
+    gk: us.gk,
+  });
+  const themQ = sideQuality(awaySlots, awayStyle, them);
+  const gap = (usQ - themQ) / 18;
+  const gf = clamp(poisson(clamp(1.15 + gap + swing(), 0.25, 4.4)), 0, 8);
+  const ga = clamp(poisson(clamp(1.05 - gap + swing(), 0.2, 4.2)), 0, 8);
   const result: Match["result"] = gf > ga ? "W" : gf === ga ? "D" : "L";
   return {
     round,
@@ -307,12 +361,13 @@ export function simulateCampaign(slots: Slot[], style: StyleId, pool: PoolId = "
     const opp = foes[i]!;
     const nation = playersForSide(opp.name, pool);
     const oppXi = autoFillFrom("4-3-3", takenKeysFromSlots(slots), nation);
-    const match = playMatch(axes, opp, round, slots, oppXi.slots, homeName);
+    const match = playMatch(axes, opp, round, slots, oppXi.slots, homeName, style, "balanced");
     if (oppXi.slots.some((slot) => slot.player)) {
       match.awayRatings = displayRatings(oppXi.slots, "balanced");
     }
     if (match.result === "D") {
-      const pens = Math.random() < 0.5 + (axes.gk - 80) / 80;
+      const edge = (sideQuality(slots, style) - sideQuality(oppXi.slots, "balanced", opp)) / 50;
+      const pens = Math.random() < clamp(0.5 + edge, 0.36, 0.64);
       match.result = pens ? "W" : "L";
       match.pens = pens ? { home: 5, away: 4 } : { home: 3, away: 4 };
     }
@@ -377,10 +432,11 @@ export function simulateFinal(
     us,
     them,
     usName,
+    styleUs,
+    styleThem,
   );
   if (match.result === "D") {
-    const edge = teamAxes(us, styleUs).gk - their.gk;
-    const shot = scriptPens(us, them, edge / 40);
+    const shot = scriptPens(us, them, sideQuality(us, styleUs) - sideQuality(them, styleThem));
     match.result = shot.home >= shot.away ? "W" : "L";
     match.pens = shot;
   }

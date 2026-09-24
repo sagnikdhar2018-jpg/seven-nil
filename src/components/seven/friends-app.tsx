@@ -669,6 +669,7 @@ function DraftTable() {
         <Pitch
           slots={kind === "local" ? active.slots : viewing.slots}
           selected={selected}
+          style={viewing.style}
           onPlace={(id) => act({ type: "place", slotId: id })}
         />
         {selected ? (

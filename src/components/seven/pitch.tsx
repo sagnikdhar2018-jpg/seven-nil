@@ -1,5 +1,5 @@
-import { emptySlotsFor } from "@/lib/seven/formations";
-import type { Player, Slot } from "@/lib/seven/types";
+import { emptySlotsFor, styledSpot } from "@/lib/seven/formations";
+import type { Player, Slot, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
 import { cn } from "@/lib/utils";
 
@@ -7,17 +7,21 @@ export function Pitch({
   slots: slotsProp,
   selected: selectedProp,
   onPlace,
+  style: styleProp,
 }: {
   slots?: Slot[];
   selected?: Player | null;
   onPlace?: (id: string) => void;
+  style?: StyleId;
 }) {
   const storeSlots = useSeven((s) => s.slots);
   const storeSelected = useSeven((s) => s.selected);
   const storePlace = useSeven((s) => s.place);
+  const storeStyle = useSeven((s) => s.style);
   const slots = slotsProp ?? storeSlots;
   const selected = selectedProp !== undefined ? selectedProp : storeSelected;
   const place = onPlace ?? storePlace;
+  const style = styleProp ?? storeStyle;
   const legalIds = selected
     ? new Set(emptySlotsFor(slots, selected.pos).map((slot) => slot.id))
     : new Set<string>();
@@ -39,12 +43,13 @@ export function Pitch({
       {slots.map((slot) => {
         const filled = Boolean(slot.player);
         const legal = legalIds.has(slot.id);
+        const spot = styledSpot(slot.x, slot.y, slot.pos, style);
         return (
           <button
             key={slot.id}
             type="button"
             className={cn("disc", !filled && "is-empty", filled && "is-filled", legal && "is-legal")}
-            style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
+            style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
             disabled={!legal && !filled}
             onClick={() => {
               if (legal) place(slot.id);
