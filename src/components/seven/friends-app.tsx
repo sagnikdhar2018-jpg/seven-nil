@@ -25,7 +25,7 @@ import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
 import { useSeven } from "@/lib/seven/store";
 import type { FormationId, ModeId, PoolId, StyleId } from "@/lib/seven/types";
 import { cn } from "@/lib/utils";
-import { BracketBoard } from "./bracket-board";
+import { BracketBoard, ChampionPop } from "./bracket-board";
 import { ChipGroup } from "./chips";
 import { LineupBox } from "./box-score";
 import { LiveCup } from "./live-match";
@@ -776,7 +776,15 @@ function ResultView() {
   const champion = useFriends((s) => s.champion);
   const seats = useFriends((s) => s.seats);
   const pool = useFriends((s) => s.pool);
+  const kind = useFriends((s) => s.kind);
+  const actorId = useFriends((s) => s.actorId);
   const backToMenu = useFriends((s) => s.backToMenu);
+  const [pop, setPop] = useState(true);
+  const winner = shownName(champion ?? "");
+  const youWon = seats.some((seat) => {
+    if (seat.kind !== "human" || shownName(seat.name) !== winner) return false;
+    return kind === "local" || seat.id === actorId;
+  });
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-24 pt-2">
@@ -814,6 +822,14 @@ function ResultView() {
       <Button data-action="new-room" onClick={() => backToMenu(pool)}>
         New room
       </Button>
+      {youWon ? (
+        <ChampionPop
+          open={pop}
+          name={winner}
+          detail="You won the tournament."
+          onClose={() => setPop(false)}
+        />
+      ) : null}
     </section>
   );
 }

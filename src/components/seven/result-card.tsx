@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSeven } from "@/lib/seven/store";
+import { ChampionPop } from "./bracket-board";
 import { LiveMatchBoard } from "./live-match";
 
 export function ResultCard() {
@@ -11,6 +13,7 @@ export function ResultCard() {
   const resetDraft = useSeven((s) => s.resetDraft);
   const slots = useSeven((s) => s.slots);
   const pool = useSeven((s) => s.pool);
+  const [pop, setPop] = useState(true);
 
   if (!campaign || (phase !== "simulating" && phase !== "result")) return null;
 
@@ -103,6 +106,14 @@ export function ResultCard() {
           <Button className="w-full" data-action="new-draft" onClick={resetDraft}>
             New draft
           </Button>
+          {campaign.champion ? (
+            <ChampionPop
+              open={pop}
+              name="You"
+              detail={pool === "club" ? "You won Europe." : "You won the tournament."}
+              onClose={() => setPop(false)}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>
