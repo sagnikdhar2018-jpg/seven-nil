@@ -1,10 +1,13 @@
 # Seven Nil
 
-World Cup and club draft XI. Roll a squad, pick eleven, simulate the campaign.
+Play the game: [seven-nil-self.vercel.app](https://seven-nil-self.vercel.app)
 
-- World Cup: historic national teams
-- Clubs: top-five league sides from 1980 on
-- Friends: local, Cup Final, Full Cup
+World Cup and club draft XI by nik.peeps. Roll a squad, pick eleven, simulate the campaign.
+
+- [World Cup draft](https://seven-nil-self.vercel.app/): historic national teams
+- [Club draft](https://seven-nil-self.vercel.app/club): top-five league sides from 1980 on
+- [Friends](https://seven-nil-self.vercel.app/friends): local, Cup Final, Full Cup
+- [How to play](https://seven-nil-self.vercel.app/how-to-play)
 
 ```bash
 npm install
