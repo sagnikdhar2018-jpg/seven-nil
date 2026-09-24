@@ -31,8 +31,9 @@ export function MuteButton() {
 
   return (
     <Button
-      variant="ghost"
+      variant="secondary"
       size="icon"
+      className="size-14 min-h-14 rounded-full"
       data-action="mute"
       aria-label={muted ? "Unmute sounds" : "Mute sounds"}
       aria-pressed={muted}
@@ -41,7 +42,7 @@ export function MuteButton() {
         setMuted(!muted);
       }}
     >
-      {muted ? <VolumeX className="size-5" strokeWidth={1.75} /> : <Volume2 className="size-5" strokeWidth={1.75} />}
+      {muted ? <VolumeX className="size-7" strokeWidth={2} /> : <Volume2 className="size-7" strokeWidth={2} />}
     </Button>
   );
 }

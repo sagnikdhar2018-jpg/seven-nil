@@ -16,15 +16,16 @@ export function SiteHeader({ playLabel = "Play", playHref = "#draft" }: { playLa
       <div className="flex flex-wrap items-center justify-end gap-2">
         <MuteButton />
         <Button
-          variant="ghost"
+          variant="secondary"
           size="icon"
+          className="size-14 min-h-14 rounded-full"
           aria-label={theme === "panini" ? "Night pitch" : "Paper pitch"}
           onClick={() => setTheme(theme === "panini" ? "terrace" : "panini")}
         >
           {theme === "panini" ? (
-            <Moon className="size-5" strokeWidth={1.75} />
+            <Moon className="size-7" strokeWidth={2} />
           ) : (
-            <Sun className="size-5" strokeWidth={1.75} />
+            <Sun className="size-7" strokeWidth={2} />
           )}
         </Button>
         <Button variant="ghost" asChild>
