@@ -35,9 +35,15 @@ function ContactPage() {
       </p>
       <form
         className="flex flex-col gap-3"
-        action={`mailto:${CONTACT_EMAIL}`}
-        method="post"
-        encType="text/plain"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          const name = String(data.get("name") ?? "").trim();
+          const email = String(data.get("email") ?? "").trim();
+          const message = String(data.get("message") ?? "").trim();
+          const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+          window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Seven Nil")}&body=${encodeURIComponent(body)}`;
+        }}
       >
         <label className="flex flex-col gap-1 text-sm font-extrabold">
           Name
@@ -55,7 +61,9 @@ function ContactPage() {
           Send
         </button>
       </form>
-      <p className="text-sm text-muted">The form opens your email app. Nothing is stored on the site.</p>
+      <p className="text-sm text-muted">
+        Send opens your email app on this device. The message is not posted to the site.
+      </p>
     </LegalShell>
   );
 }
