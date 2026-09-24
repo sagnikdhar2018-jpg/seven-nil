@@ -11,7 +11,7 @@ export function LegalShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="relative min-h-dvh bg-paper text-ink">
+    <main id="main-content" className="relative min-h-dvh bg-paper text-ink">
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">

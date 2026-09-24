@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalShell } from "@/components/seven/legal-shell";
-import { pageHead } from "@/lib/seven/site";
+import { SITE_URL, pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/how-to-play")({
   component: HowToPlayPage,
@@ -10,6 +10,21 @@ export const Route = createFileRoute("/how-to-play")({
       description:
         "Learn the World Cup draft game: roll a historic squad, pick one player, place your XI, and simulate the tournament. Club mode and Friends cups included.",
       path: "/how-to-play",
+      schemas: [
+        {
+          "@type": "HowTo",
+          name: "How to play Seven Nil",
+          description: "Roll a historic squad, pick one player, place an XI, and simulate the tournament.",
+          totalTime: "PT15M",
+          step: [
+            { "@type": "HowToStep", position: 1, name: "Choose a formation", text: "Pick a formation and Classic or Almanac." },
+            { "@type": "HowToStep", position: 2, name: "Roll", text: "A nation and a tournament year appear." },
+            { "@type": "HowToStep", position: 3, name: "Pick one player", text: "Take one footballer who fits an empty role." },
+            { "@type": "HowToStep", position: 4, name: "Simulate", text: "Fill eleven shirts, then simulate the cup." },
+          ],
+          url: `${SITE_URL}/how-to-play`,
+        },
+      ],
     }),
 });
 

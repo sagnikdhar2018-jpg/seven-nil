@@ -34,7 +34,7 @@ const CLUB_STEPS = [
   },
 ];
 
-const WORLD_FAQ = [
+export const WORLD_FAQ = [
   {
     q: "What is Seven Nil?",
     a: "A free World Cup draft. Each turn draws one national team and one tournament year. You pick a player who fits an open role, complete an XI, then simulate the campaign.",
@@ -86,14 +86,21 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
         <h2 className="home-headline mt-2">
           {pool === "club" ? "What is Club mode?" : "What is Seven Nil?"}
         </h2>
-        <p className="mt-4 text-base leading-relaxed text-muted">
+        <p className="mt-4 text-base leading-relaxed text-muted" id="answer">
           {pool === "club"
-            ? "A club draft you can finish in a coffee. Roll a side from the top five leagues and a season since 1980, pick one footballer who actually wore that shirt, and keep going until the formation is full. Then see if the XI can live through Europe."
-            : "A World Cup draft you can finish in a coffee. Roll a national team and a year, pick one real player who actually wore that shirt, and keep going until the formation is full. Then see if the XI can live through a tournament — or even the dream: champions, unbeaten, nothing conceded."}
+            ? "Club mode in Seven Nil is a separate draft. You roll one club from the top five leagues and one season since 1980, take one footballer who wore that shirt, and simulate a European run."
+            : "Seven Nil is a free World Cup draft you play in the browser. Each turn gives you one national team and one tournament year. You take one player who fits an open role, fill eleven shirts, and simulate the cup."}
         </p>
+        <p className="text-xs font-semibold text-muted">Last updated: September 2026</p>
+        <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm font-extrabold">
+          <a href="#how-a-turn-works">How a turn works</a>
+          <a href="#ratings">Ratings</a>
+          <a href="#questions">Questions</a>
+          <a href="#sources">Sources</a>
+        </nav>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3">
+      <div id="how-a-turn-works" className="grid gap-8 md:grid-cols-3">
         {steps.map((step) => (
           <article key={step.n} className="flex flex-col gap-3">
             <p className="font-numeral text-sm font-extrabold text-accent">{step.n}</p>
@@ -103,7 +110,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
         ))}
       </div>
 
-      <div className="grid gap-10 md:grid-cols-2">
+      <div id="ratings" className="grid gap-10 md:grid-cols-2">
         <article className="flex flex-col gap-3">
           <h3 className="font-display text-2xl leading-none">Rules</h3>
           <p className="text-sm leading-relaxed text-muted">
@@ -121,16 +128,75 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
         </article>
       </div>
 
-      <div className="flex flex-col gap-6">
-        <h3 className="font-display text-2xl leading-none">Common questions</h3>
+      <div id="questions" className="flex flex-col gap-6">
+        <h2 className="font-display text-3xl leading-none">Common questions</h2>
         <div className="grid gap-6 md:grid-cols-2">
           {faq.map((item) => (
             <article key={item.q} className="flex flex-col gap-2">
-              <h4 className="text-sm font-extrabold text-ink">{item.q}</h4>
+              <h3 className="text-sm font-extrabold text-ink">{item.q}</h3>
               <p className="text-sm leading-relaxed text-muted">{item.a}</p>
             </article>
           ))}
         </div>
+      </div>
+
+      <div id="sources" className="flex max-w-2xl flex-col gap-3 text-sm leading-relaxed text-muted">
+        <h2 className="font-display text-3xl leading-none text-ink">What the board is built from</h2>
+        <p>
+          Seven Nil keeps 53 national tournament squads and 73 club seasons. That is 1,520 player ratings. A rating is
+          that year only. Above 90, the name is gold. A quiet tournament does not keep a career score.
+        </p>
+        <blockquote className="border-l-4 border-ink pl-3 text-ink">
+          Champions, unbeaten, and nothing conceded. That is the seven-nil.
+        </blockquote>
+        <table className="w-full border-collapse text-left text-ink">
+          <caption className="sr-only">Seven Nil modes</caption>
+          <thead>
+            <tr>
+              <th className="border-b border-line py-2 pr-3">Mode</th>
+              <th className="border-b border-line py-2">What you draft</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border-b border-line py-2 pr-3 font-extrabold">World Cup</td>
+              <td className="border-b border-line py-2">One nation, one tournament year</td>
+            </tr>
+            <tr>
+              <td className="border-b border-line py-2 pr-3 font-extrabold">Clubs</td>
+              <td className="border-b border-line py-2">One top-five club, one season from 1980</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3 font-extrabold">Friends</td>
+              <td className="py-2">A final, or a cup seeded by ranking</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Five redraws. Another year and another team each spend one.</li>
+          <li>World Cup rooms and club rooms never share a player.</li>
+          <li>Only a match between two people is played minute by minute.</li>
+        </ul>
+        <p>
+          The real competitions this game borrows its shape from are the{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/FIFA_World_Cup">
+            FIFA World Cup
+          </a>{" "}
+          (played since 1930) and the{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/UEFA_Champions_League">
+            UEFA Champions League
+          </a>
+          . Seven Nil is not those competitions and is not licensed by them. Squad notes also follow public tournament
+          reports such as the{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/1970_FIFA_World_Cup">
+            1970 World Cup
+          </a>{" "}
+          and the{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/2022_FIFA_World_Cup">
+            2022 World Cup
+          </a>
+          .
+        </p>
       </div>
     </section>
   );

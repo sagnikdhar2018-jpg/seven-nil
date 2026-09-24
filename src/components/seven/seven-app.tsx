@@ -22,7 +22,7 @@ const COPY: Record<
     kicker: "World Cup draft · 1958 — 2026",
     h1: ["Build your dream", "World Cup XI"],
     blurb:
-      "Roll a national team and a tournament year. Draft one real player at a time. See whether the XI can turn memory into a seven-nil statement.",
+      "Seven Nil is a free browser game for drafting a historic World Cup XI. You roll one real national team and one tournament year, pick one player who fits an open role, and then simulate the cup.",
     play: "Play World Cup",
     footer: "A World Cup draft. Not affiliated with FIFA.",
   },
@@ -55,7 +55,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   }, [hydrate, pool]);
 
   return (
-    <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink" data-pool={pool}>
+    <main id="main-content" className="relative min-h-dvh overflow-x-hidden bg-paper text-ink" data-pool={pool}>
       <SfxRoot />
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
@@ -107,6 +107,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               {copy.h1[1]}
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-muted">{copy.blurb}</p>
+            <p className="mt-2 text-xs font-semibold text-muted">Updated 24 September 2026</p>
             {pool === "club" ? (
               <p className="mt-3 text-xs font-semibold tracking-[0.12em] text-muted uppercase">
                 {CLUB_SQUADS.length} seasons · England · Spain · Italy · Germany · France

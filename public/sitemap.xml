@@ -5,6 +5,8 @@
   <url><loc>https://seven-nil-self.vercel.app/friends</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://seven-nil-self.vercel.app/club/friends</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://seven-nil-self.vercel.app/how-to-play</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://seven-nil-self.vercel.app/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://seven-nil-self.vercel.app/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/about</loc><lastmod>2026-09-24</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/contact</loc><lastmod>2026-09-24</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/privacy</loc><lastmod>2026-09-24</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/terms</loc><lastmod>2026-09-24</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
 </urlset>

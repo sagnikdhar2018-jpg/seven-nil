@@ -1,0 +1,22 @@
+# Seven Nil
+
+> Free browser game. Draft a historic World Cup or club XI, then simulate the tournament.
+
+Seven Nil is not affiliated with FIFA or UEFA. Player ratings are for the season or tournament on the card, not a career peak.
+
+## Play
+
+- [World Cup draft](https://seven-nil-self.vercel.app/): roll a nation and a tournament year, pick one player, fill eleven roles.
+- [Club draft](https://seven-nil-self.vercel.app/club): top five leagues from 1980.
+- [Friends](https://seven-nil-self.vercel.app/friends): pass-and-play, a final, or a seeded cup.
+- [Club friends](https://seven-nil-self.vercel.app/club/friends): rivalry or a UCL-style knockout.
+
+## Read
+
+- [How to play](https://seven-nil-self.vercel.app/how-to-play)
+- [About](https://seven-nil-self.vercel.app/about)
+- [Contact](https://seven-nil-self.vercel.app/contact)
+- [Privacy](https://seven-nil-self.vercel.app/privacy)
+- [Terms](https://seven-nil-self.vercel.app/terms)
+
+Updated 24 September 2026. Contact: sagnik.dhar2018@gmail.com

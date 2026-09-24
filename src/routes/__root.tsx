@@ -1,7 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seven/site";
+import { OG_IMAGE, SITE_NAME, SITE_URL, orgRef, personRef } from "@/lib/seven/site";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Seven Nil";
@@ -9,15 +9,31 @@ const ADSENSE_CLIENT = "ca-pub-1391099021196311";
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: SITE_NAME,
-  url: SITE_URL,
-  applicationCategory: "GameApplication",
-  operatingSystem: "Any",
-  description:
-    "Free World Cup draft game. Roll a historic national squad, pick an XI, and simulate the tournament. Club mode covers the top five leagues from 1980.",
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-  image: OG_IMAGE,
+  "@graph": [
+    orgRef,
+    personRef,
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      publisher: { "@id": `${SITE_URL}/#org` },
+      inLanguage: "en",
+    },
+    {
+      "@type": "WebApplication",
+      name: SITE_NAME,
+      url: SITE_URL,
+      applicationCategory: "GameApplication",
+      operatingSystem: "Any",
+      description:
+        "Free World Cup draft game. Roll a historic national squad, pick an XI, and simulate the tournament. Club mode covers the top five leagues from 1980.",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      image: OG_IMAGE,
+      publisher: { "@id": `${SITE_URL}/#org` },
+      author: { "@id": `${SITE_URL}/#maker` },
+    },
+  ],
 };
 
 export const Route = createRootRoute({
@@ -43,13 +59,6 @@ export const Route = createRootRoute({
     links: [
       { rel: "canonical", href: SITE_URL },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "preconnect", href: "https://pagead2.googlesyndication.com" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700;800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap",
-      },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
@@ -78,6 +87,9 @@ export const Route = createRootRoute({
         />
       </head>
       <body className="bg-paper text-ink">
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />
