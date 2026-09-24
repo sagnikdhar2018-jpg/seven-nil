@@ -343,8 +343,8 @@ function Selector({ pool }: { pool: PoolId }) {
               value={join}
               onChange={(e) => setJoin(e.target.value.toUpperCase())}
             />
-            <Button variant="ink" disabled={join.length < 4} onClick={joinRoom}>
-              Start →
+            <Button variant="ink" className="shrink-0" disabled={join.length < 4} onClick={joinRoom}>
+              Start
             </Button>
           </div>
         </div>
