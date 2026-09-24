@@ -1,22 +1,23 @@
 # Seven Nil
 
-> Free browser game. Draft a historic World Cup or club XI, then simulate the tournament.
+> Seven Nil is a free browser game. You draft a historic World Cup or club XI, then simulate the tournament. Ratings are for that season, not a career peak. Not affiliated with FIFA or UEFA.
 
-Seven Nil is not affiliated with FIFA or UEFA. Player ratings are for the season or tournament on the card, not a career peak.
+Updated 24 September 2026. Contact: sagnik.dhar2018@gmail.com
 
 ## Play
 
-- [World Cup draft](https://seven-nil-self.vercel.app/): roll a nation and a tournament year, pick one player, fill eleven roles.
-- [Club draft](https://seven-nil-self.vercel.app/club): top five leagues from 1980.
-- [Friends](https://seven-nil-self.vercel.app/friends): pass-and-play, a final, or a seeded cup.
-- [Club friends](https://seven-nil-self.vercel.app/club/friends): rivalry or a UCL-style knockout.
+- [World Cup draft](https://seven-nil-self.vercel.app/): Roll one nation and one tournament year, pick one player, fill eleven roles.
+- [Club draft](https://seven-nil-self.vercel.app/club): Roll a top-five league club and a season from 1980 on.
+- [Friends](https://seven-nil-self.vercel.app/friends): Pass-and-play, a final, or a seeded World Cup with real nations.
+- [Club friends](https://seven-nil-self.vercel.app/club/friends): A rivalry or a UCL-style knockout. Separate from World Cup rooms.
 
-## Read
+## Guides
 
-- [How to play](https://seven-nil-self.vercel.app/how-to-play)
-- [About](https://seven-nil-self.vercel.app/about)
-- [Contact](https://seven-nil-self.vercel.app/contact)
-- [Privacy](https://seven-nil-self.vercel.app/privacy)
-- [Terms](https://seven-nil-self.vercel.app/terms)
+- [How to play](https://seven-nil-self.vercel.app/how-to-play): Roll, pick, place, and simulate, including penalties and friends cups.
+- [About](https://seven-nil-self.vercel.app/about): Who makes the game, how a season rating is set, and what it is not.
+- [Contact](https://seven-nil-self.vercel.app/contact): Email the maker. Online only. No phone and no office.
 
-Updated 24 September 2026. Contact: sagnik.dhar2018@gmail.com
+## Optional
+
+- [Privacy](https://seven-nil-self.vercel.app/privacy): What stays on the device, and how ads work.
+- [Terms](https://seven-nil-self.vercel.app/terms): The game is a simulation, not a forecast or a licensed product.

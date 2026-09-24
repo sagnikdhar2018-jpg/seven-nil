@@ -101,7 +101,15 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
         </nav>
       </div>
 
-      <div id="how-a-turn-works" className="grid gap-8 md:grid-cols-3">
+      <div id="how-a-turn-works" className="flex flex-col gap-8">
+        <div className="max-w-2xl">
+          <h2 className="font-display text-3xl leading-none">How does a turn work?</h2>
+          <p className="mt-3 text-base leading-relaxed text-muted">
+            A turn is one roll and one pick. The dice give you a single squad. You take the one footballer who fits an
+            empty role, then that squad is gone. Eleven turns fill the XI.
+          </p>
+        </div>
+        <div className="grid gap-8 md:grid-cols-3">
         {steps.map((step) => (
           <article key={step.n} className="flex flex-col gap-3">
             <p className="font-numeral text-sm font-extrabold text-accent">{step.n}</p>
@@ -109,9 +117,18 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
             <p className="text-sm leading-relaxed text-muted">{step.body}</p>
           </article>
         ))}
+        </div>
       </div>
 
-      <div id="ratings" className="grid gap-10 md:grid-cols-2">
+      <div id="ratings" className="flex flex-col gap-6">
+        <div className="max-w-2xl">
+          <h2 className="font-display text-3xl leading-none">What do the ratings mean?</h2>
+          <p className="mt-3 text-base leading-relaxed text-muted">
+            A rating is that year only, on a scale from the low 70s to the mid-90s. Classic shows the number. Almanac
+            hides it. A name above 90 is gold. You have five redraws, and names lock when the draft starts.
+          </p>
+        </div>
+        <div className="grid gap-10 md:grid-cols-2">
         <article className="flex flex-col gap-3">
           <h3 className="font-display text-2xl leading-none">Rules</h3>
           <p className="text-sm leading-relaxed text-muted">
@@ -127,6 +144,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
             cheap in the draw. Rare defenders are not. Take the scarce role, then let nostalgia in.
           </p>
         </article>
+        </div>
       </div>
 
       <div id="questions" className="flex flex-col gap-6">
