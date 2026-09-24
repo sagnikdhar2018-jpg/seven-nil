@@ -984,6 +984,19 @@
   gap: 0.3rem;
 }
 
+.tie-rank {
+  min-width: 0.9rem;
+  flex: none;
+  color: var(--muted);
+  font-family: var(--font-numeral);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.tie.is-done .tie-team.is-win .tie-rank {
+  color: #ffffffb8;
+}
+
 .tie-flag {
   flex: none;
   font-size: 0.85rem;

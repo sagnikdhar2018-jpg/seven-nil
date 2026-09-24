@@ -2,6 +2,7 @@ import { ATT_POS, DEF_POS, MID_POS } from "./formations";
 import { autoFillFrom } from "./draft";
 import { takenKeysFromSlots } from "./person";
 import { playersForSide } from "./squads";
+import { bracketSeeds, teamRank } from "./rankings";
 import type { Campaign, Match, MatchGoal, PenKick, Player, PlayerRating, PoolId, Slot, StyleId, TeamRatings } from "./types";
 
 const OPPONENTS = [
@@ -116,6 +117,7 @@ function sideQuality(
   slots: Slot[],
   style: StyleId,
   fallback?: { att: number; mid: number; def: number; gk: number },
+  name?: string,
 ) {
   const hasPlayers = slots.some((slot) => slot.player);
   const ovr = hasPlayers
@@ -125,6 +127,8 @@ function sideQuality(
       : 78;
   const chem = hasPlayers ? chemistry(slots) : 76;
   let quality = ovr * 0.74 + chem * 0.26;
+  const rank = name ? teamRank(name) : null;
+  if (rank) quality += Math.max(0, (18 - rank) * 0.12);
   if (style === "attacking") quality += 1.1;
   else if (style === "press") quality += 0.7;
   else if (style === "counter") quality += 0.8;
@@ -298,13 +302,13 @@ function playMatch(
   homeStyle: StyleId = "balanced",
   awayStyle: StyleId = "balanced",
 ): Match {
-  const usQ = sideQuality(homeSlots, homeStyle, {
-    att: us.attack,
-    mid: us.midfield,
-    def: us.defence,
-    gk: us.gk,
-  });
-  const themQ = sideQuality(awaySlots, awayStyle, them);
+  const usQ = sideQuality(
+    homeSlots,
+    homeStyle,
+    { att: us.attack, mid: us.midfield, def: us.defence, gk: us.gk },
+    homeName,
+  );
+  const themQ = sideQuality(awaySlots, awayStyle, them, them.name);
   const gap = (usQ - themQ) / 18;
   const gf = clamp(poisson(clamp(1.15 + gap + swing(), 0.25, 4.4)), 0, 8);
   const ga = clamp(poisson(clamp(1.05 - gap + swing(), 0.2, 4.2)), 0, 8);
@@ -474,7 +478,7 @@ export function roundNameFor(size: number) {
 export function simulateKnockout(
   teams: { name: string; slots: Slot[]; style: StyleId; human?: boolean }[],
 ): { games: BracketGame[]; champion: string } {
-  let live = teams.map((t) => ({ ...t, human: Boolean(t.human) }));
+  let live = seedBracket(teams);
   const games: BracketGame[] = [];
   while (live.length >= 2) {
     const next: typeof live = [];
@@ -505,4 +509,22 @@ export function simulateKnockout(
     live = next;
   }
   return { games, champion: live[0]?.name ?? teams[0]!.name };
+}
+
+function seedBracket<T extends { name: string; slots: Slot[]; human?: boolean }>(teams: T[]) {
+  const score = (team: T) => {
+    if (team.human) {
+      const filled = team.slots.filter((slot) => slot.player);
+      const ovr = filled.length
+        ? filled.reduce((sum, slot) => sum + slot.player!.ovr, 0) / filled.length
+        : 80;
+      return Math.round(Math.max(1, Math.min(40, 2 + (92 - ovr) * 1.15)));
+    }
+    return teamRank(team.name) ?? 36;
+  };
+  const sorted = [...teams].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+  return bracketSeeds(sorted.length).map((seed) => ({
+    ...sorted[seed - 1] ?? sorted[sorted.length - 1]!,
+    human: Boolean((sorted[seed - 1] ?? sorted[sorted.length - 1]!).human),
+  }));
 }

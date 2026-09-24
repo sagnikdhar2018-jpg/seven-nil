@@ -19,6 +19,7 @@ import {
   type FriendsState,
   type TimerSec,
 } from "@/lib/seven/friends";
+import { rankedSides } from "@/lib/seven/rankings";
 import { useFriends } from "@/lib/seven/friends-store";
 import { isPersonTaken } from "@/lib/seven/person";
 import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
@@ -927,10 +928,21 @@ function FriendsGuide({ pool }: { pool: PoolId }) {
           <h3 className="font-display text-2xl leading-none">{club ? "UCL" : "Full Cup"}</h3>
           <p className="text-sm leading-relaxed text-muted">
             {club
-              ? "Knockout of 4, 8, 16, or 32. Empty seats become other European clubs. Only a tie between two friends is played in full, with penalties kick by kick if it is level."
-              : "Bracket of 4, 8, 16, or 32. Empty seats become real nations. Only a tie between two friends is played in full, with penalties kick by kick if it is level."}
+              ? "Knockout of 4, 8, 16, or 32. Empty seats become other European clubs, seeded by ranking. Only a tie between two friends is played in full, with penalties kick by kick if it is level."
+              : "Bracket of 4, 8, 16, or 32. Empty seats become real nations, seeded by ranking. Only a tie between two friends is played in full, with penalties kick by kick if it is level."}
           </p>
         </article>
+      </div>
+      <div>
+        <h3 className="font-display text-2xl leading-none">{club ? "Club ranking" : "Nation ranking"}</h3>
+        <ol className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
+          {rankedSides(pool).slice(0, 12).map((side) => (
+            <li key={side.name} className="flex items-baseline gap-2 text-sm font-extrabold">
+              <span className="w-5 font-numeral tabular-nums text-muted">{side.rank}</span>
+              <span className="truncate">{side.name}</span>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

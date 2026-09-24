@@ -1,4 +1,5 @@
 import type { MatchGoal, TeamRatings } from "@/lib/seven/types";
+import { teamRank } from "@/lib/seven/rankings";
 import { cn } from "@/lib/utils";
 
 export type BracketTie = {
@@ -138,9 +139,11 @@ function Tie({
 
 function Team({ name, score, win }: { name: string; score: string; win: boolean }) {
   const flag = FLAGS[name];
+  const rank = teamRank(name);
   return (
     <div className={cn("tie-team", win && "is-win")}>
       <span className="tie-name">
+        {rank ? <span className="tie-rank">{rank}</span> : null}
         {flag ? <span className="tie-flag" aria-hidden="true">{flag}</span> : <span className="tie-pip" aria-hidden="true" />}
         <span className="truncate">{name}</span>
       </span>
