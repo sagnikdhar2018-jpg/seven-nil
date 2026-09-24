@@ -23,7 +23,7 @@ export const orgRef = {
 export const personRef = {
   "@type": "Person",
   "@id": `${SITE_URL}/#maker`,
-  name: "Sagnik Dhar",
+  name: "nik.peeps",
   email: CONTACT_EMAIL,
   url: `${SITE_URL}/about`,
   jobTitle: "Independent game maker",

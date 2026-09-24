@@ -112,7 +112,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
             <p className="mt-3 text-sm font-semibold text-ink">
               By{" "}
               <Link className="underline" to="/about">
-                Sagnik Dhar
+                nik.peeps
               </Link>
               , independent maker of Seven Nil. The board holds 53 national squads, 73 club seasons, and 1,520 season
               ratings.

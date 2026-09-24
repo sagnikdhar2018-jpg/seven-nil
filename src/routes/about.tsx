@@ -8,7 +8,7 @@ export const Route = createFileRoute("/about")({
     pageHead({
       title: "About Seven Nil — World Cup draft game",
       description:
-        "Seven Nil is a free World Cup and club draft XI game made by Sagnik Dhar. Roll a historic squad, pick eleven, and simulate the campaign.",
+        "Seven Nil is a free World Cup and club draft XI game made by nik.peeps. Roll a historic squad, pick eleven, and simulate the campaign.",
       path: "/about",
       schemas: [
         {
@@ -39,7 +39,7 @@ function AboutPage() {
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Who makes it</h2>
       <p>
-        Sagnik Dhar makes Seven Nil on his own. He is not a club analyst and he does not sell scouting reports. The
+        nik.peeps makes Seven Nil independently, and is not a club analyst and does not sell scouting reports. The
         work is the game: the draft rules, the season ratings, and the simulation. The public code is on{" "}
         <a className="underline" href={GITHUB} rel="me">
           GitHub

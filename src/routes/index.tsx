@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
           dateModified: UPDATED,
           author: {
             "@type": "Person",
-            name: "Sagnik Dhar",
+            name: "nik.peeps",
             jobTitle: "Independent game maker",
             url: `${SITE_URL}/about`,
             worksFor: { "@type": "Organization", name: "Seven Nil", url: SITE_URL },
