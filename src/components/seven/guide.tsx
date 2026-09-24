@@ -206,6 +206,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
             height="630"
             loading="lazy"
             decoding="async"
+            fetchPriority="low"
             className="h-auto w-full max-w-md rounded-lg"
           />
           <figcaption>The board you draft on.</figcaption>
