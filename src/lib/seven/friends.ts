@@ -1,5 +1,6 @@
-import { canFill, emptySlotsFor, makeSlots } from "./formations";
+import { canFill, emptySlotsFor, makeSlots, reshapeXi } from "./formations";
 import { autoFillFrom, drawLegal, drawOtherSide, drawSameTeam, filledCount } from "./draft";
+import { coachBoost, coachById, drawCoaches, styleForCoach } from "./coaches";
 import { personKey } from "./person";
 import { playersForSide } from "./squads";
 import { simulateFinal, simulateKnockout, type BracketGame } from "./simulate";
@@ -20,6 +21,9 @@ export type Seat = {
   ready: boolean;
   confirmed: boolean;
   rerolls: number;
+  coachId: string | null;
+  coachOffer: string[] | null;
+  coachRerolls: number;
 };
 
 export type FriendsState = {
@@ -61,6 +65,9 @@ export type FriendsAction =
   | { type: "pick"; player: Player }
   | { type: "place"; slotId: string }
   | { type: "autoPick" }
+  | { type: "rollCoach" }
+  | { type: "rerollCoach" }
+  | { type: "setCoach"; coachId: string }
   | { type: "confirm"; seatId: string }
   | { type: "simulate" }
   | { type: "simDone" };
@@ -110,6 +117,9 @@ export function makeSeat(id: string, name: string, kind: Seat["kind"] = "human")
     ready: kind === "cpu",
     confirmed: false,
     rerolls: 5,
+    coachId: null,
+    coachOffer: null,
+    coachRerolls: 3,
   };
 }
 
@@ -267,18 +277,24 @@ function humans(state: FriendsState) {
   return state.seats.filter((s) => s.kind === "human");
 }
 
+function needsTurn(seat: Seat) {
+  if (seat.kind !== "human" || seat.confirmed) return false;
+  if (filledCount(seat.slots) < 11) return true;
+  return !seat.coachId;
+}
+
 function nextNeedyIndex(state: FriendsState, from: number) {
   const n = state.seats.length;
   for (let i = 1; i <= n; i++) {
     const idx = (from + i) % n;
     const seat = state.seats[idx]!;
-    if (seat.kind === "human" && filledCount(seat.slots) < 11 && !seat.confirmed) return idx;
+    if (needsTurn(seat)) return idx;
   }
   return from;
 }
 
 function allHumansFull(state: FriendsState) {
-  return humans(state).every((s) => filledCount(s.slots) >= 11);
+  return humans(state).every((s) => !needsTurn(s));
 }
 
 function passTurn(state: FriendsState): FriendsState {
@@ -317,7 +333,20 @@ function placePlayer(state: FriendsState, player: Player, slotId: string): Frien
 function autoPickPlayer(state: FriendsState): FriendsState {
   const seat = state.seats[state.activeSeat];
   if (!seat || seat.kind !== "human") return state;
-  if (filledCount(seat.slots) >= 11) return state;
+  if (filledCount(seat.slots) >= 11) {
+    if (seat.coachId) return state;
+    let cur = state;
+    if (!seat.coachOffer?.length) {
+      const offer = drawCoaches(3).map((coach) => coach.id);
+      cur = {
+        ...state,
+        seats: state.seats.map((s, i) => (i === state.activeSeat ? { ...s, coachOffer: offer } : s)),
+      };
+    }
+    const offer = cur.seats[cur.activeSeat]?.coachOffer ?? [];
+    const id = offer[Math.floor(Math.random() * offer.length)];
+    return id ? assignCoach(cur, id) : cur;
+  }
 
   if (state.selected) {
     const options = emptySlotsFor(seat.slots, state.selected.pos);
@@ -350,16 +379,61 @@ function autoPickPlayer(state: FriendsState): FriendsState {
   return cur;
 }
 
+function assignCoach(state: FriendsState, coachId: string): FriendsState {
+  const seat = state.seats[state.activeSeat];
+  const coach = coachById(coachId);
+  if (!seat || !coach || !seat.coachOffer?.includes(coachId)) return state;
+  const players = seat.slots.map((slot) => slot.player).filter((player): player is Player => Boolean(player));
+  const slots = reshapeXi(players, coach.formation);
+  const seats = state.seats.map((s, i) =>
+    i === state.activeSeat
+      ? {
+          ...s,
+          slots,
+          coachId: coach.id,
+          coachOffer: null,
+          formation: coach.formation,
+          style: styleForCoach(coach.play),
+        }
+      : s,
+  );
+  return passTurn({ ...state, seats, draw: null, selected: null });
+}
+
+function withCoach(seat: Seat, claimed: string[], pool: PoolId): { seat: Seat; claimed: string[] } {
+  const own = playersForSide(seat.name, pool);
+  const filled = autoFillFrom(seat.formation, claimed, own);
+  const coach = drawCoaches(1)[0];
+  if (!coach) return { seat: { ...seat, slots: filled.slots, confirmed: true }, claimed: filled.claimed };
+  const players = filled.slots.map((slot) => slot.player).filter((player): player is Player => Boolean(player));
+  return {
+    seat: {
+      ...seat,
+      slots: reshapeXi(players, coach.formation),
+      confirmed: true,
+      coachId: coach.id,
+      coachOffer: null,
+      formation: coach.formation,
+      style: styleForCoach(coach.play),
+    },
+    claimed: filled.claimed,
+  };
+}
+
 function fillCpu(state: FriendsState): FriendsState {
   let claimed = [...state.claimed];
   const seats = state.seats.map((seat) => {
-    if (seat.kind !== "cpu") return seat;
-    const own = playersForSide(seat.name, state.pool);
-    const filled = autoFillFrom(seat.formation, claimed, own);
-    claimed = filled.claimed;
-    return { ...seat, slots: filled.slots, confirmed: true };
+    if (seat.kind !== "cpu" || seat.coachId) return seat;
+    const next = withCoach(seat, claimed, state.pool);
+    claimed = next.claimed;
+    return next.seat;
   });
   return { ...state, seats, claimed };
+}
+
+function boostOf(seat: Seat) {
+  const coach = coachById(seat.coachId);
+  return coach ? coachBoost(coach) : undefined;
 }
 
 function runSimulate(state: FriendsState): FriendsState {
@@ -371,6 +445,7 @@ function runSimulate(state: FriendsState): FriendsState {
         slots: s.slots,
         style: s.style,
         human: s.kind === "human",
+        boost: boostOf(s),
       })),
     );
     return { ...filled, phase: "simulating", bracket: games, champion, resultMatch: null };
@@ -386,6 +461,8 @@ function runSimulate(state: FriendsState): FriendsState {
     shownName(away.name, "Away"),
     label,
     shownName(home.name, "Home"),
+    boostOf(home),
+    boostOf(away),
   );
   return {
     ...filled,
@@ -452,7 +529,9 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (action.seatId !== actorId && !isHost) return state;
       return {
         ...state,
-        seats: state.seats.map((s) => (s.id === action.seatId ? { ...s, style: action.style } : s)),
+        seats: state.seats.map((s) =>
+          s.id === action.seatId && !s.coachId ? { ...s, style: action.style } : s,
+        ),
       };
     }
     case "setMode":
@@ -481,7 +560,7 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (state.seats.some((s) => s.id === action.seat.id)) return state;
       const cap = state.kind === "final" ? 2 : Math.min(8, state.bracketSize);
       if (humans(state).length >= cap) return state;
-      return { ...state, seats: [...state.seats, { ...action.seat, ready: false }] };
+      return { ...state, seats: [...state.seats, { ...makeSeat(action.seat.id, action.seat.name), ...action.seat, ready: false }] };
     }
     case "start": {
       if (!isHost) return state;
@@ -571,11 +650,37 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (state.phase !== "draft") return state;
       return autoPickPlayer(state);
     }
+    case "rollCoach": {
+      if (state.phase !== "draft" || !isActive || !active) return state;
+      if (filledCount(active.slots) < 11 || active.coachId || active.coachOffer) return state;
+      const offer = drawCoaches(3).map((coach) => coach.id);
+      return {
+        ...state,
+        draw: null,
+        selected: null,
+        seats: state.seats.map((s, i) => (i === state.activeSeat ? { ...s, coachOffer: offer } : s)),
+      };
+    }
+    case "rerollCoach": {
+      if (state.phase !== "draft" || !isActive || !active?.coachOffer) return state;
+      if (active.coachRerolls <= 0 || active.coachId) return state;
+      const offer = drawCoaches(3, active.coachOffer).map((coach) => coach.id);
+      return {
+        ...state,
+        seats: state.seats.map((s, i) =>
+          i === state.activeSeat ? { ...s, coachRerolls: s.coachRerolls - 1, coachOffer: offer } : s,
+        ),
+      };
+    }
+    case "setCoach": {
+      if (state.phase !== "draft" || !isActive || !active) return state;
+      return assignCoach(state, action.coachId);
+    }
     case "confirm": {
       if (action.seatId !== actorId && !isHost) return state;
       if (state.phase !== "draft") return state;
       const seats = state.seats.map((s) =>
-        s.id === action.seatId && filledCount(s.slots) >= 11 ? { ...s, confirmed: true } : s,
+        s.id === action.seatId && filledCount(s.slots) >= 11 && s.coachId ? { ...s, confirmed: true } : s,
       );
       const next = { ...state, seats };
       if (humans(next).every((s) => s.confirmed)) return runSimulate(next);

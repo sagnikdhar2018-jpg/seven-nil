@@ -457,10 +457,12 @@ export function simulateFinal(
   themName = "Them",
   round = "Cup Final",
   usName = "Home",
+  boostUs?: { att: number; def: number },
+  boostThem?: { att: number; def: number },
 ): Match {
-  const their = teamAxes(them, styleThem);
+  const their = teamAxes(them, styleThem, boostThem);
   const match = playMatch(
-    teamAxes(us, styleUs),
+    teamAxes(us, styleUs, boostUs),
     { name: themName, att: their.attack, mid: their.midfield, def: their.defence, gk: their.gk },
     round,
     us,
@@ -506,7 +508,7 @@ export function roundNameFor(size: number) {
 }
 
 export function simulateKnockout(
-  teams: { name: string; slots: Slot[]; style: StyleId; human?: boolean }[],
+  teams: { name: string; slots: Slot[]; style: StyleId; human?: boolean; boost?: { att: number; def: number } }[],
 ): { games: BracketGame[]; champion: string } {
   let live = seedBracket(teams);
   const games: BracketGame[] = [];
@@ -516,7 +518,17 @@ export function simulateKnockout(
     for (let i = 0; i < live.length; i += 2) {
       const home = live[i]!;
       const away = live[i + 1]!;
-      const match = simulateFinal(home.slots, away.slots, home.style, away.style, away.name, label, home.name);
+      const match = simulateFinal(
+        home.slots,
+        away.slots,
+        home.style,
+        away.style,
+        away.name,
+        label,
+        home.name,
+        home.boost,
+        away.boost,
+      );
       const homeWins = match.result === "W";
       const winner = homeWins ? home : away;
       games.push({

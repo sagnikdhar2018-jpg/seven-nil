@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, Copy, Dices } from "lucide-react";
+import { Check, Copy, Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
+import { PLAY_LABEL, coachById } from "@/lib/seven/coaches";
 import { emptySlotsFor, FORMATIONS, STYLES } from "@/lib/seven/formations";
 import {
   apply,
@@ -536,6 +537,15 @@ function Lobby({ pool }: { pool: PoolId }) {
   );
 }
 
+const MANAGER_BARS = [
+  ["possession", "Possession"],
+  ["quickCounter", "Quick counter"],
+  ["longBall", "Long ball"],
+  ["overload", "Overload"],
+  ["pressing", "Pressing"],
+  ["compactness", "Compactness"],
+] as const;
+
 function DraftTable() {
   const seats = useFriends((s) => s.seats);
   const activeSeat = useFriends((s) => s.activeSeat);
@@ -572,6 +582,7 @@ function DraftTable() {
   const bestId = classic
     ? roster.filter((p) => legalIds.has(p.id)).sort((a, b) => b.ovr - a.ovr)[0]?.id
     : undefined;
+  const managerTurn = filledCount(active.slots) >= 11 && !active.coachId;
 
   return (
     <section className="draft-board mx-auto w-full max-w-6xl px-5 pb-24 pt-2">
@@ -580,7 +591,8 @@ function DraftTable() {
           <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Turn</p>
           <p className="mt-1 font-display text-3xl leading-none">{shownName(active.name)}</p>
           <p className="mt-2 text-sm text-muted">
-            {filledCount(active.slots)}/11 · {active.formation} · {active.style}
+            {filledCount(active.slots)}/11 · {active.formation}
+            {active.coachId ? ` · ${coachById(active.coachId)?.name ?? "Manager"}` : ""}
           </p>
           <TurnClock
             startedAt={turnStartedAt}
@@ -591,8 +603,12 @@ function DraftTable() {
         <div className="card-ink flex flex-col overflow-hidden rounded-lg">
           <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-4">
             <div>
-              <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Drawn</p>
-              {draw ? (
+              <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
+                {managerTurn ? "12th pick" : "Drawn"}
+              </p>
+              {managerTurn ? (
+                <h3 className="mt-1 font-display text-2xl leading-none">Manager</h3>
+              ) : draw ? (
                 <>
                   <h3 className="mt-1 font-display text-2xl leading-none normal-case tracking-tight">
                     {draw.squad.nation}
@@ -607,7 +623,29 @@ function DraftTable() {
             </div>
             <span className="font-numeral text-sm font-extrabold tabular-nums text-muted">{filled}/11</span>
           </div>
-          {draw ? (
+          {managerTurn ? (
+            active.coachOffer ? (
+              <div className="flex flex-col gap-2 border-b border-line px-4 py-3">
+                <Button
+                  variant="secondary"
+                  className="btn-choice"
+                  disabled={!myTurn || (active.coachRerolls ?? 0) <= 0 || busy}
+                  onClick={() => spin(() => act({ type: "rerollCoach" }))}
+                >
+                  <RotateCcw className="size-4 shrink-0" strokeWidth={2} />
+                  Change managers
+                </Button>
+                <p className="text-xs font-semibold text-muted">{active.coachRerolls ?? 0} chances left</p>
+              </div>
+            ) : (
+              <div className="border-b border-line px-4 py-3">
+                <Button className="w-full" disabled={!myTurn || busy} onClick={() => spin(() => act({ type: "rollCoach" }))}>
+                  <Dices className="size-5" strokeWidth={2} />
+                  Roll a manager
+                </Button>
+              </div>
+            )
+          ) : draw ? (
             <RerollChoices
               left={active.rerolls}
               pool={pool}
@@ -631,7 +669,43 @@ function DraftTable() {
             </div>
           )}
           <div className="max-h-80 overflow-y-auto">
-            {draw ? (
+            {managerTurn && active.coachOffer
+              ? active.coachOffer.map((id) => {
+                  const coach = coachById(id);
+                  if (!coach) return null;
+                  return (
+                    <button
+                      key={coach.id}
+                      type="button"
+                      className="flex w-full flex-col gap-2 border-b border-line px-4 py-3 text-left last:border-b-0 hover:bg-paper disabled:opacity-50"
+                      disabled={!myTurn}
+                      onClick={() => act({ type: "setCoach", coachId: coach.id })}
+                    >
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="font-extrabold text-ink">{coach.name}</span>
+                        <span className="text-xs font-semibold text-muted">
+                          {coach.formation} · {PLAY_LABEL[coach.play]}
+                        </span>
+                      </span>
+                      <span className="text-xs font-semibold text-accent">
+                        {coach.known} · {coach.years}
+                      </span>
+                      {classic ? (
+                        <span className="grid grid-cols-2 gap-x-3 gap-y-1">
+                          {MANAGER_BARS.map(([key, label]) => (
+                            <span key={key} className="flex items-center justify-between text-[11px] font-bold text-muted">
+                              <span>{label}</span>
+                              <span className="tabular-nums text-ink">{coach.stats[key]}</span>
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-muted">Stats hidden. Almanac.</span>
+                      )}
+                    </button>
+                  );
+                })
+              : draw && !managerTurn ? (
               roster.map((player) => (
                 <PlayerPickRow
                   key={player.id}
@@ -646,7 +720,9 @@ function DraftTable() {
               ))
             ) : (
               <p className="px-4 py-6 text-sm text-muted">
-                If someone claims a footballer, every other year of that name is locked. Can't select.
+                {managerTurn
+                  ? "Roll three managers. You get three chances to change them."
+                  : "If someone claims a footballer, every other year of that name is locked. Can't select."}
               </p>
             )}
           </div>
@@ -665,7 +741,13 @@ function DraftTable() {
           </p>
         ) : (
           <p className="text-center text-sm text-muted">
-            {myTurn ? `${shownName(active.name)} to pick.` : `Waiting on ${shownName(active.name)}.`}
+            {managerTurn
+              ? myTurn
+                ? "Your 12th pick is the manager."
+                : `Waiting on ${shownName(active.name)} to pick a manager.`
+              : myTurn
+                ? `${shownName(active.name)} to pick.`
+                : `Waiting on ${shownName(active.name)}.`}
           </p>
         )}
       </div>
@@ -675,22 +757,24 @@ function DraftTable() {
           .map((seat) => {
             const mine = kind === "local" || seat.id === actorId;
             const full = filledCount(seat.slots) >= 11;
+            const coach = coachById(seat.coachId);
             return (
               <div key={seat.id} className="card-ink flex flex-col gap-3 rounded-lg px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">{seat.formation}</p>
                 <p className="font-display text-2xl leading-none">{shownName(seat.name)}</p>
                 <p className="font-numeral text-sm font-extrabold tabular-nums">
                   {filledCount(seat.slots)}/11
+                  {coach ? ` · ${coach.name}` : ""}
                   {seat.confirmed ? " · confirmed" : ""}
                 </p>
                 {mine && full ? (
                   <Button
                     variant={seat.confirmed ? "ink" : "primary"}
                     data-action={`confirm-${seat.id}`}
-                    disabled={seat.confirmed}
+                    disabled={seat.confirmed || !seat.coachId}
                     onClick={() => act({ type: "confirm", seatId: seat.id })}
                   >
-                    {seat.confirmed ? "XI locked" : "Confirm XI"}
+                    {seat.confirmed ? "XI locked" : seat.coachId ? "Confirm XI" : "Pick a manager first"}
                   </Button>
                 ) : null}
               </div>
@@ -890,7 +974,7 @@ function FriendsGuide({ pool }: { pool: PoolId }) {
         <p className="mt-4 text-base leading-relaxed text-muted">
           {club
             ? "Join with a code, put your name on the shirt, and draft historic club sides from the top five leagues. Taken footballers are locked across every year. Confirm the XI, then play a European night or a full UCL knockout."
-            : "Join with a code, put your name on the shirt, choose a formation and style, mark ready, and build separate XIs in turn order. You can rename yourself in the lobby and during the draft. On each turn the active player draws a nation and a World Cup year, then claims one valid footballer. That footballer is then locked for everyone else. When the XI is full, confirm it."}
+            : "Join with a code, put your name on the shirt, choose a formation and style, mark ready, and build separate XIs in turn order. You can rename yourself in the lobby and during the draft. On each turn the active player draws a nation and a World Cup year, then claims one valid footballer. That footballer is then locked for everyone else. The 12th pick is a manager. When the XI is full, confirm it."}
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-3">
