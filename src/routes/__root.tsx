@@ -65,9 +65,7 @@ export const Route = createRootRoute({
     ],
     scripts: [
       {
-        async: true,
-        src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,
-        crossOrigin: "anonymous",
+        children: `(function(){var id='${ADSENSE_CLIENT}';function load(){if(document.querySelector('script[data-ads]'))return;var s=document.createElement('script');s.async=true;s.dataset.ads='1';s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+id;s.crossOrigin='anonymous';document.head.appendChild(s);}window.addEventListener('load',function(){setTimeout(load,2500);});})();`,
       },
       {
         type: "application/ld+json",

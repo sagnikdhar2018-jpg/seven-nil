@@ -1,6 +1,9 @@
 {
   "title": "Seven Nil",
+  "description": "Seven Nil is a free World Cup draft. Roll a nation and a year, pick one real player, and simulate the cup.",
   "type": "x:game",
   "card": "custom",
-  "color": "1F6C37"
+  "color": "1F6C37",
+  "image": "/og.jpg",
+  "banner": "/x-banner.jpg"
 }

@@ -25,7 +25,13 @@ export const Route = createFileRoute("/")({
           headline: "Seven Nil — Free World Cup draft game",
           datePublished: "2026-09-01",
           dateModified: UPDATED,
-          author: { "@id": `${SITE_URL}/#maker` },
+          author: {
+            "@type": "Person",
+            name: "Sagnik Dhar",
+            jobTitle: "Independent game maker",
+            url: `${SITE_URL}/about`,
+            worksFor: { "@type": "Organization", name: "Seven Nil", url: SITE_URL },
+          },
           publisher: { "@id": `${SITE_URL}/#org` },
           mainEntityOfPage: SITE_URL,
           speakable: {

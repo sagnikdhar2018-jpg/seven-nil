@@ -41,7 +41,7 @@
   --ink: #071711;
   --muted: #626965;
   --line: #e7dfce;
-  --accent: #ff553c;
+  --accent: #b42318;
   --gold: #cda044;
   --pitch: #1f6c37;
   --win: #0c5d3d;
@@ -168,7 +168,7 @@
   font-weight: var(--display-weight);
 }
 
-.mark70 .sep { color: var(--gold); padding: 0 0.06em; }
+.mark70 .sep { color: #6b4e12; padding: 0 0.06em; }
 
 .theme-panini .sep-colon,
 .theme-terrace .sep-dash { display: none; }
@@ -507,7 +507,7 @@
 
 .badge-new {
   background: var(--accent);
-  color: var(--paper);
+  color: #fffdf8;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 2px;

@@ -39,12 +39,15 @@ function AboutPage() {
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Who makes it</h2>
       <p>
-        Sagnik Dhar makes Seven Nil independently. There is no studio, no office, and no phone line. The public record
-        of the code is on{" "}
+        Sagnik Dhar makes Seven Nil on his own. He is not a club analyst and he does not sell scouting reports. The
+        work is the game: the draft rules, the season ratings, and the simulation. The public code is on{" "}
         <a className="underline" href={GITHUB} rel="me">
           GitHub
         </a>
-        . Email{" "}
+        . That profile is the only social record for the project. There is no company page, no office, and no phone.
+      </p>
+      <p>
+        Email{" "}
         <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
           {CONTACT_EMAIL}
         </a>{" "}
@@ -52,13 +55,29 @@ function AboutPage() {
         <a className="underline" href="/contact">
           contact page
         </a>
-        .
+        . A wrong year, a missing shirt, or a room that will not start is the useful note.
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">How a rating is set</h2>
       <p>
-        A number is that tournament or that league season, not a career badge. The scale runs from the low 70s for a
-        squad role or a poor year to the mid-90s for a defining one. The game holds 53 national squads and 73 club
-        seasons, 1,520 ratings in all. Names above 90 are shown in gold.
+        Each number is that tournament or that league season. It is not a career peak. The scale sits in the low 70s
+        for a squad role or a poor year and in the mid-90s for a defining one. Names above 90 are shown in gold so a
+        true standout is obvious and a famous name in a quiet year is not.
+      </p>
+      <p>
+        The archive is finite on purpose. Seven Nil holds 53 national squads and 73 club seasons. That is 1,520
+        ratings. Club mode stays inside England, Spain, Italy, Germany, and France from 1980 on. World Cup mode never
+        draws a club. Club mode never draws a country.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">How a match is decided</h2>
+      <p>
+        The XI is scored as attack, midfield, and defence, plus how well the players fit the roles. A stronger side
+        is more likely to go through. It is not guaranteed. Friends matches between two people are played minute by
+        minute, including a penalty shootout if the score is level. Every other tie in the bracket is settled at once
+        so a 32-team cup does not take an hour.
+      </p>
+      <p>
+        You get five redraws. Choosing another year of the same side, or a different side, spends one. Names can be
+        edited in the lobby, before the draft starts, and not after.
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">What it is not</h2>
       <p>

@@ -111,9 +111,15 @@ export function publicAppHost(hostHeader) {
  * app — Envoy rewrites it to `*.vercel.app`.
  */
 export function resolvePublicHost(hostHeader) {
-  return (
-    publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) || publicAppHost(hostHeader)
-  );
+  const fromEnv = publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME);
+  if (fromEnv) return fromEnv;
+  // This production alias serves /og.jpg publicly. Other *.vercel.app hosts stay blocked.
+  const pinned = String(process.env?.VITE_PUBLIC_HOSTNAME ?? "")
+    .trim()
+    .split(":")[0]
+    .toLowerCase();
+  if (pinned === "seven-nil-self.vercel.app") return pinned;
+  return publicAppHost(hostHeader);
 }
 
 export function isInstallQuery(url) {

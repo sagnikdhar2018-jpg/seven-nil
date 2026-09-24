@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL } from "@/lib/seven/site";
+import { CONTACT_EMAIL, GITHUB } from "@/lib/seven/site";
 import { Link } from "@tanstack/react-router";
 
 export function SiteFooter({ note }: { note?: string }) {
@@ -37,6 +37,9 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club/friends">
           Club friends
         </Link>
+        <a className="underline-offset-2 hover:text-ink hover:underline" href={GITHUB} rel="me">
+          GitHub
+        </a>
       </nav>
     </footer>
   );

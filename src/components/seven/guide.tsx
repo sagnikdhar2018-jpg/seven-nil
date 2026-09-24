@@ -96,6 +96,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           <a href="#how-a-turn-works">How a turn works</a>
           <a href="#ratings">Ratings</a>
           <a href="#questions">Questions</a>
+          <a href="#record">Numbers</a>
           <a href="#sources">Sources</a>
         </nav>
       </div>
@@ -138,6 +139,59 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
             </article>
           ))}
         </div>
+      </div>
+
+      <div id="record" className="flex max-w-2xl flex-col gap-3 text-sm leading-relaxed text-muted">
+        <h2 className="font-display text-3xl leading-none text-ink">The numbers the draft uses</h2>
+        <p>
+          TL;DR: Seven Nil rates the season on the card, then simulates from that XI.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>53 national tournament squads, from 1958 through 2026.</li>
+          <li>73 club seasons from the top five leagues, starting in 1980.</li>
+          <li>1,520 player ratings. A score above 90 is written in gold.</li>
+          <li>Five redraws. Another year and another team each spend one.</li>
+          <li>11 players. One open role, one pick.</li>
+        </ul>
+        <p>
+          According to FIFA, the men's{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/FIFA_World_Cup">
+            World Cup
+          </a>{" "}
+          began in 1930 in Uruguay with 13 teams. The{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/2022_FIFA_World_Cup">
+            2022 tournament
+          </a>{" "}
+          used 32 teams and 64 matches. The{" "}
+          <a className="underline" href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">
+            2026 tournament
+          </a>
+          , shared by Canada, Mexico, and the United States, expanded to 48 teams and 104 matches. Those figures are
+          the real cups. Seven Nil borrows the bracket shape, not the licence.
+        </p>
+        <p>
+          A rating here is not a career badge. Pelé in 1970 and a quiet year for a famous name are different numbers.
+          The match model then uses the XI: overall, attack, midfield, defence, and how well the shirts fit together.
+          A stronger side wins more often. It does not win every time.
+        </p>
+        <blockquote className="border-l-4 border-ink pl-3 text-ink">
+          Take the scarce role first. Attackers are common in the draw. A real left-back is not.
+        </blockquote>
+        <blockquote className="border-l-4 border-ink pl-3 text-ink">
+          Only a match between two people is played minute by minute. The rest of the bracket is settled at once.
+        </blockquote>
+        <figure className="mt-2">
+          <img
+            src="/og.jpg"
+            alt="Seven Nil share image: a green pitch and the 7-0 mark."
+            width="1200"
+            height="630"
+            loading="lazy"
+            decoding="async"
+            className="h-auto w-full max-w-md rounded-lg"
+          />
+          <figcaption>The board you draft on.</figcaption>
+        </figure>
       </div>
 
       <div id="sources" className="flex max-w-2xl flex-col gap-3 text-sm leading-relaxed text-muted">

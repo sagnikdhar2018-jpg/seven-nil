@@ -3,6 +3,9 @@
   "framework": null,
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
+  "env": {
+    "VITE_PUBLIC_HOSTNAME": "seven-nil-self.vercel.app"
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -28,7 +31,7 @@
     {
       "source": "/(.*\\.(?:svg|jpg|jpeg|png|webp|woff2|ico))",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ]
