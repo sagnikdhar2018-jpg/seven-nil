@@ -14,7 +14,7 @@ export type FriendsPhase = "menu" | "setup" | "lobby" | "draft" | "simulating" |
 export type Seat = {
   id: string;
   name: string;
-  kind: "human" | "cpu" | "organizer";
+  kind: "human" | "cpu" | "organizer" | "partner";
   formation: FormationId;
   style: StyleId;
   slots: Slot[];
@@ -61,7 +61,7 @@ export type FriendsAction =
   | { type: "setPassword"; password: string }
   | { type: "setBracket"; size: BracketSize }
   | { type: "ready"; seatId: string }
-  | { type: "join"; seat: Seat; password?: string }
+  | { type: "join"; seat: Seat; password?: string; partner?: boolean }
   | { type: "kick"; seatId: string }
   | { type: "start" }
   | { type: "roll"; seatId: string }
@@ -202,16 +202,18 @@ function concealGame(game: BracketGame, viewerName: string): BracketGame {
   };
 }
 
-/** Players receive their own XI only. An organize-only host keeps every team. */
+/** Players receive their own XI only. The organizer and the host's partner see every team. */
 export function viewFor(state: FriendsState, viewerId: string): FriendsState {
   const snap = pickState(state);
   if (state.kind === "local") return snap;
-  if (state.organizer && viewerId === state.hostId) return snap;
   const me = state.seats.find((seat) => seat.id === viewerId);
-  const myName = me && me.kind !== "organizer" ? shownName(me.name) : "";
+  if ((state.organizer && viewerId === state.hostId) || me?.kind === "partner") return snap;
+  const myName = me && me.kind === "human" ? shownName(me.name) : "";
   return {
     ...snap,
-    seats: snap.seats.map((seat) => (seat.id === viewerId || seat.kind === "organizer" ? seat : concealSeat(seat))),
+    seats: snap.seats.map((seat) =>
+      seat.id === viewerId || seat.kind === "organizer" || seat.kind === "partner" ? seat : concealSeat(seat),
+    ),
     bracket: snap.bracket.map((game) => concealGame(game, myName)),
   };
 }
@@ -472,7 +474,7 @@ function boostOf(seat: Seat) {
 function runSimulate(state: FriendsState): FriendsState {
   const filled = fillCpu(state);
   if (filled.kind === "cup") {
-    const playing = filled.seats.filter((s) => s.kind !== "organizer");
+    const playing = filled.seats.filter((s) => s.kind !== "organizer" && s.kind !== "partner");
     const { games, champion } = simulateKnockout(
       playing.map((s) => ({
         name: shownName(s.name, s.kind === "cpu" ? s.name : "Player"),
@@ -484,8 +486,9 @@ function runSimulate(state: FriendsState): FriendsState {
     );
     return { ...filled, phase: "simulating", bracket: games, champion, resultMatch: null };
   }
-  const home = filled.seats[0]!;
-  const away = filled.seats[1]!;
+  const home = filled.seats.find((s) => s.kind === "human" || s.kind === "cpu");
+  const away = filled.seats.filter((s) => s.kind === "human" || s.kind === "cpu")[1];
+  if (!home || !away) return { ...filled, phase: "draft" };
   const label = filled.pool === "club" ? "European night" : "Cup Final";
   const match = simulateFinal(
     home.slots,
@@ -595,14 +598,36 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       if (state.seats.some((s) => s.id === action.seat.id)) return state;
       const cap = state.kind === "final" ? 2 : Math.min(8, state.bracketSize);
       if (humans(state).length >= cap) return state;
-      return { ...state, seats: [...state.seats, { ...makeSeat(action.seat.id, action.seat.name), ...action.seat, ready: false }] };
+      if (action.partner) {
+        if (state.seats.some((s) => s.kind === "partner")) return state;
+        return {
+          ...state,
+          seats: [
+            ...state.seats,
+            {
+              ...makeSeat(action.seat.id, action.seat.name),
+              ...action.seat,
+              kind: "partner",
+              ready: true,
+              confirmed: true,
+            },
+          ],
+        };
+      }
+      return {
+        ...state,
+        seats: [
+          ...state.seats,
+          { ...makeSeat(action.seat.id, action.seat.name), ...action.seat, kind: "human", ready: false },
+        ],
+      };
     }
     case "kick": {
       if (!isHost || state.kind === "local") return state;
       if (action.seatId === state.hostId) return state;
       if (state.phase === "simulating" || state.phase === "result" || state.phase === "menu") return state;
       const seat = state.seats.find((s) => s.id === action.seatId);
-      if (!seat || seat.kind !== "human") return state;
+      if (!seat || (seat.kind !== "human" && seat.kind !== "partner")) return state;
       const theirs = new Set(
         seat.slots.flatMap((slot) => (slot.player ? [personKey(slot.player.name)] : [])),
       );
@@ -614,14 +639,16 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
     }
     case "start": {
       if (!isHost) return state;
-      const readyHumans = humans(state).filter((s) => s.ready || state.kind === "local");
-      if (readyHumans.some((s) => !s.name.trim())) return state;
-      if (state.kind === "final" && readyHumans.length < 2) return state;
-      if (state.kind === "cup" && readyHumans.length < (state.organizer ? 2 : 1)) return state;
+      if (state.kind !== "local") {
+        const players = humans(state);
+        if (players.length === 0 || players.some((s) => !s.ready || !s.name.trim())) return state;
+        if (state.kind === "final" && players.length < 2) return state;
+        if (state.kind === "cup" && players.length < (state.organizer ? 2 : 1)) return state;
+      }
       if (state.kind === "local" && state.seats.length < 2) return state;
       let seats = state.seats;
       if (state.kind === "cup") {
-        const playing = seats.filter((s) => s.kind !== "organizer");
+        const playing = seats.filter((s) => s.kind !== "organizer" && s.kind !== "partner");
         const need = state.bracketSize - playing.length;
         const taken = new Set(seats.map((s) => s.name.trim().toLowerCase()).filter(Boolean));
         const extras: Seat[] = [];

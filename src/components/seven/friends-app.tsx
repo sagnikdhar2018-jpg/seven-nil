@@ -40,11 +40,12 @@ import { SiteHeader } from "./site-header";
 import { useDiceSpin } from "./use-dice-spin";
 
 type Wire =
-  | { t: "hello"; id: string; name: string; password: string }
+  | { t: "hello"; id: string; name: string; password: string; partner?: boolean }
   | { t: "state"; state: FriendsState }
   | { t: "act"; action: FriendsAction; actorId: string }
   | { t: "need" }
-  | { t: "kicked" };
+  | { t: "kicked" }
+  | { t: "refused"; reason: string };
 
 function modeList(pool: PoolId): { id: FriendKind; n: string; name: string; desc: string }[] {
   if (pool === "club") {
@@ -199,6 +200,8 @@ function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
     loadPlayerName() ||
     "";
   if (!joinName.trim()) return;
+  const partner = new URLSearchParams(window.location.search).get("partner") === "1";
+  if (partner) sessionStorage.setItem("sn-join-partner", "1");
   const guest = {
     ...existing,
     kind: "final" as const,
@@ -224,6 +227,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const [bracketSize, setBracketSize] = useState<BracketSize>(8);
   const [organize, setOrganize] = useState(false);
   const [kicked, setKicked] = useState(false);
+  const [notice, setNotice] = useState("");
   const hydrateLocal = useFriends((s) => s.hydrateLocal);
   const becomeHost = useFriends((s) => s.becomeHost);
   const navigate = useNavigate();
@@ -236,6 +240,11 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
       if (sessionStorage.getItem("sn-kicked") === "1") {
         sessionStorage.removeItem("sn-kicked");
         setKicked(true);
+      }
+      const note = sessionStorage.getItem("sn-notice");
+      if (note) {
+        sessionStorage.removeItem("sn-notice");
+        setNotice(note);
       }
     } catch {
       // ignore
@@ -259,6 +268,9 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
     if (!name || code.length < 4) return;
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
+    const partner = new URLSearchParams(window.location.search).get("partner") === "1";
+    if (partner) sessionStorage.setItem("sn-join-partner", "1");
+    else sessionStorage.removeItem("sn-join-partner");
     sessionStorage.setItem("sn-join-password", password);
     if ((roomFromUrl ?? "").toUpperCase() === code) {
       bootFromUrl(code, pool);
@@ -285,6 +297,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
         {kicked ? (
           <p className="text-sm font-semibold text-accent">The host removed you from the room.</p>
         ) : null}
+        {notice ? <p className="text-sm font-semibold text-accent">{notice}</p> : null}
 
         <NameField value={displayName} onChange={setDisplayName} autoFocus={!nameReady} />
         {!nameReady ? (
@@ -512,16 +525,19 @@ function Lobby({ pool }: { pool: PoolId }) {
   const kind = useFriends((s) => s.kind);
   const organizer = useFriends((s) => s.organizer);
   const act = useFriends((s) => s.act);
-  const timer = useFriends((s) => s.timer);
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef(0);
   useEffect(() => () => window.clearTimeout(copiedTimer.current), []);
-  const me = seats.find((s) => s.id === actorId) ?? seats[0];
-  const readyHumans = seats.filter((s) => s.kind === "human" && s.ready).length;
+  const me = seats.find((s) => s.id === actorId);
+  const players = seats.filter((s) => s.kind === "human");
+  const readyHumans = players.filter((s) => s.ready).length;
   const isHost = actorId === hostId;
   const share =
     typeof window !== "undefined" ? `${window.location.origin}${friendsPath(pool)}?room=${code}` : code;
-  const needReady = organizer ? 2 : kind === "cup" ? 1 : 2;
+  const partnerShare = `${share}&partner=1`;
+  const enough = kind === "final" ? players.length >= 2 : players.length >= (organizer ? 2 : 1);
+  const allReady = players.length > 0 && readyHumans === players.length && enough;
+  const [copiedPartner, setCopiedPartner] = useState(false);
   const lobbyLabel =
     kind === "cup"
       ? pool === "club"
@@ -561,11 +577,37 @@ function Lobby({ pool }: { pool: PoolId }) {
         {copied ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2} />}
         {copied ? "Copied" : "Copy link"}
       </Button>
+      {isHost ? (
+        <Button
+          variant={copiedPartner ? "ink" : "secondary"}
+          aria-label={copiedPartner ? "Partner link copied" : "Copy partner link"}
+          onClick={() => {
+            void navigator.clipboard
+              ?.writeText(partnerShare)
+              .then(() => {
+                setCopiedPartner(true);
+                window.clearTimeout(copiedTimer.current);
+                copiedTimer.current = window.setTimeout(() => setCopiedPartner(false), 2500);
+              })
+              .catch(() => {});
+          }}
+        >
+          {copiedPartner ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2} />}
+          {copiedPartner ? "Copied" : "Invite a partner"}
+        </Button>
+      ) : null}
       {me?.kind === "organizer" ? (
         <div className="card-ink rounded-lg px-4 py-4">
           <p className="font-display text-2xl leading-none">Spectating</p>
           <p className="mt-2 text-sm text-muted">
             The draw, every XI, and every match stay on your screen. You are not in the tournament.
+          </p>
+        </div>
+      ) : me?.kind === "partner" ? (
+        <div className="card-ink rounded-lg px-4 py-4">
+          <p className="font-display text-2xl leading-none">Partner</p>
+          <p className="mt-2 text-sm text-muted">
+            You can watch every XI and every match. Only the host can start, kick, or invite.
           </p>
         </div>
       ) : me ? (
@@ -604,14 +646,19 @@ function Lobby({ pool }: { pool: PoolId }) {
             <span className="text-sm font-extrabold">
               {shownName(seat.name)}
               {seat.kind === "organizer" ? " · organizer" : ""}
+              {seat.kind === "partner" ? " · partner" : ""}
               {seat.id === hostId && seat.kind !== "organizer" ? " · host" : ""}
               {seat.id === actorId ? " · you" : ""}
             </span>
             <span className="flex items-center gap-3">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {seat.kind === "organizer" ? "Watching" : seat.ready ? "Ready" : "Waiting"}
+                {seat.kind === "organizer" || seat.kind === "partner"
+                  ? "Watching"
+                  : seat.ready
+                    ? "Ready"
+                    : "Waiting"}
               </span>
-              {isHost && seat.kind === "human" && seat.id !== actorId ? (
+              {isHost && (seat.kind === "human" || seat.kind === "partner") && seat.id !== actorId ? (
                 <Button
                   variant="secondary"
                   className="btn-mini"
@@ -625,9 +672,11 @@ function Lobby({ pool }: { pool: PoolId }) {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted">{timer}s turn · auto-pick at zero · {readyHumans} ready</p>
+      <p className="text-xs text-muted">
+        {readyHumans}/{players.length} ready · the match starts only when every player is ready and the host presses start
+      </p>
       {isHost ? (
-        <Button data-action="host-start" disabled={readyHumans < needReady} onClick={() => act({ type: "start" })}>
+        <Button data-action="host-start" disabled={!allReady} onClick={() => act({ type: "start" })}>
           Start
         </Button>
       ) : (
@@ -656,7 +705,7 @@ function DraftTable() {
   const mode = useFriends((s) => s.mode);
   const act = useFriends((s) => s.act);
   const backToMenu = useFriends((s) => s.backToMenu);
-  const spectating = organizer && actorId === hostId;
+  const spectating = (organizer && actorId === hostId) || seats.some((seat) => seat.id === actorId && seat.kind === "partner");
   const boards = seats.filter(
     (seat) => seat.kind === "human" && (kind === "local" || spectating || seat.id === actorId),
   );
@@ -674,7 +723,7 @@ function DraftTable() {
             : "Everyone drafts at once. Other teams stay hidden."}
         </p>
         {seats
-          .filter((s) => s.kind === "human")
+          .filter((s) => s.kind === "human" || s.kind === "partner")
           .map((seat) => {
             const reveal = kind === "local" || spectating || seat.id === actorId;
             const full = filledCount(seat.slots) >= 11;
@@ -690,7 +739,10 @@ function DraftTable() {
                   {coach ? ` · ${coach.name}` : ""}
                   {seat.confirmed ? " · confirmed" : ""}
                 </p>
-                {reveal && full && seat.id === actorId ? (
+                {seat.kind === "partner" ? (
+                  <p className="text-xs font-semibold text-muted">Watching with the host</p>
+                ) : null}
+                {reveal && full && seat.id === actorId && seat.kind === "human" ? (
                   <Button
                     variant={seat.confirmed ? "ink" : "primary"}
                     data-action={`confirm-${seat.id}`}
@@ -933,7 +985,7 @@ function SimView() {
   const organizer = useFriends((s) => s.organizer);
   const act = useFriends((s) => s.act);
   const backToMenu = useFriends((s) => s.backToMenu);
-  const spectating = organizer && actorId === hostId;
+  const spectating = (organizer && actorId === hostId) || seats.some((seat) => seat.id === actorId && seat.kind === "partner");
   const myName = shownName(seats.find((seat) => seat.id === actorId)?.name ?? "");
   const games = bracket.map((g) => {
     const mine = g.home === myName || g.away === myName;
@@ -990,7 +1042,7 @@ function ResultView() {
   const hostId = useFriends((s) => s.hostId);
   const organizer = useFriends((s) => s.organizer);
   const backToMenu = useFriends((s) => s.backToMenu);
-  const spectating = organizer && actorId === hostId;
+  const spectating = (organizer && actorId === hostId) || seats.some((seat) => seat.id === actorId && seat.kind === "partner");
   const [pop, setPop] = useState(true);
   const winner = shownName(champion ?? "");
   const youWon = seats.some((seat) => {
@@ -1202,6 +1254,15 @@ function NetInner({
     return p2p.onMessage((from, data) => {
       const msg = data as Wire;
       if (!msg || typeof msg !== "object" || !("t" in msg)) return;
+      if (msg.t === "refused") {
+        try {
+          sessionStorage.setItem("sn-notice", msg.reason);
+        } catch {
+          // ignore
+        }
+        useFriends.getState().backToMenu(pool);
+        return;
+      }
       if (msg.t === "kicked") {
         try {
           sessionStorage.setItem("sn-kicked", "1");
@@ -1219,10 +1280,22 @@ function NetInner({
         peerSeats.current.set(from, msg.id);
         const next = apply(
           useFriends.getState(),
-          { type: "join", seat: makeSeat(msg.id, msg.name), password: msg.password },
+          {
+            type: "join",
+            seat: makeSeat(msg.id, msg.name),
+            password: msg.password,
+            partner: msg.partner,
+          },
           useFriends.getState().hostId,
         );
         replace(next);
+        if (!next.seats.some((seat) => seat.id === msg.id)) {
+          p2p.send(
+            { t: "refused", reason: msg.partner ? "This room already has a partner." : "The room is full." },
+            from,
+          );
+          return;
+        }
         p2p.send({ t: "state", state: viewFor(next, msg.id) }, from);
         return;
       }
@@ -1242,7 +1315,13 @@ function NetInner({
   useEffect(() => {
     if (isHost || !p2p.joined) return;
     becomeGuest(useFriends.getState(), p2p.selfId);
-    p2p.send({ t: "hello", id: p2p.selfId, name: selfName, password });
+    p2p.send({
+      t: "hello",
+      id: p2p.selfId,
+      name: selfName,
+      password,
+      partner: sessionStorage.getItem("sn-join-partner") === "1",
+    });
     p2p.send({ t: "need" });
   }, [isHost, p2p.joined, p2p.peers.length, p2p.selfId, p2p.send, selfName, password, becomeGuest]);
 
