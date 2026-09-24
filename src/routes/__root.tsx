@@ -2,7 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { OG_IMAGE, SITE_NAME, SITE_URL, orgRef, personRef } from "@/lib/seven/site";
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 const APP_NAME = "Seven Nil";
 const ADSENSE_CLIENT = "ca-pub-1391099021196311";
@@ -68,7 +68,6 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/png", href: "/favicon-192.png", sizes: "192x192" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "stylesheet", href: appCss, fetchPriority: "high" },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
     ],
     scripts: [
