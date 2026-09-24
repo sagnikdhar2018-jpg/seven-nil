@@ -210,15 +210,26 @@ export const COACHES: Coach[] = RAW.map(([name, known, years, formation, play, p
 
 export function drawCoaches(count: number, exclude: string[] = []): Coach[] {
   const blocked = new Set(exclude);
-  const pool = COACHES.filter((coach) => !blocked.has(coach.id));
-  const bag = (pool.length >= count ? pool : COACHES).slice();
+  const bag = COACHES.filter((coach) => !blocked.has(coach.id));
   for (let i = bag.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     const swap = bag[i]!;
     bag[i] = bag[j]!;
     bag[j] = swap;
   }
-  return bag.slice(0, count);
+  const picked: Coach[] = [];
+  const styles = new Set<string>();
+  for (const coach of bag) {
+    if (picked.length >= count) break;
+    if (styles.has(coach.play)) continue;
+    picked.push(coach);
+    styles.add(coach.play);
+  }
+  for (const coach of bag) {
+    if (picked.length >= count) break;
+    if (!picked.includes(coach)) picked.push(coach);
+  }
+  return picked;
 }
 
 export function coachById(id: string | null | undefined): Coach | undefined {

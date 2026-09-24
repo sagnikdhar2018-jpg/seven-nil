@@ -140,8 +140,9 @@ function sideQuality(
   return quality;
 }
 
-function swing() {
-  return (Math.random() + Math.random() + Math.random() - 1.5) * 0.9;
+function swing(gap: number) {
+  const room = Math.max(0.22, 0.72 - Math.abs(gap) * 0.28);
+  return (Math.random() + Math.random() + Math.random() - 1.5) * room;
 }
 
 export function displayRatings(slots: Slot[], _style: StyleId): TeamRatings {
@@ -189,7 +190,8 @@ function scorers(slots: Slot[], fallback: string) {
   for (const slot of slots) {
     if (!slot.player || slot.pos === "GK") continue;
     const weight =
-      slot.pos === "ST" ? 6 : slot.pos === "RW" || slot.pos === "LW" ? 4 : slot.pos === "AM" ? 3 : MID_POS.includes(slot.pos) ? 2 : 1;
+      (slot.pos === "ST" ? 6 : slot.pos === "RW" || slot.pos === "LW" ? 4 : slot.pos === "AM" ? 3 : MID_POS.includes(slot.pos) ? 2 : 1) *
+      Math.max(1, Math.round((slot.player.ovr - 68) / 10));
     const name = lastName(slot.player.name);
     for (let i = 0; i < weight; i++) weighted.push(name);
   }
@@ -225,7 +227,15 @@ function takers(slots: Slot[], fallback: string) {
     .filter((s) => s.player && s.pos !== "GK")
     .map((s) => ({ name: lastName(s.player!.name), ovr: s.player!.ovr }));
   if (!out.length) return [{ name: fallback, ovr: 78 }];
-  return out.sort(() => Math.random() - 0.5);
+  out.sort((a, b) => b.ovr - a.ovr);
+  for (let i = 0; i < out.length - 1; i++) {
+    if (Math.random() < 0.22) {
+      const swap = out[i]!;
+      out[i] = out[i + 1]!;
+      out[i + 1] = swap;
+    }
+  }
+  return out;
 }
 
 export function scriptPens(homeSlots: Slot[], awaySlots: Slot[], homeBias = 0) {
@@ -313,9 +323,9 @@ function playMatch(
     homeName,
   );
   const themQ = sideQuality(awaySlots, awayStyle, them, them.name);
-  const gap = (usQ - themQ) / 18;
-  const gf = clamp(poisson(clamp(1.15 + gap + swing(), 0.25, 4.4)), 0, 8);
-  const ga = clamp(poisson(clamp(1.05 - gap + swing(), 0.2, 4.2)), 0, 8);
+  const gap = (usQ - themQ) / 11;
+  const gf = clamp(poisson(clamp(1.05 + gap * 0.85 + swing(gap), 0.2, 4.2)), 0, 7);
+  const ga = clamp(poisson(clamp(0.95 - gap * 0.85 + swing(gap), 0.15, 4.0)), 0, 7);
   const result: Match["result"] = gf > ga ? "W" : gf === ga ? "D" : "L";
   return {
     round,
@@ -335,11 +345,22 @@ function playMatch(
 
 function pickOpponents(count: number, pool: PoolId = "world") {
   const copy = [...(pool === "club" ? CLUB_OPPONENTS : OPPONENTS)];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  const strength = (row: (typeof copy)[number]) => {
+    const rank = teamRank(row.name, pool);
+    const rated = (row.att + row.mid + row.def + row.gk) / 4;
+    return rated + (rank ? (24 - rank) * 0.35 : 0) + Math.random() * 1.6;
+  };
+  copy.sort((a, b) => strength(a) - strength(b));
+  if (copy.length <= count) return copy;
+  const picked: typeof copy = [];
+  const used = new Set<number>();
+  for (let i = 0; i < count; i++) {
+    let at = Math.round((i * (copy.length - 1)) / Math.max(1, count - 1));
+    while (used.has(at) && at < copy.length - 1) at += 1;
+    used.add(at);
+    picked.push(copy[at]!);
   }
-  return copy.slice(0, count);
+  return picked;
 }
 
 const KNOCKOUT = [
@@ -379,8 +400,8 @@ export function simulateCampaign(
       match.awayRatings = displayRatings(oppXi.slots, "balanced");
     }
     if (match.result === "D") {
-      const edge = (sideQuality(slots, style) - sideQuality(oppXi.slots, "balanced", opp)) / 50;
-      const pens = Math.random() < clamp(0.5 + edge, 0.36, 0.64);
+      const edge = (sideQuality(slots, style) - sideQuality(oppXi.slots, "balanced", opp, opp.name)) / 22;
+      const pens = Math.random() < clamp(0.5 + edge, 0.3, 0.74);
       match.result = pens ? "W" : "L";
       match.pens = pens ? { home: 5, away: 4 } : { home: 3, away: 4 };
     }
