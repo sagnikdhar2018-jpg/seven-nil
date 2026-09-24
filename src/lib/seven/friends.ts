@@ -62,6 +62,7 @@ export type FriendsAction =
   | { type: "setBracket"; size: BracketSize }
   | { type: "ready"; seatId: string }
   | { type: "join"; seat: Seat; password?: string }
+  | { type: "kick"; seatId: string }
   | { type: "start" }
   | { type: "roll"; seatId: string }
   | { type: "reroll"; seatId: string }
@@ -595,6 +596,21 @@ export function apply(state: FriendsState, action: FriendsAction, actorId: strin
       const cap = state.kind === "final" ? 2 : Math.min(8, state.bracketSize);
       if (humans(state).length >= cap) return state;
       return { ...state, seats: [...state.seats, { ...makeSeat(action.seat.id, action.seat.name), ...action.seat, ready: false }] };
+    }
+    case "kick": {
+      if (!isHost || state.kind === "local") return state;
+      if (action.seatId === state.hostId) return state;
+      if (state.phase === "simulating" || state.phase === "result" || state.phase === "menu") return state;
+      const seat = state.seats.find((s) => s.id === action.seatId);
+      if (!seat || seat.kind !== "human") return state;
+      const theirs = new Set(
+        seat.slots.flatMap((slot) => (slot.player ? [personKey(slot.player.name)] : [])),
+      );
+      return {
+        ...state,
+        claimed: state.claimed.filter((key) => !theirs.has(key)),
+        seats: state.seats.filter((s) => s.id !== action.seatId),
+      };
     }
     case "start": {
       if (!isHost) return state;

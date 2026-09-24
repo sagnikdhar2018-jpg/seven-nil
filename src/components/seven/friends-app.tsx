@@ -43,7 +43,8 @@ type Wire =
   | { t: "hello"; id: string; name: string; password: string }
   | { t: "state"; state: FriendsState }
   | { t: "act"; action: FriendsAction; actorId: string }
-  | { t: "need" };
+  | { t: "need" }
+  | { t: "kicked" };
 
 function modeList(pool: PoolId): { id: FriendKind; n: string; name: string; desc: string }[] {
   if (pool === "club") {
@@ -119,7 +120,11 @@ export function FriendsApp({
   const hydrate = useSeven((s) => s.hydrate);
   const phase = useFriends((s) => s.phase);
   const kind = useFriends((s) => s.kind);
+  const actorId = useFriends((s) => s.actorId);
+  const hostId = useFriends((s) => s.hostId);
+  const seats = useFriends((s) => s.seats);
   const backToMenu = useFriends((s) => s.backToMenu);
+  const wasHere = useRef(false);
 
   useEffect(() => {
     hydrate(pool);
@@ -133,6 +138,27 @@ export function FriendsApp({
   useEffect(() => {
     bootFromUrl(roomFromUrl, pool);
   }, [roomFromUrl, pool]);
+
+  useEffect(() => {
+    if (phase === "menu") wasHere.current = false;
+  }, [phase]);
+
+  useEffect(() => {
+    if (seats.some((seat) => seat.id === actorId)) wasHere.current = true;
+  }, [seats, actorId]);
+
+  useEffect(() => {
+    if (!wasHere.current || kind === "local" || actorId === hostId) return;
+    if (phase === "menu" || phase === "setup") return;
+    if (seats.some((seat) => seat.id === actorId)) return;
+    wasHere.current = false;
+    try {
+      sessionStorage.setItem("sn-kicked", "1");
+    } catch {
+      // ignore
+    }
+    backToMenu(pool);
+  }, [seats, actorId, hostId, kind, phase, backToMenu, pool]);
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden bg-paper text-ink" data-pool={pool}>
@@ -197,12 +223,24 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const [timer, setTimer] = useState<TimerSec>(30);
   const [bracketSize, setBracketSize] = useState<BracketSize>(8);
   const [organize, setOrganize] = useState(false);
+  const [kicked, setKicked] = useState(false);
   const hydrateLocal = useFriends((s) => s.hydrateLocal);
   const becomeHost = useFriends((s) => s.becomeHost);
   const navigate = useNavigate();
   const kinds = modeList(pool);
   const path = friendsPath(pool);
   const nameReady = displayName.trim().length > 0;
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("sn-kicked") === "1") {
+        sessionStorage.removeItem("sn-kicked");
+        setKicked(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const startHost = (kind: FriendKind) => {
     const name = displayName.trim().slice(0, 18);
@@ -243,6 +281,10 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
             {pool === "club" ? "Friend vs friend · UCL knockout" : "3 modes · local and online"}
           </p>
         </div>
+
+        {kicked ? (
+          <p className="text-sm font-semibold text-accent">The host removed you from the room.</p>
+        ) : null}
 
         <NameField value={displayName} onChange={setDisplayName} autoFocus={!nameReady} />
         {!nameReady ? (
@@ -565,8 +607,20 @@ function Lobby({ pool }: { pool: PoolId }) {
               {seat.id === hostId && seat.kind !== "organizer" ? " · host" : ""}
               {seat.id === actorId ? " · you" : ""}
             </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {seat.kind === "organizer" ? "Watching" : seat.ready ? "Ready" : "Waiting"}
+            <span className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {seat.kind === "organizer" ? "Watching" : seat.ready ? "Ready" : "Waiting"}
+              </span>
+              {isHost && seat.kind === "human" && seat.id !== actorId ? (
+                <Button
+                  variant="secondary"
+                  className="btn-mini"
+                  data-action={`kick-${seat.id}`}
+                  onClick={() => act({ type: "kick", seatId: seat.id })}
+                >
+                  Kick
+                </Button>
+              ) : null}
             </span>
           </li>
         ))}
@@ -644,6 +698,16 @@ function DraftTable() {
                     onClick={() => act({ type: "confirm", seatId: seat.id })}
                   >
                     {seat.confirmed ? "XI locked" : seat.coachId ? "Confirm XI" : "Pick a manager first"}
+                  </Button>
+                ) : null}
+                {actorId === hostId && seat.id !== actorId ? (
+                  <Button
+                    variant="secondary"
+                    className="btn-mini"
+                    data-action={`kick-${seat.id}`}
+                    onClick={() => act({ type: "kick", seatId: seat.id })}
+                  >
+                    Kick
                   </Button>
                 ) : null}
               </div>
@@ -1138,6 +1202,15 @@ function NetInner({
     return p2p.onMessage((from, data) => {
       const msg = data as Wire;
       if (!msg || typeof msg !== "object" || !("t" in msg)) return;
+      if (msg.t === "kicked") {
+        try {
+          sessionStorage.setItem("sn-kicked", "1");
+        } catch {
+          // ignore
+        }
+        useFriends.getState().backToMenu(pool);
+        return;
+      }
       if (msg.t === "state") {
         replace(msg.state);
         return;
@@ -1164,7 +1237,7 @@ function NetInner({
         p2p.send({ t: "state", state: viewFor(useFriends.getState(), seatId) }, from);
       }
     });
-  }, [p2p.onMessage, p2p.send, isHost, replace]);
+  }, [p2p.onMessage, p2p.send, isHost, replace, pool]);
 
   useEffect(() => {
     if (isHost || !p2p.joined) return;
@@ -1191,11 +1264,19 @@ function NetInner({
         p2p.send({ t: "act", action: state.lastAction.action, actorId: state.lastAction.actorId });
       });
     }
-    return useFriends.subscribe((state) => {
+    return useFriends.subscribe((state, prev) => {
       if (state.phase === "menu" || state.phase === "setup") return;
+      const action = state.lastAction;
+      const kicked =
+        action && action !== prev.lastAction && action.action.type === "kick" ? action.action.seatId : "";
       for (const peer of peersRef.current) {
         const seatId = peerSeats.current.get(peer.id);
         if (!seatId) continue;
+        if (kicked && seatId === kicked) {
+          p2p.send({ t: "kicked" }, peer.id);
+          peerSeats.current.delete(peer.id);
+          continue;
+        }
         p2p.send({ t: "state", state: viewFor(state, seatId) }, peer.id);
       }
     });
