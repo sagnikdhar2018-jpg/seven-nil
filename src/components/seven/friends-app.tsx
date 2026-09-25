@@ -294,6 +294,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
   const [join, setJoin] = useState(() => (roomFromUrl ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase());
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [joinPassword, setJoinPassword] = useState("");
   const [displayName, setDisplayName] = useState(() => loadPlayerName());
   const [mode, setMode] = useState<ModeId>("classic");
   const [timer, setTimer] = useState<TimerSec>(30);
@@ -345,19 +346,65 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
     savePlayerName(name);
     sessionStorage.setItem("sn-join-name", name);
     sessionStorage.setItem(`sn-door-${code}`, "1");
-    sessionStorage.removeItem("sn-join-password");
-    useFriends.getState().setJoinSecret("");
+    const typedPassword = joinPassword.trim().slice(0, 24);
+    if (typedPassword) sessionStorage.setItem("sn-join-password", typedPassword);
+    else sessionStorage.removeItem("sn-join-password");
+    useFriends.getState().setJoinSecret(typedPassword);
     useFriends.getState().setPasswordPrompt(0);
     const partner = new URLSearchParams(window.location.search).get("partner") === "1";
     if (partner) sessionStorage.setItem("sn-join-partner", "1");
     else sessionStorage.removeItem("sn-join-partner");
-    sessionStorage.setItem("sn-join-password", password);
     if ((roomFromUrl ?? "").toUpperCase() === code) {
       bootFromUrl(code, pool);
       return;
     }
     void navigate({ to: path, search: { room: code } });
   };
+
+  const joinForm = (
+    <form
+      className="card-ink flex flex-col gap-3 rounded-lg px-4 py-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        joinRoom();
+      }}
+    >
+      <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
+        {roomFromUrl ? `Join room ${roomFromUrl}` : "Join with a code"}
+      </p>
+      <NameField value={displayName} onChange={setDisplayName} autoFocus={Boolean(roomFromUrl) && !nameReady} />
+      {!nameReady ? <p className="text-xs font-semibold text-accent">Enter your name before you join.</p> : null}
+      <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+        Room code
+        <input
+          className="field-input"
+          maxLength={6}
+          placeholder="Room code"
+          aria-label="Room code"
+          value={join}
+          onChange={(e) => setJoin(e.target.value.toUpperCase())}
+        />
+      </label>
+      {join.length > 0 && join.length < 4 ? (
+        <p className="text-xs font-semibold text-accent">Room codes are 4 to 6 characters.</p>
+      ) : null}
+      <label className="flex flex-col gap-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+        Password, if the host set one
+        <input
+          className="field-input normal-case tracking-normal"
+          value={joinPassword}
+          maxLength={24}
+          placeholder="Leave blank if the room is open"
+          type="text"
+          autoComplete="off"
+          onChange={(e) => setJoinPassword(e.target.value)}
+        />
+      </label>
+      <Button type="submit" disabled={!nameReady || join.length < 4}>
+        Join
+      </Button>
+    </form>
+  );
 
   return (
     <>
@@ -374,18 +421,6 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
           </p>
         </div>
 
-        {roomFromUrl ? (
-          <div className="card-ink flex flex-col gap-3 rounded-lg px-4 py-4">
-            <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Room {roomFromUrl}</p>
-            <p className="text-sm text-muted">
-              Confirm your name before the lobby opens. If this room has a password, you confirm that next.
-            </p>
-            <Button disabled={!nameReady || roomFromUrl.length < 4} onClick={joinRoom}>
-              Confirm name
-            </Button>
-          </div>
-        ) : null}
-
         {kicked ? (
           <p className="text-sm font-semibold text-accent">The host removed you from the room.</p>
         ) : null}
@@ -395,6 +430,8 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
         {!nameReady ? (
           <p className="text-xs font-semibold text-accent">Enter your name before you create or join a room.</p>
         ) : null}
+
+        {roomFromUrl ? joinForm : null}
 
         <div className="ms-list">
           {kinds.map((item) => {
@@ -468,6 +505,9 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
                             />
                           </label>
                         ) : null}
+                        {password.trim() && !passwordOk ? (
+                          <p className="text-xs font-semibold text-accent">Those passwords do not match.</p>
+                        ) : null}
                       </>
                     ) : null}
                     {item.id === "cup" ? (
@@ -515,23 +555,7 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
           })}
         </div>
 
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Join with a code</p>
-          <p className="text-sm text-muted">Confirm your name first. The password is asked only if the host set one, and only before the room opens.</p>
-          <div className="flex gap-2">
-            <input
-              className="field-input"
-              maxLength={6}
-              placeholder="room code"
-              aria-label="Join with a code"
-              value={join}
-              onChange={(e) => setJoin(e.target.value.toUpperCase())}
-            />
-            <Button variant="ink" className="shrink-0" disabled={!nameReady || join.length < 4} onClick={joinRoom}>
-              Confirm
-            </Button>
-          </div>
-        </div>
+        {!roomFromUrl ? joinForm : null}
         <p className="text-sm text-muted">
           {pool === "club" ? (
             <>
@@ -633,6 +657,8 @@ function Lobby({ pool }: { pool: PoolId }) {
   const isHost = actorId === hostId;
   const passwordPrompt = useFriends((s) => s.passwordPrompt);
   const setJoinSecret = useFriends((s) => s.setJoinSecret);
+  const backToMenu = useFriends((s) => s.backToMenu);
+  const navigate = useNavigate();
   const share =
     typeof window !== "undefined" ? `${window.location.origin}${friendsPath(pool)}?room=${code}` : code;
   const partnerShare = `${share}&partner=1`;
@@ -678,6 +704,23 @@ function Lobby({ pool }: { pool: PoolId }) {
         ) : (
           <ConnectingNote />
         )}
+        <Button
+          variant="ghost"
+          onClick={() => {
+            try {
+              sessionStorage.removeItem(`sn-door-${code}`);
+              sessionStorage.removeItem("sn-join-password");
+            } catch {
+              // ignore
+            }
+            setJoinSecret("");
+            useFriends.getState().setPasswordPrompt(0);
+            backToMenu(pool);
+            void navigate({ to: friendsPath(pool), search: {}, replace: true });
+          }}
+        >
+          Back
+        </Button>
       </section>
     );
   }
