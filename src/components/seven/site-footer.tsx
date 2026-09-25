@@ -28,14 +28,17 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/terms">
           Terms
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/">
+          World Cup
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club">
-          Clubs
+          UCL
         </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/friends">
-          Friends
+          World Cup with friends
         </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club/friends">
-          Club friends
+          UCL with friends
         </Link>
         <a className="underline-offset-2 hover:text-ink hover:underline" href={GITHUB} rel="me">
           GitHub

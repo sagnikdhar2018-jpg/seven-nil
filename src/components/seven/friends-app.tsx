@@ -201,10 +201,7 @@ export function FriendsApp({
       <SfxRoot />
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
-        <SiteHeader
-          playLabel={pool === "club" ? "Clubs" : "World Cup"}
-          playHref={pool === "club" ? "/club" : "/"}
-        />
+        <SiteHeader pool={pool} friends />
         {phase === "menu" ? <Selector pool={pool} roomFromUrl={roomFromUrl} /> : null}
         {phase === "setup" ? <LocalSetup pool={pool} /> : null}
         {phase === "lobby" ? <Lobby pool={pool} /> : null}
@@ -538,16 +535,16 @@ function Selector({ pool, roomFromUrl }: { pool: PoolId; roomFromUrl?: string })
         <p className="text-sm text-muted">
           {pool === "club" ? (
             <>
-              Looking for nations?{" "}
+              This room is UCL.{" "}
               <Link className="font-extrabold text-ink underline-offset-2 hover:underline" to="/friends">
-                World Cup friends
+                Switch to World Cup
               </Link>
             </>
           ) : (
             <>
-              Historic clubs?{" "}
+              This room is the World Cup.{" "}
               <Link className="font-extrabold text-ink underline-offset-2 hover:underline" to="/club/friends">
-                Club friends
+                Switch to UCL
               </Link>
             </>
           )}

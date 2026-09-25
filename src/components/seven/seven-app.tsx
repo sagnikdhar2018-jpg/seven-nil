@@ -12,6 +12,7 @@ import { Pitch } from "./pitch";
 import { ResultCard } from "./result-card";
 import { MuteButton, SfxRoot } from "./sfx";
 import { SiteFooter } from "./site-footer";
+import { ModeSwitch } from "./site-header";
 import { SquadPanel } from "./squad-panel";
 
 const COPY: Record<
@@ -30,7 +31,7 @@ const COPY: Record<
     kicker: "Club draft · top five · 1980 — 2024",
     h1: ["Build your dream", "club XI"],
     blurb:
-      "Roll a side from England, Spain, Italy, Germany, or France and a season since 1980. One footballer per draw. Then take the XI into Europe — or open Club friends for a rivalry or a UCL night.",
+      "Roll a side from England, Spain, Italy, Germany, or France and a season since 1980. One footballer per draw. Then take the XI into Europe, or play UCL with friends.",
     play: "Play clubs",
     footer: "A club draft of the top five leagues. Not affiliated with UEFA or any league.",
   },
@@ -60,11 +61,11 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
       <SfxRoot />
       <div className="paper-grain" aria-hidden="true" />
       <div className="relative z-10">
-        <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
+        <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5">
           <Link to="/" className="home-brand" id="top">
             7-0
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <MuteButton />
             <Button
               variant="secondary"
@@ -79,19 +80,9 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 <Sun className="size-7" strokeWidth={2} />
               )}
             </Button>
-            {pool === "world" ? (
-              <Button variant="secondary" asChild>
-                <Link to="/club">Clubs</Link>
-              </Button>
-            ) : (
-              <Button variant="secondary" asChild>
-                <Link to="/">World Cup</Link>
-              </Button>
-            )}
+            <ModeSwitch pool={pool} />
             <Button variant="ghost" asChild>
-              <Link to={pool === "club" ? "/club/friends" : "/friends"}>
-                {pool === "club" ? "Club friends" : "Friends"}
-              </Link>
+              <Link to={pool === "club" ? "/club/friends" : "/friends"}>With friends</Link>
             </Button>
           </div>
         </header>
@@ -129,30 +120,15 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               <Button asChild>
                 <a href="#draft">
                   <Dices className="size-5" strokeWidth={2} />
-                  {copy.play}
+                  {pool === "club" ? "Play UCL" : "Play World Cup"}
                 </a>
               </Button>
-              {pool === "world" ? (
-                <Button variant="secondary" asChild>
-                  <Link to="/club">
-                    Club mode
-                    <span className="badge-new">New</span>
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="secondary" asChild>
-                  <Link to="/club/friends">Club friends</Link>
-                </Button>
-              )}
-              {pool === "world" ? (
-                <Button variant="ghost" asChild>
-                  <Link to="/friends">Friends</Link>
-                </Button>
-              ) : (
-                <Button variant="ghost" asChild>
-                  <Link to="/">World Cup</Link>
-                </Button>
-              )}
+              <Button variant="secondary" asChild>
+                <Link to={pool === "club" ? "/club/friends" : "/friends"}>With friends</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to={pool === "club" ? "/" : "/club"}>{pool === "club" ? "World Cup" : "UCL"}</Link>
+              </Button>
               <Button variant="ghost" asChild>
                 <Link to="/how-to-play">How to play</Link>
               </Button>
