@@ -8,6 +8,7 @@ import { PLAY_LABEL, coachById } from "@/lib/seven/coaches";
 import { emptySlotsFor, FORMATIONS, STYLES } from "@/lib/seven/formations";
 import {
   apply,
+  freshFriends,
   friendsPath,
   loadPlayerName,
   makeSeat,
@@ -21,7 +22,7 @@ import {
   type TimerSec,
 } from "@/lib/seven/friends";
 import { rankedSides } from "@/lib/seven/rankings";
-import { useFriends } from "@/lib/seven/friends-store";
+import { loadSavedRoom, useFriends } from "@/lib/seven/friends-store";
 import { isPersonTaken } from "@/lib/seven/person";
 import { RerollChoices } from "./reroll-choices";
 import { playTimerExpire, playTimerWarn } from "@/lib/seven/sound";
@@ -226,8 +227,47 @@ function bootFromUrl(roomFromUrl: string | undefined, pool: PoolId) {
   if (!room) return;
   const existing = useFriends.getState();
   if (existing.code === room && existing.phase !== "menu") return;
+  const saved = loadSavedRoom(room);
   const hostKey = sessionStorage.getItem(`sn-host-${room}`);
-  if (hostKey && existing.hostId === hostKey) return;
+  if (saved && (saved.pool === pool || !saved.pool)) {
+    const seated = saved.seats.some((seat) => seat.id === saved.actorId);
+    const iAmHost = Boolean(hostKey && (hostKey === saved.hostId || hostKey === saved.actorId));
+    if (iAmHost || seated) {
+      useFriends.setState({
+        ...saved,
+        pool,
+        actorId: iAmHost ? saved.hostId : saved.actorId,
+        lastAction: null,
+        passwordPrompt: 0,
+        joinSecret: sessionStorage.getItem("sn-join-password") ?? "",
+      });
+      return;
+    }
+  }
+  if (hostKey) {
+    const name = loadPlayerName() || "Host";
+    const kind = saved?.kind === "final" ? "final" : "cup";
+    let state = freshFriends(kind, hostKey, name, pool);
+    state = {
+      ...state,
+      code: room,
+      password: saved?.password ?? "",
+      mode: saved?.mode ?? state.mode,
+      timer: saved?.timer ?? state.timer,
+      bracketSize: saved?.bracketSize ?? state.bracketSize,
+      organizer: Boolean(saved?.organizer),
+    };
+    if (state.organizer) {
+      state = {
+        ...state,
+        seats: state.seats.map((seat) =>
+          seat.id === hostKey ? { ...seat, kind: "organizer", ready: true, confirmed: true } : seat,
+        ),
+      };
+    }
+    useFriends.setState({ ...state, actorId: hostKey, lastAction: null, passwordPrompt: 0, joinSecret: "" });
+    return;
+  }
   const id = `p-${Math.random().toString(36).slice(2, 10)}`;
   const joinName =
     (typeof sessionStorage !== "undefined" && sessionStorage.getItem("sn-join-name")) ||

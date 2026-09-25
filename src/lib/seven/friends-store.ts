@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   apply,
   freshFriends,
+  pickState,
   type FriendKind,
   type FriendsAction,
   type FriendsState,
@@ -80,14 +81,20 @@ export const useFriends = create<FriendsStore>((set, get) => ({
       return { ...cur, ...state, passwordPrompt: seated ? 0 : cur.passwordPrompt };
     }),
 
-  backToMenu: (pool) =>
+  backToMenu: (pool) => {
+    const code = get().code;
+    if (code && typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem(`sn-room-${code}`);
+      sessionStorage.removeItem(`sn-host-${code}`);
+    }
     set({
       ...menuState(pool ?? get().pool ?? "world"),
       actorId: "home",
       lastAction: null,
       passwordPrompt: 0,
       joinSecret: "",
-    }),
+    });
+  },
 
   act: (action) => {
     const cur = get();
@@ -96,3 +103,31 @@ export const useFriends = create<FriendsStore>((set, get) => ({
     return next;
   },
 }));
+
+function roomKey(code: string) {
+  return `sn-room-${code}`;
+}
+
+export function loadSavedRoom(code: string): (FriendsState & { actorId: string }) | null {
+  if (typeof sessionStorage === "undefined" || !code) return null;
+  try {
+    const raw = sessionStorage.getItem(roomKey(code));
+    if (!raw) return null;
+    const data = JSON.parse(raw) as FriendsState & { actorId?: string };
+    if (!data || data.code !== code || !Array.isArray(data.seats) || !data.hostId || !data.actorId) return null;
+    if (data.phase === "menu" || data.phase === "setup" || data.kind === "local") return null;
+    return data as FriendsState & { actorId: string };
+  } catch {
+    return null;
+  }
+}
+
+useFriends.subscribe((state) => {
+  if (typeof sessionStorage === "undefined") return;
+  if (!state.code || state.kind === "local" || state.phase === "menu" || state.phase === "setup") return;
+  try {
+    sessionStorage.setItem(roomKey(state.code), JSON.stringify({ ...pickState(state), actorId: state.actorId }));
+  } catch {
+    // ignore quota
+  }
+});
