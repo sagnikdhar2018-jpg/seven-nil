@@ -24,6 +24,13 @@ const OPPONENTS = [
   { name: "Colombia", att: 84, mid: 82, def: 80, gk: 82 },
   { name: "Mexico", att: 80, mid: 80, def: 81, gk: 82 },
   { name: "Senegal", att: 82, mid: 80, def: 80, gk: 81 },
+  { name: "Greece", att: 74, mid: 76, def: 80, gk: 80 },
+  { name: "Bulgaria", att: 82, mid: 78, def: 74, gk: 78 },
+  { name: "Romania", att: 80, mid: 78, def: 76, gk: 74 },
+  { name: "Poland", att: 84, mid: 78, def: 76, gk: 80 },
+  { name: "Denmark", att: 82, mid: 80, def: 76, gk: 76 },
+  { name: "Nigeria", att: 82, mid: 78, def: 72, gk: 76 },
+  { name: "Costa Rica", att: 74, mid: 74, def: 76, gk: 84 },
 ];
 
 const CLUB_OPPONENTS = [
@@ -42,6 +49,9 @@ const CLUB_OPPONENTS = [
   { name: "Atlético Madrid", att: 82, mid: 84, def: 88, gk: 86 },
   { name: "PSG", att: 90, mid: 84, def: 80, gk: 84 },
   { name: "Napoli", att: 86, mid: 84, def: 82, gk: 82 },
+  { name: "Atalanta", att: 84, mid: 86, def: 78, gk: 78 },
+  { name: "Monaco", att: 80, mid: 80, def: 78, gk: 78 },
+  { name: "Roma", att: 82, mid: 84, def: 80, gk: 80 },
   { name: "Ajax", att: 84, mid: 86, def: 80, gk: 80 },
 ];
 

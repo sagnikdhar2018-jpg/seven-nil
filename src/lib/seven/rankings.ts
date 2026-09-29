@@ -30,6 +30,12 @@ const NATIONS: [string, number][] = [
   ["Australia", 29],
   ["Ecuador", 30],
   ["Serbia", 31],
+  ["Greece", 32],
+  ["Bulgaria", 33],
+  ["Romania", 34],
+  ["Costa Rica", 35],
+  ["Czechoslovakia", 36],
+  ["Soviet Union", 37],
 ];
 
 const CLUBS: [string, number][] = [
@@ -58,6 +64,7 @@ const CLUBS: [string, number][] = [
   ["Roma", 23],
   ["Bayer Leverkusen", 24],
   ["Napoli", 25],
+  ["Atalanta", 26],
 ];
 
 const ALIASES: Record<string, string> = {

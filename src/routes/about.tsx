@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalShell } from "@/components/seven/legal-shell";
+import { archiveCounts } from "@/lib/seven/squads";
 import { CONTACT_EMAIL, GITHUB, SITE_URL, UPDATED, pageHead } from "@/lib/seven/site";
 
 export const Route = createFileRoute("/about")({
@@ -25,6 +26,8 @@ export const Route = createFileRoute("/about")({
 });
 
 function AboutPage() {
+  const archive = archiveCounts();
+  const ratingLabel = archive.ratings.toLocaleString("en-US");
   return (
     <LegalShell title="About Seven Nil" kicker="Last updated September 2026">
       <p>
@@ -64,9 +67,9 @@ function AboutPage() {
         true standout is obvious and a famous name in a quiet year is not.
       </p>
       <p>
-        The archive is finite on purpose. Seven Nil holds 53 national squads and 73 club seasons. That is 1,520
-        ratings. Club mode stays inside England, Spain, Italy, Germany, and France from 1980 on. World Cup mode never
-        draws a club. Club mode never draws a country.
+        The archive is finite on purpose. Seven Nil holds {archive.nations} national squads and {archive.clubs} club
+        seasons. That is {ratingLabel} ratings. Club mode stays inside England, Spain, Italy, Germany, and France from
+        1980 on. World Cup mode never draws a club. Club mode never draws a country.
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">How a match is decided</h2>
       <p>

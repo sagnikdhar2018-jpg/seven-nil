@@ -4,6 +4,7 @@ import { Dices, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PoolId } from "@/lib/seven/types";
 import { CLUB_SQUADS } from "@/lib/seven/club-squads";
+import { archiveCounts } from "@/lib/seven/squads";
 import { useSeven } from "@/lib/seven/store";
 import { BoxScore } from "./box-score";
 import { Controls } from "./controls";
@@ -51,6 +52,7 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
   const selected = useSeven((s) => s.selected);
   const picking = phase !== "setup" || filled > 0 || Boolean(selected);
   const copy = COPY[pool];
+  const archive = archiveCounts();
 
   useEffect(() => {
     hydrate(pool);
@@ -107,8 +109,8 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
               <Link className="underline" to="/about">
                 nik.peeps
               </Link>
-              , independent maker of Seven Nil. The board holds 53 national squads, 73 club seasons, and 1,520 season
-              ratings.
+              , independent maker of Seven Nil. The board holds {archive.nations} national squads, {archive.clubs} club seasons, and{" "}
+              {archive.ratings.toLocaleString("en-US")} season ratings.
             </p>
             <p className="mt-2 text-xs font-semibold text-muted">Last updated: September 2026</p>
             {pool === "club" ? (

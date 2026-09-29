@@ -1,3 +1,8 @@
+import { archiveCounts } from "@/lib/seven/squads";
+
+const archive = archiveCounts();
+const ratingLabel = archive.ratings.toLocaleString("en-US");
+
 const WORLD_STEPS = [
   {
     n: "01",
@@ -165,9 +170,9 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
           TL;DR: Seven Nil rates the season on the card, then simulates from that XI.
         </p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>53 national tournament squads, from 1958 through 2026.</li>
-          <li>73 club seasons from the top five leagues, starting in 1980.</li>
-          <li>1,520 player ratings. A score above 90 is written in gold.</li>
+          <li>{archive.nations} national tournament squads, from 1958 through 2026.</li>
+          <li>{archive.clubs} club seasons from the top five leagues, starting in 1980.</li>
+          <li>{ratingLabel} player ratings. A score above 90 is written in gold.</li>
           <li>Five redraws. Another cup and another team each spend one.</li>
           <li>11 players. One open role, one pick.</li>
         </ul>
@@ -216,7 +221,7 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
       <div id="sources" className="flex max-w-2xl flex-col gap-3 text-sm leading-relaxed text-muted">
         <h2 className="font-display text-3xl leading-none text-ink">What the board is built from</h2>
         <p>
-          Seven Nil keeps 53 national tournament squads and 73 club seasons. That is 1,520 player ratings. A rating is
+          Seven Nil keeps {archive.nations} national tournament squads and {archive.clubs} club seasons. That is {ratingLabel} player ratings. A rating is
           that year only. Above 90, the name is gold. A quiet tournament does not keep a career score.
         </p>
         <blockquote className="border-l-4 border-ink pl-3 text-ink">
