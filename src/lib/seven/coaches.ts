@@ -244,7 +244,7 @@ export function styleForCoach(play: CoachPlay): StyleId {
   return "press";
 }
 
-export function coachBoost(coach: Coach): { att: number; def: number } {
+export function coachBoost(coach: Coach): { att: number; def: number; link: number } {
   const s = coach.stats;
   const att =
     (s.overload - 70) * 0.04 +
@@ -256,5 +256,7 @@ export function coachBoost(coach: Coach): { att: number; def: number } {
     (s.pressing > 82 ? -0.5 : 0.25) +
     (coach.play === "counter" || coach.play === "long-ball-counter" ? 0.6 : 0);
   const clip = (n: number) => Math.max(-2.4, Math.min(3, n));
-  return { att: clip(att), def: clip(def) };
+  const knit = s.possession * 0.55 + s.compactness * 0.45;
+  const link = Math.round(Math.max(4, Math.min(16, (knit - 52) * 0.42)));
+  return { att: clip(att), def: clip(def), link };
 }

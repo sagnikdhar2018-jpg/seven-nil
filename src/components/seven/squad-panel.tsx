@@ -1,7 +1,7 @@
 import { Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canDrawSameTeam } from "@/lib/seven/draft";
-import { PLAY_LABEL, coachById } from "@/lib/seven/coaches";
+import { PLAY_LABEL, coachBoost, coachById } from "@/lib/seven/coaches";
 import { emptySlotsFor } from "@/lib/seven/formations";
 import { isPersonTaken, takenKeysFromSlots } from "@/lib/seven/person";
 import { useSeven } from "@/lib/seven/store";
@@ -73,7 +73,7 @@ export function SquadPanel() {
             <>
               <h3 className="mt-1 font-display text-2xl leading-none normal-case tracking-tight text-ink">{chosen.name}</h3>
               <p className="mt-1 text-sm font-semibold text-accent">
-                {PLAY_LABEL[chosen.play]} · {chosen.formation}
+                {PLAY_LABEL[chosen.play]} · {chosen.formation} · link-up +{coachBoost(chosen).link}
               </p>
             </>
           ) : (
@@ -160,7 +160,7 @@ export function SquadPanel() {
                     </span>
                   </span>
                   <span className="text-xs font-semibold text-accent">
-                    {coach.known} · {coach.years}
+                    {coach.known} · {coach.years} · link-up +{coachBoost(coach).link}
                   </span>
                   {classic ? (
                     <span className="grid grid-cols-2 gap-x-3 gap-y-1">

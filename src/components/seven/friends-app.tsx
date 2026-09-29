@@ -4,7 +4,7 @@ import { Check, Copy, Dices, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useP2PRoom } from "@/lib/multiplayer";
 import { canDrawSameTeam, filledCount } from "@/lib/seven/draft";
-import { PLAY_LABEL, coachById } from "@/lib/seven/coaches";
+import { PLAY_LABEL, coachBoost, coachById } from "@/lib/seven/coaches";
 import { emptySlotsFor, FORMATIONS, STYLES } from "@/lib/seven/formations";
 import {
   apply,
@@ -946,6 +946,7 @@ function DraftTable() {
             style={viewing.style}
             classic={mode === "classic"}
             title={`${shownName(viewing.name)} XI`}
+            coachId={viewing.coachId}
           />
         ) : null}
         <Button variant="ghost" data-action="leave-draft" onClick={() => backToMenu(pool)}>
@@ -987,6 +988,7 @@ function SeatDraft({ seatId }: { seatId: string }) {
     ? roster.filter((p) => legalIds.has(p.id)).sort((a, b) => b.ovr - a.ovr)[0]?.id
     : undefined;
   const managerTurn = filledCount(active.slots) >= 11 && !active.coachId;
+  const boss = coachById(active.coachId);
 
   return (
     <div className="draft-col flex flex-col gap-4">
@@ -995,7 +997,7 @@ function SeatDraft({ seatId }: { seatId: string }) {
           <p className="mt-1 font-display text-3xl leading-none">{shownName(active.name)}</p>
           <p className="mt-2 text-sm text-muted">
             {filledCount(active.slots)}/11 · {active.formation}
-            {active.coachId ? ` · ${coachById(active.coachId)?.name ?? "Manager"}` : ""}
+            {boss ? ` · ${boss.name} · link-up +${coachBoost(boss).link}` : ""}
           </p>
           <TurnClock
             startedAt={active.since}
@@ -1091,7 +1093,7 @@ function SeatDraft({ seatId }: { seatId: string }) {
                         </span>
                       </span>
                       <span className="text-xs font-semibold text-accent">
-                        {coach.known} · {coach.years}
+                        {coach.known} · {coach.years} · link-up +{coachBoost(coach).link}
                       </span>
                       {classic ? (
                         <span className="grid grid-cols-2 gap-x-3 gap-y-1">

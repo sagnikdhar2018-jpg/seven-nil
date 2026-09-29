@@ -52,13 +52,13 @@ function avg(nums: number[], fallback: number) {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-export function teamAxes(slots: Slot[], style: StyleId, boost?: { att: number; def: number }): Axis {
+export function teamAxes(slots: Slot[], style: StyleId, boost?: { att: number; def: number; link?: number }): Axis {
   const filled = slots.filter((s) => s.player) as (Slot & { player: Player })[];
   const attack = avg(
     filled.filter((s) => ATT_POS.includes(s.pos)).map((s) => s.player.ovr),
     78,
   );
-  const midfield = avg(
+  let midfield = avg(
     filled.filter((s) => MID_POS.includes(s.pos)).map((s) => s.player.ovr),
     78,
   );
@@ -67,6 +67,7 @@ export function teamAxes(slots: Slot[], style: StyleId, boost?: { att: number; d
     78,
   );
   const gk = filled.find((s) => s.pos === "GK")?.player.ovr ?? 78;
+  if (boost?.link) midfield += boost.link * 0.35;
   const balancePenalty = filled.length < 11 ? (11 - filled.length) * 2.5 : 0;
   let att = attack + midfield * 0.28 - balancePenalty;
   let def = defence + gk * 0.35 + midfield * 0.18 - balancePenalty;
@@ -95,10 +96,10 @@ export function teamAxes(slots: Slot[], style: StyleId, boost?: { att: number; d
   };
 }
 
-export function chemistry(slots: Slot[]): number {
+export function chemistry(slots: Slot[], link = 0): number {
   const filled = slots.filter((slot): slot is Slot & { player: Player } => Boolean(slot.player));
   if (filled.length < 2) return 62;
-  let link = 0;
+  let bonds = 0;
   let pairs = 0;
   for (let i = 0; i < filled.length; i++) {
     for (let j = i + 1; j < filled.length; j++) {
@@ -108,13 +109,15 @@ export function chemistry(slots: Slot[]): number {
       let bond = 0;
       if (a.nation === b.nation) bond += 0.6;
       if (a.nation === b.nation && Math.abs(a.year - b.year) <= 2) bond += 0.4;
-      link += Math.min(1, bond);
+      bonds += Math.min(1, bond);
     }
   }
-  const together = pairs ? link / pairs : 0;
+  const together = pairs ? bonds / pairs : 0;
   const fit =
     filled.reduce((sum, slot) => sum + (slot.player.pos.includes(slot.pos) ? 1 : 0.4), 0) / filled.length;
-  return Math.round(together * 70 + fit * 30);
+  const base = together * 70 + fit * 30;
+  const lift = link > 0 ? link * (0.42 + together * 0.58) : 0;
+  return Math.round(Math.min(99, base + lift));
 }
 
 function sideQuality(
@@ -122,6 +125,7 @@ function sideQuality(
   style: StyleId,
   fallback?: { att: number; mid: number; def: number; gk: number },
   name?: string,
+  link = 0,
 ) {
   const hasPlayers = slots.some((slot) => slot.player);
   const ovr = hasPlayers
@@ -129,8 +133,8 @@ function sideQuality(
     : fallback
       ? (fallback.att + fallback.mid + fallback.def + fallback.gk) / 4
       : 78;
-  const chem = hasPlayers ? chemistry(slots) : 76;
-  let quality = ovr * 0.74 + chem * 0.26;
+  const chem = hasPlayers ? chemistry(slots, link) : 76;
+  let quality = ovr * 0.74 + chem * 0.26 + link * 0.18;
   const rank = name ? teamRank(name) : null;
   if (rank) quality += Math.max(0, (18 - rank) * 0.12);
   if (style === "attacking") quality += 1.1;
@@ -315,14 +319,17 @@ function playMatch(
   homeName = "You",
   homeStyle: StyleId = "balanced",
   awayStyle: StyleId = "balanced",
+  homeLink = 0,
+  awayLink = 0,
 ): Match {
   const usQ = sideQuality(
     homeSlots,
     homeStyle,
     { att: us.attack, mid: us.midfield, def: us.defence, gk: us.gk },
     homeName,
+    homeLink,
   );
-  const themQ = sideQuality(awaySlots, awayStyle, them, them.name);
+  const themQ = sideQuality(awaySlots, awayStyle, them, them.name, awayLink);
   const gap = (usQ - themQ) / 11;
   const gf = clamp(poisson(clamp(1.05 + gap * 0.85 + swing(gap), 0.2, 4.2)), 0, 7);
   const ga = clamp(poisson(clamp(0.95 - gap * 0.85 + swing(gap), 0.15, 4.0)), 0, 7);
@@ -375,7 +382,7 @@ export function simulateCampaign(
   slots: Slot[],
   style: StyleId,
   pool: PoolId = "world",
-  boost?: { att: number; def: number },
+  boost?: { att: number; def: number; link?: number },
 ): Campaign {
   const axes = teamAxes(slots, style, boost);
   const foes = pickOpponents(5, pool);
@@ -395,12 +402,15 @@ export function simulateCampaign(
     const opp = foes[i]!;
     const nation = playersForSide(opp.name, pool);
     const oppXi = autoFillFrom("4-3-3", takenKeysFromSlots(slots), nation);
-    const match = playMatch(axes, opp, round, slots, oppXi.slots, homeName, style, "balanced");
+    const match = playMatch(axes, opp, round, slots, oppXi.slots, homeName, style, "balanced", boost?.link ?? 0, 0);
     if (oppXi.slots.some((slot) => slot.player)) {
       match.awayRatings = displayRatings(oppXi.slots, "balanced");
     }
     if (match.result === "D") {
-      const edge = (sideQuality(slots, style) - sideQuality(oppXi.slots, "balanced", opp, opp.name)) / 22;
+      const edge =
+        (sideQuality(slots, style, undefined, undefined, boost?.link ?? 0) -
+          sideQuality(oppXi.slots, "balanced", opp, opp.name)) /
+        22;
       const pens = Math.random() < clamp(0.5 + edge, 0.3, 0.74);
       match.result = pens ? "W" : "L";
       match.pens = pens ? { home: 5, away: 4 } : { home: 3, away: 4 };
@@ -457,8 +467,8 @@ export function simulateFinal(
   themName = "Them",
   round = "Cup Final",
   usName = "Home",
-  boostUs?: { att: number; def: number },
-  boostThem?: { att: number; def: number },
+  boostUs?: { att: number; def: number; link?: number },
+  boostThem?: { att: number; def: number; link?: number },
 ): Match {
   const their = teamAxes(them, styleThem, boostThem);
   const match = playMatch(
@@ -470,9 +480,16 @@ export function simulateFinal(
     usName,
     styleUs,
     styleThem,
+    boostUs?.link ?? 0,
+    boostThem?.link ?? 0,
   );
   if (match.result === "D") {
-    const shot = scriptPens(us, them, sideQuality(us, styleUs) - sideQuality(them, styleThem));
+    const shot = scriptPens(
+      us,
+      them,
+      sideQuality(us, styleUs, undefined, undefined, boostUs?.link ?? 0) -
+        sideQuality(them, styleThem, undefined, undefined, boostThem?.link ?? 0),
+    );
     match.result = shot.home >= shot.away ? "W" : "L";
     match.pens = shot;
   }
@@ -512,7 +529,7 @@ export type KnockoutSide = {
   slots: Slot[];
   style: StyleId;
   human?: boolean;
-  boost?: { att: number; def: number };
+  boost?: { att: number; def: number; link?: number };
 };
 
 /** The first round only. Computer ties are settled. A match with a player is scripted but not revealed. */

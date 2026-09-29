@@ -1,4 +1,5 @@
 import { chemistry, displayRatings } from "@/lib/seven/simulate";
+import { coachBoost, coachById } from "@/lib/seven/coaches";
 import type { Slot, StyleId } from "@/lib/seven/types";
 import { useSeven } from "@/lib/seven/store";
 import { cn } from "@/lib/utils";
@@ -8,15 +9,20 @@ export function LineupBox({
   style,
   classic = true,
   title = "Lineup",
+  coachId = null,
 }: {
   slots: Slot[];
   style: StyleId;
   classic?: boolean;
   title?: string;
+  coachId?: string | null;
 }) {
   const filled = slots.filter((s) => s.player).length;
   const ratings = filled >= 11 ? displayRatings(slots, style) : null;
-  const chem = filled >= 11 ? chemistry(slots) : null;
+  const coach = coachById(coachId);
+  const link = coach ? coachBoost(coach).link : 0;
+  const chem = filled >= 11 ? chemistry(slots, link) : null;
+  const bare = filled >= 11 ? chemistry(slots) : null;
 
   return (
     <div className="card-ink rounded-lg px-4 py-4">
@@ -44,9 +50,15 @@ export function LineupBox({
       {chem != null && classic ? (
         <p className="mt-2 text-sm font-extrabold text-ink">
           Chemistry <span className="font-numeral tabular-nums text-accent">{chem}</span>
-          <span className="ml-2 font-semibold text-muted">
-            {chem >= 75 ? "They know each other." : chem >= 50 ? "A mixed side." : "Little link-up."}
-          </span>
+          {coach && bare != null ? (
+            <span className="ml-2 font-semibold text-muted">
+              {coach.name.split(" ").slice(-1)} link-up +{chem - bare}
+            </span>
+          ) : (
+            <span className="ml-2 font-semibold text-muted">
+              {chem >= 75 ? "They know each other." : chem >= 50 ? "A mixed side." : "Little link-up."}
+            </span>
+          )}
         </p>
       ) : null}
       <ul className="mt-2">
@@ -73,7 +85,8 @@ export function BoxScore() {
   const slots = useSeven((s) => s.slots);
   const style = useSeven((s) => s.style);
   const mode = useSeven((s) => s.mode);
-  return <LineupBox slots={slots} style={style} classic={mode === "classic"} title="Box score" />;
+  const coachId = useSeven((s) => s.coachId);
+  return <LineupBox slots={slots} style={style} classic={mode === "classic"} title="Box score" coachId={coachId} />;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
