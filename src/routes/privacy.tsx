@@ -14,41 +14,101 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPage() {
   return (
-    <LegalShell title="Privacy policy" kicker="Effective 18 September 2026">
+    <LegalShell title="Privacy policy" kicker="Effective 1 October 2026">
       <p>
-        Seven Nil is a free browser game. You can play without creating an account. This page explains what we store,
-        what Google may collect for ads, and how to opt out.
-      </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Game data on your device</h2>
-      <p>
-        Drafts, names, mute preference, and theme stay in your browser via localStorage. That data never leaves your
-        device unless you use Friends online, which only shares the room code, display names, and picks with the people
-        in that room.
-      </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Advertising</h2>
-      <p>
-        We use Google AdSense to show ads. Google may use cookies or similar tech to serve ads based on your visits to
-        this site and other sites. Google's use of advertising cookies is covered by{" "}
-        <a className="underline" href="https://policies.google.com/privacy" rel="noreferrer">
-          Google Privacy Policy
-        </a>{" "}
-        and{" "}
-        <a className="underline" href="https://policies.google.com/technologies/ads" rel="noreferrer">
-          How Google uses information from sites
+        Seven Nil is a free browser game run by nik.peeps. You can play without creating an account. This page says
+        what stays on your device, what a friends room shares, and what Google may collect if advertising is switched
+        on. The contact address for privacy questions is{" "}
+        <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
+          {CONTACT_EMAIL}
         </a>
         .
       </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Who we are</h2>
       <p>
-        Visitors in the European Economic Area, the UK, and Switzerland see a consent message before personalized ads.
-        You can refuse. Non-personalized ads may still appear.
+        The site is published at seven-nil-self.vercel.app. There is no company, no office, and no phone line. The{" "}
+        <a className="underline" href="/about">
+          about page
+        </a>{" "}
+        names the maker. The{" "}
+        <a className="underline" href="/contact">
+          contact page
+        </a>{" "}
+        is the way to write in.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Game data on your device</h2>
+      <p>
+        Drafts, display names, the mute preference, and the theme stay in your browser through localStorage. That data
+        does not go to a Seven Nil account, because there is no account. Clearing the site's storage in your
+        browser deletes it.
+      </p>
+      <p>
+        Friends online is different. A room shares the room code, the display names people typed, and the picks in
+        that room with the other people who joined it. Do not put a phone number, an address, or any other private
+        fact in a display name. Rooms are temporary. They are not a public profile.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">What we do not do</h2>
+      <p>
+        We do not sell personal information. We do not ask you to register. We do not run a shop. A message sent from
+        the contact form opens your own email app. It is not stored on the site.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Advertising and Google AdSense</h2>
+      <p>
+        We use Google AdSense (publisher ID pub-1391099021196311) to show ads. Ads are how the free game can stay
+        online. Google and its partners may use cookies, device identifiers, and similar technology to serve, measure,
+        and personalise ads based on your visits to this site and other sites. That can include the pages you open
+        here and a coarse location derived from your IP address.
+      </p>
+      <p>
+        Google's own explanation is in the{" "}
+        <a className="underline" href="https://policies.google.com/privacy" rel="noreferrer">
+          Google Privacy Policy
+        </a>{" "}
+        and in{" "}
+        <a className="underline" href="https://policies.google.com/technologies/ads" rel="noreferrer">
+          How Google uses information from sites or apps that use its services
+        </a>
+        . The ads.txt file at the root of this site lists that publisher ID.
+      </p>
+      <p>
+        Visitors in the European Economic Area, the United Kingdom, and Switzerland see a consent message before
+        personalised ads. You can refuse. Non-personalised ads may still appear. You can change ad personalisation at
+        any time in{" "}
+        <a className="underline" href="https://adssettings.google.com" rel="noreferrer">
+          Google Ads Settings
+        </a>
+        . Industry opt-out pages are{" "}
+        <a className="underline" href="https://www.aboutads.info/choices" rel="noreferrer">
+          aboutads.info
+        </a>{" "}
+        and, in Europe,{" "}
+        <a className="underline" href="https://www.youronlinechoices.eu" rel="noreferrer">
+          youronlinechoices.eu
+        </a>
+        .
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Cookies</h2>
       <p>
-        Essential cookies keep the game working. Advertising cookies are set by Google if you consent. You can clear
-        cookies in your browser settings at any time.
+        Essential storage keeps the game working: your draft, your name in a room, and whether sound is muted.
+        Advertising cookies are set by Google when ads load and, where the law requires it, when you consent. Vercel
+        Analytics may record a page view so we can see if the site is up. It is not used to build an advertising
+        profile. You can block or clear cookies in your browser. Blocking them can stop ads and can also reset a draft
+        that lived only on that device.
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Children</h2>
-      <p>Seven Nil is not directed at children under 13. We do not knowingly collect personal information from them.</p>
+      <p>
+        Seven Nil is not directed at children under 13, and we do not knowingly collect personal information from
+        them. If you believe a child sent personal information through a display name or the contact form, email{" "}
+        <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
+          {CONTACT_EMAIL}
+        </a>{" "}
+        and we will delete what we can.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Changes</h2>
+      <p>
+        If this policy changes, the date at the top of the page changes with it. The current version was updated on 1
+        October 2026.
+      </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Contact</h2>
       <p>
         Questions:{" "}

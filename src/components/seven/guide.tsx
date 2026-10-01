@@ -222,7 +222,11 @@ export function Guide({ pool = "world" }: { pool?: "world" | "club" }) {
         <h2 className="font-display text-3xl leading-none text-ink">What the board is built from</h2>
         <p>
           Seven Nil keeps {archive.nations} national tournament squads and {archive.clubs} club seasons. That is {ratingLabel} player ratings. A rating is
-          that year only. Above 90, the name is gold. A quiet tournament does not keep a career score.
+          that year only. Above 90, the name is gold. A quiet tournament does not keep a career score. The written notes are on{" "}
+          <a className="underline" href="/guides">Guides</a>,{" "}
+          <a className="underline" href="/ratings">ratings</a>,{" "}
+          <a className="underline" href="/world-cups">World Cups</a>, and{" "}
+          <a className="underline" href="/club-seasons">club seasons</a>.
         </p>
         <blockquote className="border-l-4 border-ink pl-3 text-ink">
           Champions, unbeaten, and nothing conceded. That is the seven-nil.

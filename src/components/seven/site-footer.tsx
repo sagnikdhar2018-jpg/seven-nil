@@ -16,6 +16,18 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/how-to-play">
           How to play
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/guides">
+          Guides
+        </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/ratings">
+          Ratings
+        </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/world-cups">
+          World Cups
+        </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club-seasons">
+          Club seasons
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/about">
           About
         </Link>

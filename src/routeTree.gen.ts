@@ -12,11 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ClubRouteImport } from './routes/club'
+import { Route as ClubSeasonsRouteImport } from './routes/club-seasons'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FriendsRouteImport } from './routes/friends'
+import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HowToPlayRouteImport } from './routes/how-to-play'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WorldCupsRouteImport } from './routes/world-cups'
 import { Route as ApiRtcRouteImport } from './routes/api/rtc'
 import { Route as ClubFriendsRouteImport } from './routes/club_.friends'
 
@@ -35,6 +39,11 @@ const ClubRoute = ClubRouteImport.update({
   path: '/club',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClubSeasonsRoute = ClubSeasonsRouteImport.update({
+  id: '/club-seasons',
+  path: '/club-seasons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -43,6 +52,11 @@ const ContactRoute = ContactRouteImport.update({
 const FriendsRoute = FriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowToPlayRoute = HowToPlayRouteImport.update({
@@ -55,9 +69,19 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RatingsRoute = RatingsRouteImport.update({
+  id: '/ratings',
+  path: '/ratings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorldCupsRoute = WorldCupsRouteImport.update({
+  id: '/world-cups',
+  path: '/world-cups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRtcRoute = ApiRtcRouteImport.update({
@@ -75,11 +99,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/club': typeof ClubRoute
+  '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
   '/friends': typeof FriendsRoute
+  '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
+  '/ratings': typeof RatingsRoute
   '/terms': typeof TermsRoute
+  '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
   '/club/friends': typeof ClubFriendsRoute
 }
@@ -87,11 +115,15 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/club': typeof ClubRoute
+  '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
   '/friends': typeof FriendsRoute
+  '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
+  '/ratings': typeof RatingsRoute
   '/terms': typeof TermsRoute
+  '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
   '/club/friends': typeof ClubFriendsRoute
 }
@@ -100,11 +132,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/club': typeof ClubRoute
+  '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
   '/friends': typeof FriendsRoute
+  '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
+  '/ratings': typeof RatingsRoute
   '/terms': typeof TermsRoute
+  '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
   '/club_/friends': typeof ClubFriendsRoute
 }
@@ -114,11 +150,15 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/club'
+    | '/club-seasons'
     | '/contact'
     | '/friends'
+    | '/guides'
     | '/how-to-play'
     | '/privacy'
+    | '/ratings'
     | '/terms'
+    | '/world-cups'
     | '/api/rtc'
     | '/club/friends'
   fileRoutesByTo: FileRoutesByTo
@@ -126,11 +166,15 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/club'
+    | '/club-seasons'
     | '/contact'
     | '/friends'
+    | '/guides'
     | '/how-to-play'
     | '/privacy'
+    | '/ratings'
     | '/terms'
+    | '/world-cups'
     | '/api/rtc'
     | '/club/friends'
   id:
@@ -138,11 +182,15 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/club'
+    | '/club-seasons'
     | '/contact'
     | '/friends'
+    | '/guides'
     | '/how-to-play'
     | '/privacy'
+    | '/ratings'
     | '/terms'
+    | '/world-cups'
     | '/api/rtc'
     | '/club_/friends'
   fileRoutesById: FileRoutesById
@@ -151,11 +199,15 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ClubRoute: typeof ClubRoute
+  ClubSeasonsRoute: typeof ClubSeasonsRoute
   ContactRoute: typeof ContactRoute
   FriendsRoute: typeof FriendsRoute
+  GuidesRoute: typeof GuidesRoute
   HowToPlayRoute: typeof HowToPlayRoute
   PrivacyRoute: typeof PrivacyRoute
+  RatingsRoute: typeof RatingsRoute
   TermsRoute: typeof TermsRoute
+  WorldCupsRoute: typeof WorldCupsRoute
   ApiRtcRoute: typeof ApiRtcRoute
   ClubFriendsRoute: typeof ClubFriendsRoute
 }
@@ -183,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClubRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/club-seasons': {
+      id: '/club-seasons'
+      path: '/club-seasons'
+      fullPath: '/club-seasons'
+      preLoaderRoute: typeof ClubSeasonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -195,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/friends'
       fullPath: '/friends'
       preLoaderRoute: typeof FriendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-to-play': {
@@ -211,11 +277,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ratings': {
+      id: '/ratings'
+      path: '/ratings'
+      fullPath: '/ratings'
+      preLoaderRoute: typeof RatingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/world-cups': {
+      id: '/world-cups'
+      path: '/world-cups'
+      fullPath: '/world-cups'
+      preLoaderRoute: typeof WorldCupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/rtc': {
@@ -239,11 +319,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ClubRoute: ClubRoute,
+  ClubSeasonsRoute: ClubSeasonsRoute,
   ContactRoute: ContactRoute,
   FriendsRoute: FriendsRoute,
+  GuidesRoute: GuidesRoute,
   HowToPlayRoute: HowToPlayRoute,
   PrivacyRoute: PrivacyRoute,
+  RatingsRoute: RatingsRoute,
   TermsRoute: TermsRoute,
+  WorldCupsRoute: WorldCupsRoute,
   ApiRtcRoute: ApiRtcRoute,
   ClubFriendsRoute: ClubFriendsRoute,
 }

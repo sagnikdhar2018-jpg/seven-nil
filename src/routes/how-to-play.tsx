@@ -126,6 +126,14 @@ function HowToPlayPage() {
       <p>No. Progress stays on your device. Friends only needs a display name.</p>
       <h3 className="font-semibold">Can I keep the same team and change the year?</h3>
       <p>Yes. After a roll, Another team draws a new side. Another cup keeps that side and changes the year. Clubs use Another club and Another season. Each one spends a re-roll.</p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Read the archive</h2>
+      <p>
+        The rules above are the whole match. The seasons behind the cards are written out separately:{" "}
+        <a className="underline" href="/guides">guides</a>,{" "}
+        <a className="underline" href="/ratings">how a rating is set</a>,{" "}
+        <a className="underline" href="/world-cups">World Cups</a>, and{" "}
+        <a className="underline" href="/club-seasons">club seasons</a>.
+      </p>
     </LegalShell>
   );
 }
