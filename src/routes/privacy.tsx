@@ -52,12 +52,13 @@ function PrivacyPage() {
         We do not sell personal information. We do not ask you to register. We do not run a shop. A message sent from
         the contact form opens your own email app. It is not stored on the site.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Advertising and Google AdSense</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Advertising</h2>
       <p>
-        We use Google AdSense (publisher ID pub-1391099021196311) to show ads. Ads are how the free game can stay
-        online. Google and its partners may use cookies, device identifiers, and similar technology to serve, measure,
-        and personalise ads based on your visits to this site and other sites. That can include the pages you open
-        here and a coarse location derived from your IP address.
+        Seven Nil may display advertising through Google AdSense or another advertising provider. Publisher ID
+        pub-1391099021196311 is reserved for this site. Ads are not shown until an account is approved and the ad code
+        is allowed to serve. When advertising is enabled, those providers may use cookies, device identifiers, or
+        similar technology to provide and measure advertisements, including a coarse location derived from an IP
+        address.
       </p>
       <p>
         Google's own explanation is in the{" "}
@@ -71,8 +72,8 @@ function PrivacyPage() {
         . The ads.txt file at the root of this site lists that publisher ID.
       </p>
       <p>
-        Visitors in the European Economic Area, the United Kingdom, and Switzerland see a consent message before
-        personalised ads. You can refuse. Non-personalised ads may still appear. You can change ad personalisation at
+        Visitors in the European Economic Area, the United Kingdom, and Switzerland are shown a consent message before
+        personalised ads, once advertising is enabled. You can refuse. Non-personalised ads may still appear. You can change ad personalisation at
         any time in{" "}
         <a className="underline" href="https://adssettings.google.com" rel="noreferrer">
           Google Ads Settings

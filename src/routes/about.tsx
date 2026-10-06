@@ -29,17 +29,31 @@ function AboutPage() {
   const archive = archiveCounts();
   const ratingLabel = archive.ratings.toLocaleString("en-US");
   return (
-    <LegalShell title="About Seven Nil" kicker="Last updated September 2026">
+    <LegalShell title="About Seven Nil" kicker="Last updated October 2026">
       <p>
         Seven Nil is a free browser game for drafting a historic football XI. You roll one real squad and one year,
-        take one player who fits an open role, and simulate the run. That is the whole product.
+        take one player who fits an open role, and simulate the run. It is not a quiz, and it does not ask you to
+        name a winner. The decision is which shirt the formation still needs.
       </p>
       <h2 id="purpose" className="mt-4 font-display text-2xl tracking-wide">Why it exists</h2>
       <p>
-        The purpose is a short argument you can finish in one sitting. Brazil 1970, France 1998, Spain 2010, a
-        full-back from a smaller year. The name is the scoreline people remember and almost never land: 7–0.
-        Champions, unbeaten, and nothing conceded.
+        A normal football quiz rewards memory of a score. This draft rewards a squad that can actually play. Brazil
+        1970, France 1998, and Spain 2010 are full of famous forwards. The turn that matters is often the full-back
+        from a smaller year, because the formation still has an empty role. The name of the game is the scoreline
+        people remember and almost never land: 7–0. Champions, unbeaten, and nothing conceded.
       </p>
+      <p>
+        nik.peeps built it as a short argument you can finish in one sitting. There is no pack shop and no account.
+        The public rules, the season ratings, and the match model are the product.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">What makes it different</h2>
+      <ul className="list-disc space-y-2 pl-5">
+        <li>You do not search the archive. One squad appears, you take one player, and that squad leaves.</li>
+        <li>A famous name is useless if the open role is a left-back they cannot play.</li>
+        <li>The number on the card is that tournament or that league season, not a career peak.</li>
+        <li>A stronger XI is more likely to win. It is not scripted to win.</li>
+        <li>World Cup drafts and club drafts never share a player pool.</li>
+      </ul>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Who makes it</h2>
       <p>
         nik.peeps makes Seven Nil independently, and is not a club analyst and does not sell scouting reports. The
@@ -71,12 +85,29 @@ function AboutPage() {
         seasons. That is {ratingLabel} ratings. Club mode stays inside England, Spain, Italy, Germany, and France from
         1980 on. World Cup mode never draws a club. Club mode never draws a country.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">How a match is decided</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">How the simulation works</h2>
       <p>
-        The XI is scored as attack, midfield, and defence, plus how well the players fit the roles. A stronger side
-        is more likely to go through. It is not guaranteed. Friends matches between two people are played minute by
-        minute, including a penalty shootout if the score is level. Every other tie in the bracket is settled at once
-        so a 32-team cup does not take an hour.
+        The eleven is split into attack, midfield, and defence. Each band is the players in those roles, adjusted for
+        whether the shirt fits them. The goalkeeper is separate. Chemistry asks whether neighbours shared a nation and
+        a year, and whether their roles actually connect. The manager, chosen last, adds link-up play. That raises a
+        side that already has some bonds. It does not turn strangers into a great team.
+      </p>
+      <p>
+        Style changes the weighting. A defensive side spends more of its quality at the back. An attacking side spends
+        it up front. The result is a chance. Two equal sides can split a tie. A much stronger side loses sometimes.
+        Friends matches between two people are played minute by minute, including penalties one kick at a time. Every
+        other tie in a bracket is settled at once, and the next round stays closed until the live match is finished.
+      </p>
+      <p>
+        The full scale, gold names, and chemistry formula are on{" "}
+        <a className="underline" href="/ratings">
+          How a rating is set
+        </a>
+        . Where the names and years come from, and what is original to this game, is on{" "}
+        <a className="underline" href="/sources">
+          Sources
+        </a>
+        .
       </p>
       <p>
         You get five redraws. Choosing another year of the same side, or a different side, spends one. Names can be

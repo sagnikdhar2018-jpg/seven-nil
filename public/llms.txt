@@ -18,7 +18,8 @@ Updated 1 October 2026. Contact: sagnik.dhar2018@gmail.com
 - [Ratings](https://seven-nil-self.vercel.app/ratings): Season scores, gold names, chemistry, and the manager.
 - [World Cups](https://seven-nil-self.vercel.app/world-cups): The national tournaments in the draft.
 - [Club seasons](https://seven-nil-self.vercel.app/club-seasons): Top-five league seasons from 1980.
-- [About](https://seven-nil-self.vercel.app/about): Who makes the game, how a season rating is set, and what it is not.
+- [Sources](https://seven-nil-self.vercel.app/sources): Which facts come from real squads, and which numbers are original to the game.
+- [About](https://seven-nil-self.vercel.app/about): Who makes the game, how the simulation works, and what it is not.
 - [Contact](https://seven-nil-self.vercel.app/contact): Email the maker. Online only. No phone and no office.
 
 ## Optional

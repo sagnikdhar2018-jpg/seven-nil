@@ -28,6 +28,9 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/club-seasons">
           Club seasons
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/sources">
+          Sources
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/about">
           About
         </Link>

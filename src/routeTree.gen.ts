@@ -19,6 +19,7 @@ import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HowToPlayRouteImport } from './routes/how-to-play'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RatingsRouteImport } from './routes/ratings'
+import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WorldCupsRouteImport } from './routes/world-cups'
 import { Route as ApiRtcRouteImport } from './routes/api/rtc'
@@ -74,6 +75,11 @@ const RatingsRoute = RatingsRouteImport.update({
   path: '/ratings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SourcesRoute = SourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
   '/ratings': typeof RatingsRoute
+  '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
   '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
   '/ratings': typeof RatingsRoute
+  '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
   '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/how-to-play': typeof HowToPlayRoute
   '/privacy': typeof PrivacyRoute
   '/ratings': typeof RatingsRoute
+  '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
   '/world-cups': typeof WorldCupsRoute
   '/api/rtc': typeof ApiRtcRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/how-to-play'
     | '/privacy'
     | '/ratings'
+    | '/sources'
     | '/terms'
     | '/world-cups'
     | '/api/rtc'
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/how-to-play'
     | '/privacy'
     | '/ratings'
+    | '/sources'
     | '/terms'
     | '/world-cups'
     | '/api/rtc'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/how-to-play'
     | '/privacy'
     | '/ratings'
+    | '/sources'
     | '/terms'
     | '/world-cups'
     | '/api/rtc'
@@ -206,6 +218,7 @@ export interface RootRouteChildren {
   HowToPlayRoute: typeof HowToPlayRoute
   PrivacyRoute: typeof PrivacyRoute
   RatingsRoute: typeof RatingsRoute
+  SourcesRoute: typeof SourcesRoute
   TermsRoute: typeof TermsRoute
   WorldCupsRoute: typeof WorldCupsRoute
   ApiRtcRoute: typeof ApiRtcRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RatingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sources': {
+      id: '/sources'
+      path: '/sources'
+      fullPath: '/sources'
+      preLoaderRoute: typeof SourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -326,6 +346,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowToPlayRoute: HowToPlayRoute,
   PrivacyRoute: PrivacyRoute,
   RatingsRoute: RatingsRoute,
+  SourcesRoute: SourcesRoute,
   TermsRoute: TermsRoute,
   WorldCupsRoute: WorldCupsRoute,
   ApiRtcRoute: ApiRtcRoute,

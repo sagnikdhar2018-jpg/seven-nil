@@ -119,6 +119,37 @@ function HowToPlayPage() {
         </a>
         .
       </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">An example draft</h2>
+      <p>
+        Suppose the formation is 4-3-3 and the first roll is Brazil 1970. The attack is already famous, so the useful
+        pick might be Carlos Alberto, because right-back is empty and he can play it. The next roll is Greece 2004.
+        Stoichkov is not in that squad. Nikopolidis is. If you still need a goalkeeper, that is the pick. If the
+        goalkeeper is filled, redraw. Another team spends one of five chances and draws a new side. Another cup keeps
+        Greece and changes nothing, because Greece has one year in the archive. Another cup is the button you want
+        when the dice give you Brazil and you wanted 2002 instead of 1970.
+      </p>
+      <p>
+        After eleven shirts, the manager is offered. You can change that coach three times. The coach does not take a
+        place in the XI. They add link-up between the players you already chose. Names can be edited in a friends
+        lobby before the draft starts, and not after the first roll.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">An example simulation</h2>
+      <p>
+        A finished XI is scored as attack, midfield, defence, and goalkeeper, plus chemistry. A side built from Spain
+        2010 and Germany 2014 will usually rate higher through the middle than a side of three number 10s and no
+        holder. The campaign then plays a group and a knockout. A stronger side advances more often. It does not
+        advance every time. If you are the only human in a cup, the other ties in that round are settled immediately
+        and shown with real nation or club names. Your own match, and any match between two people, is played minute
+        by minute. A draw goes to penalties. Each kick is shown, including the miss.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Redraws</h2>
+      <ul className="list-disc space-y-2 pl-5">
+        <li>You start with five. There is no extra chance from watching an advert.</li>
+        <li>Another team, or another club, draws a different side and spends one.</li>
+        <li>Another cup, or another season, keeps the side and changes the year. That also spends one.</li>
+        <li>A player already taken, including another year of the same person, cannot be taken again. The card is marked and cannot be selected.</li>
+        <li>If the timer runs out, the game picks a legal player for the open role.</li>
+      </ul>
       <h2 className="mt-4 font-display text-2xl tracking-wide">FAQ</h2>
       <h3 className="font-semibold">Is this an official FIFA game?</h3>
       <p>No. It is an independent draft toy. Not affiliated with FIFA, UEFA, or any club.</p>
@@ -131,8 +162,9 @@ function HowToPlayPage() {
         The rules above are the whole match. The seasons behind the cards are written out separately:{" "}
         <a className="underline" href="/guides">guides</a>,{" "}
         <a className="underline" href="/ratings">how a rating is set</a>,{" "}
-        <a className="underline" href="/world-cups">World Cups</a>, and{" "}
-        <a className="underline" href="/club-seasons">club seasons</a>.
+        <a className="underline" href="/world-cups">World Cups</a>,{" "}
+        <a className="underline" href="/club-seasons">club seasons</a>, and{" "}
+        <a className="underline" href="/sources">sources</a>.
       </p>
     </LegalShell>
   );
