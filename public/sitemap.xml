@@ -13,5 +13,7 @@
   <url><loc>https://seven-nil-self.vercel.app/about</loc><lastmod>2026-10-06</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://seven-nil-self.vercel.app/contact</loc><lastmod>2026-09-24</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
   <url><loc>https://seven-nil-self.vercel.app/privacy</loc><lastmod>2026-10-09</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/cookies</loc><lastmod>2026-10-09</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://seven-nil-self.vercel.app/faq</loc><lastmod>2026-10-09</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://seven-nil-self.vercel.app/terms</loc><lastmod>2026-10-09</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
 </urlset>

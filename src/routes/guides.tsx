@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalShell } from "@/components/seven/legal-shell";
+import { FORMATIONS, STYLES } from "@/lib/seven/formations";
 import { archiveCounts } from "@/lib/seven/squads";
 import { SITE_URL, pageHead } from "@/lib/seven/site";
 
@@ -76,7 +77,21 @@ function GuidesPage() {
         You get five redraws. Another year of the same side spends one. A different side spends one. After the draft
         starts, the display name is locked. The manager is offered at the end, not as a free extra shirt in the XI.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">What a match uses</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">Formations and styles in the game</h2>
+      <p>
+        The shape is chosen before the dice. Changing it later moves players toward roles they can actually play. It
+        does not leave the picture frozen, and it does not park a pure striker at left-back. These are the shapes and
+        the styles the board offers. A style changes the weighting of the match. It does not rewrite a player's
+        number.
+      </p>
+      <p>Formations: {FORMATIONS.join(", ")}.</p>
+      <p>Styles: {STYLES.map((style) => style.label).join(", ")}.</p>
+      <p>
+        Defensive spends more of the side's quality at the back. Counter asks the midfield to turn the ball over and
+        go. Balanced leaves the bands as drafted. Press asks more of the midfield. Attacking spends more up front. A
+        coach can suggest a style. You still get three chances to change the coach at the end, and the coach never
+        occupies one of the eleven shirts.
+      </p>
       <p>
         The eleven is read as attack, midfield, and defence, plus how well each player fits the role you put them in.
         Chemistry looks at shared nation and year, and at whether neighbours can actually play together. A manager

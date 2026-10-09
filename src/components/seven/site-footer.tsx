@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 export function SiteFooter({ note }: { note?: string }) {
   return (
     <footer className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-5 pb-24 pt-4 text-xs font-semibold text-muted">
-      <p>Seven Nil · 7-0 · build · simulate</p>
+      <p>© 2026 Seven Nil. The game and the writing are ours. Player and club names identify real seasons.</p>
       <p>
         Contact:{" "}
         <a className="underline-offset-2 hover:text-ink hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
@@ -37,8 +37,14 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/contact">
           Contact
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/faq">
+          FAQ
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/privacy">
           Privacy policy
+        </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/cookies">
+          Cookies
         </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/terms">
           Terms

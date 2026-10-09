@@ -75,10 +75,48 @@ function ClubSeasonsPage() {
         cover the whole draft. A manager comes last, with three changes, and only adds link-up to players who already
         share something. Eleven strangers from eleven clubs stay a low-chemistry side.
       </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">A club turn, counted</h2>
       <p>
-        The rating rule is the same one on <a className="underline" href="/ratings">How a rating is set</a>. The line
-        between a real season and a number we invented is on <a className="underline" href="/sources">Sources</a>.
-        National years are on <a className="underline" href="/world-cups">World Cups in the draft</a>.
+        Five redraws. That is the whole budget, not five per roll. Another season and another club both spend one.
+        A player already taken is grey on every later card, including a different year of the same club. The timer
+        auto-picks a legal shirt, not the highest number on the page.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left text-sm">
+          <thead>
+            <tr>
+              <th className="border-b border-ink/20 py-2 pr-3">You press</th>
+              <th className="border-b border-ink/20 py-2 pr-3">Cost</th>
+              <th className="border-b border-ink/20 py-2">What stays</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border-b border-ink/10 py-2 pr-3">Another season</td>
+              <td className="border-b border-ink/10 py-2 pr-3">1 redraw</td>
+              <td className="border-b border-ink/10 py-2">The club. The year changes. The 2014 squad is not the 2017 squad.</td>
+            </tr>
+            <tr>
+              <td className="border-b border-ink/10 py-2 pr-3">Another club</td>
+              <td className="border-b border-ink/10 py-2 pr-3">1 redraw</td>
+              <td className="border-b border-ink/10 py-2">Nothing from the previous card. The pool is still clubs only.</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3">Take a player</td>
+              <td className="py-2 pr-3">None</td>
+              <td className="py-2">That person is gone for the rest of the draft, every year.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Chemistry does not treat "same badge" as "same team". Liverpool 2005 and Liverpool 2019 can both be in your
+        XI. They do not get the shared-year bond. Neighbours still add a little if a full-back sits beside a winger
+        whose role actually connects. The manager, last, lifts link-up. The lift is larger when some bonds already
+        exist. Stacking eleven clubs from eleven years stays a low-chemistry side no matter which coach you land.
+        The rating rule is on <a className="underline" href="/ratings">How a rating is set</a>. What is a fact and
+        what is a judgement is on <a className="underline" href="/sources">Sources</a>. National years are on{" "}
+        <a className="underline" href="/world-cups">World Cups in the draft</a>.
       </p>
     </LegalShell>
   );

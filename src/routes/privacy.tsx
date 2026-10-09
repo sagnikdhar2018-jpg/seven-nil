@@ -95,11 +95,14 @@ function PrivacyPage() {
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Cookies</h2>
       <p>
-        Essential storage keeps the game working: your draft, your name in a room, and whether sound is muted.
-        Advertising cookies are set by Google when ads load and, where the law requires it, when you consent. Vercel
-        Analytics may record a page view so we can see if the site is up. It is not used to build an advertising
-        profile. You can block or clear cookies in your browser. Blocking them can stop ads and can also reset a draft
-        that lived only on that device.
+        Essential storage keeps the game working: your draft in seven-nil-save, your name in seven-nil-name, and
+        whether sound is muted. A friends tab also uses session storage so a refresh can reopen the room you already
+        entered. The full list, including Google advertising cookies and Vercel Analytics, is the{" "}
+        <a className="underline" href="/cookies">cookie policy</a>. Advertising cookies are set by Google when the
+        AdSense script runs and, where the law requires it, when you consent. Vercel Analytics may record a page view
+        so we can see if the site is up. It is not used to build an advertising profile. You can block or clear
+        cookies in your browser. Blocking them can stop ads and can also reset a draft that lived only on that
+        device.
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Children</h2>
       <p>

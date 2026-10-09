@@ -14,6 +14,8 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ClubRouteImport } from './routes/club'
 import { Route as ClubSeasonsRouteImport } from './routes/club-seasons'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HowToPlayRouteImport } from './routes/how-to-play'
@@ -48,6 +50,16 @@ const ClubSeasonsRoute = ClubSeasonsRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FriendsRoute = FriendsRouteImport.update({
@@ -107,6 +119,8 @@ export interface FileRoutesByFullPath {
   '/club': typeof ClubRoute
   '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/friends': typeof FriendsRoute
   '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
@@ -124,6 +138,8 @@ export interface FileRoutesByTo {
   '/club': typeof ClubRoute
   '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/friends': typeof FriendsRoute
   '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
@@ -142,6 +158,8 @@ export interface FileRoutesById {
   '/club': typeof ClubRoute
   '/club-seasons': typeof ClubSeasonsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/friends': typeof FriendsRoute
   '/guides': typeof GuidesRoute
   '/how-to-play': typeof HowToPlayRoute
@@ -161,6 +179,8 @@ export interface FileRouteTypes {
     | '/club'
     | '/club-seasons'
     | '/contact'
+    | '/cookies'
+    | '/faq'
     | '/friends'
     | '/guides'
     | '/how-to-play'
@@ -178,6 +198,8 @@ export interface FileRouteTypes {
     | '/club'
     | '/club-seasons'
     | '/contact'
+    | '/cookies'
+    | '/faq'
     | '/friends'
     | '/guides'
     | '/how-to-play'
@@ -195,6 +217,8 @@ export interface FileRouteTypes {
     | '/club'
     | '/club-seasons'
     | '/contact'
+    | '/cookies'
+    | '/faq'
     | '/friends'
     | '/guides'
     | '/how-to-play'
@@ -213,6 +237,8 @@ export interface RootRouteChildren {
   ClubRoute: typeof ClubRoute
   ClubSeasonsRoute: typeof ClubSeasonsRoute
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
+  FaqRoute: typeof FaqRoute
   FriendsRoute: typeof FriendsRoute
   GuidesRoute: typeof GuidesRoute
   HowToPlayRoute: typeof HowToPlayRoute
@@ -260,6 +286,20 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/friends': {
@@ -341,6 +381,8 @@ const rootRouteChildren: RootRouteChildren = {
   ClubRoute: ClubRoute,
   ClubSeasonsRoute: ClubSeasonsRoute,
   ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
+  FaqRoute: FaqRoute,
   FriendsRoute: FriendsRoute,
   GuidesRoute: GuidesRoute,
   HowToPlayRoute: HowToPlayRoute,
