@@ -15,7 +15,7 @@ export const Route = createFileRoute("/world-cups")({
           "@type": "Article",
           headline: "World Cups in the Seven Nil draft",
           datePublished: "2026-10-01",
-          dateModified: "2026-10-01",
+          dateModified: "2026-10-09",
           author: { "@id": `${SITE_URL}/#maker` },
           publisher: { "@id": `${SITE_URL}/#org` },
           mainEntityOfPage: `${SITE_URL}/world-cups`,
@@ -26,99 +26,72 @@ export const Route = createFileRoute("/world-cups")({
 
 function WorldCupsPage() {
   return (
-    <LegalShell title="World Cups in the draft" kicker="Nations and tournament years">
+    <LegalShell title="World Cups in the draft" kicker="How a national roll is meant to be used">
       <p>
-        World Cup mode never draws a club. Each roll is one country and one tournament year, almost always a World
-        Cup or a European Championship that people still argue about. The card is the players who made that summer
-        matter, plus enough of the rest of the squad that a draft can find a full-back and a goalkeeper, not only the
-        famous forward.
+        This page is a set of draft rules written for Seven Nil. It is not a retelling of tournaments, not a match
+        report, and not text lifted from a results site. A roll gives you one country and one year. You may take one
+        player who fits an open role. Then that squad leaves. The notes below are about that decision.
       </p>
       <p>
-        This page is a reading list for those years. It is not a full history of the competition, and it is not
-        affiliated with FIFA. Scores and lineups in the game are a simulation on top of these squads.
+        World Cup mode never draws a club. Club mode never draws a country. The two pools do not share a card, a room,
+        or a friends lobby. Nothing here is affiliated with FIFA. The game does not host video, highlights, or any
+        copy of a broadcast.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">The early Brazil sides</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">What you are actually choosing</h2>
       <p>
-        Brazil 1958 is the first side in the archive that made the yellow shirt the default picture of the World Cup.
-        Pelé is already the centre of it, with Garrincha wide and Didi organising. Brazil 1970 is the other pole:
-        Carlos Alberto, Gérson, Rivelino, Jairzinho, Tostão, and Pelé in the same eleven. Those two years are in the
-        draft because a single pick from either of them changes what your attack can be. They are not copies of each
-        other. 1958 is a younger Pelé. 1970 is the finished team.
-      </p>
-      <p>
-        Brazil 1982 is the side people still call the best never to win it. Zico, Sócrates, Falcão, and Éder make the
-        midfield the point of the card. Brazil 1994 is the champion side that won by being harder to play through:
-        Romário and Bebeto up front, Dunga behind them. Brazil 1998 is the finalist side with Ronaldo and Rivaldo,
-        rated for that tournament rather than for what Ronaldo became later. Brazil 2002 is the champion side again:
-        Ronaldo at the peak of that cup, Rivaldo and Ronaldinho around him, Cafu and Roberto Carlos on the flanks.
-      </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Argentina</h2>
-      <p>
-        Argentina 1978 is the host champion, built around Kempes and a midfield that did not need a single genius.
-        Argentina 1986 is the opposite shape: Maradona at 97, and a team that becomes a different side the moment he
-        is on your card. Argentina 2014 is the finalist side of Messi, Di María, and Mascherano, still short of the
-        trophy. Argentina 2022 is the one that finished it, with Martínez in goal, Enzo Fernández and Mac Allister in
-        the middle, and Álvarez as the forward who could start or arrive.
-      </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Europe's champions</h2>
-      <p>
-        England 1966 is the World Cup side: Moore, Charlton, Hurst, Peters. England 1990 is the semi-final side people
-        remember for Gascoigne and Lineker, not for a trophy. England 2018 and 2022 are the modern tournaments, with
-        Kane as the reference striker and a defence that was the real strength in 2018.
+        The famous name is usually the trap. Brazil 1970 contains several forwards a highlight reel would take first.
+        If your 4-3-3 already has two of those roles filled, the useful shirt on that card is the right-back or the
+        goalkeeper, because the formation still has a hole and the next roll may be a side with no full-back you can
+        use. The same test applies to every champion attack in the archive.
       </p>
       <p>
-        Germany 1974 is Beckenbauer, Müller, Maier, and Breitner. The game stores that side as Germany. Germany 1990
-        is the late West German champion side, Matthäus at the front of it. Germany 2014 is Neuer, Lahm, Kroos,
-        Müller, and a bench that could change a semi-final. The 2002 side is the finalist team, Ballack and Kahn,
-        rated for a tournament they reached rather than for a decade of club football.
+        A second year of the same country is a different card, not a duplicate. Brazil 1958, 1970, 1982, 1994, 1998,
+        and 2002 do not share a rating, and a player already taken cannot be taken again from another year. The card
+        goes grey and the line under it says it cannot be selected. Another cup keeps the country and spends one of
+        five redraws to change the year. Another team spends a redraw and leaves the country.
+      </p>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">How to read a strong year</h2>
+      <p>
+        Argentina 1986 is a one-player swing. If the open role can hold Maradona, that is the pick, because almost no
+        later roll replaces what that card does in the hole. If the open role is a centre-back, ignore the 97 and take
+        the defender, or redraw. Argentina 1978, 2014, and 2022 are not smaller copies of 1986. 1978 is a side without
+        a single genius. 2022 has a goalkeeper and a midfield you can build around if the attack is already solved.
       </p>
       <p>
-        Italy 1982 is Rossi's World Cup after a quiet start. Italy 1994 and 2006 are the Baggio final and the
-        Cannavaro final, which ask completely different things of a draft. Italy 2021 is the European Championship
-        side: Donnarumma, Chiellini, Barella, Jorginho, Chiesa. Spain 2008 is the Euros side that started the run.
-        Spain 2010 is the World Cup. Spain 2012 is the third tournament, Iniesta and Xavi still the centre, the striker
-        less certain. France 1984 is Platini's Euros. France 1998 is Zidane's World Cup, with Thuram, Blanc,
-        and Deschamps around him, and a younger Henry. France 2006, 2018, and 2022 are three different generations of
-        the same shirt.
+        Spain 2008, 2010, and 2012 look alike from outside the game and behave differently inside it. 2010 is the
+        World Cup card, heavy through the middle. If you already have a holder, the scarce piece is often a full-back,
+        not a third passer. France 1998, 2006, 2018, and 2022 are four generations. Taking the 1998 striker does not
+        unlock the 2018 full-backs. Germany 1974, 1990, and 2014 are the same rule: Beckenbauer's card can defend or
+        sit in front of the defence, which is why a formation change after the coach arrives may move him. It does
+        not move a pure striker into a full-back slot.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">Sides that bent a bracket</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">How to read a thin year</h2>
       <p>
-        Netherlands 1974 is Cruyff's finalist side. Netherlands 1988 is the European champion side with Gullit,
-        van Basten, and Rijkaard. Netherlands 1998 is Bergkamp, Davids, Overmars, and a young Kluivert. Croatia 1998
-        is Šuker's semi-final team. Croatia 2018 and 2022 are Modrić's two deep runs, which the draft treats
-        as different squads because the players around him changed.
-      </p>
-      <p>
-        Denmark 1992 is the side that arrived as replacements and won the Euros. Greece 2004 is the other shock
-        champion: Zagorakis, Charisteas, and a defence that did not need a star forward. Bulgaria 1994 is Stoichkov
-        and a quarter-final. Romania 1994 is Hagi. Nigeria 1994 is Yekini, Okocha, and Amuneke. Cameroon 1990 is Milla
-        coming off the bench into a quarter-final. Senegal 2002 and Senegal 2022 are twenty years apart: Bouba Diop's
-        side, then Mané and Koulibaly.
+        Greece 2004 and Costa Rica 2014 are in the archive because a draft of only champions never asks you to solve
+        a goalkeeper. On Greece, the honest pick is Nikopolidis or a centre-back if that role is empty. There is no
+        hidden gold forward on that card. Forcing one is how the XI finishes with three number 10s and an empty
+        spine. Denmark 1992, Bulgaria 1994, and Cameroon 1990 work the same way: one or two players are the point of
+        the roll, and the rest are squad roles in the low 70s or low 80s on purpose.
       </p>
       <p>
-        Morocco 2022 is the first African semi-finalist, and the card is built that way: a defence and a midfield,
-        not a collection of forwards. Japan 2022, Korea 2002, the United States in 2022, Mexico in 1986, and Costa
-        Rica in 2014 are in the archive for the same reason. A draft that only contains champions becomes a highlight
-        reel. A draft that also contains these sides has to solve a left-back from a team that actually had one.
+        Morocco 2022 is the opposite of a star-forward card. The value is the back line and the midfield. Japan 2022,
+        Korea 2002, the United States in 2022, and Mexico in 1986 are included so a left-back problem can be answered
+        by a side that actually used one. If the timer expires, the game auto-picks a legal player for the open role.
+        It will not hand you a forward you cannot place.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">How to use a year when it appears</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">A full turn, written out</h2>
       <p>
-        If the dice give you a champion attack and you already have two forwards, take the scarce role. Full-backs and
-        holding midfielders from 1970, 1998, and 2014 are worth more to an empty formation than a third gold name. If
-        the dice give you Greece 2004 or Costa Rica 2014, the value is the goalkeeper and the defenders. Forcing a
-        glamour pick out of a defensive side is how a draft ends with no spine.
+        Formation 4-3-3. First roll, Brazil 1970. Attack is already famous, so the pick is Carlos Alberto if
+        right-back is empty. Second roll, Greece 2004. Stoichkov is not in that squad. If the goal is empty, take
+        Nikopolidis. If the goal is filled, redraw. Another team spends one chance. Another cup on Greece changes
+        nothing if that country has one year in the archive, so the redraw is wasted unless you leave the country.
+        After eleven shirts, the coach is offered. Three changes. The coach does not take a place in the XI.
       </p>
       <p>
-        Another cup keeps the country and changes the year. That is the redraw to use when you liked the nation and
-        hated the tournament. It still costs one of the five chances. The rating method is on{" "}
-        <a className="underline" href="/ratings">
-          How a rating is set
-        </a>
-        . Club years are a separate pool, described in{" "}
-        <a className="underline" href="/club-seasons">
-          Club seasons
-        </a>
-        .
+        The number on each of those cards is a judgment for that year inside this game. The method is on{" "}
+        <a className="underline" href="/ratings">How a rating is set</a>. Where the names stop and the invention
+        starts is on <a className="underline" href="/sources">Sources</a>. Club years are a separate pool:{" "}
+        <a className="underline" href="/club-seasons">Club seasons</a>.
       </p>
     </LegalShell>
   );

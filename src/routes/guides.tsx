@@ -88,7 +88,20 @@ function GuidesPage() {
         is settled at once, so a 32-team cup does not take an hour. Later rounds stay closed until the live match is
         finished.
       </p>
-      <h2 className="mt-4 font-display text-2xl tracking-wide">What this site is not</h2>
+      <h2 className="mt-4 font-display text-2xl tracking-wide">How these pages are written</h2>
+      <p>
+        The sentences on this site were written for Seven Nil. They describe the draft, the season scores, and the
+        choices a roll forces. They are not match reports copied from a newspaper, not squad lists pasted from
+        another site, and not a spun version of a public encyclopedia. A name and a year identify a real squad. The
+        rating, the chemistry, and the simulated score are original to the game. If a year is wrong, the correction
+        is the squad, the year, and the name, sent from the{" "}
+        <a className="underline" href="/contact">contact page</a>.
+      </p>
+      <p>
+        The site does not publish adult material, pirated video, scraped articles, hate, or instructions for
+        anything dangerous. It also does not sell bets. The legal version of that rule is on the{" "}
+        <a className="underline" href="/terms">terms</a>.
+      </p>
       <p>
         Seven Nil is not affiliated with FIFA, UEFA, or any club or league. It does not sell bets, tips, or packs.
         There is no account. Drafts stay on your device unless you join a friends room, and a friends room only shares
