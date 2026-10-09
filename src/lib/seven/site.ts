@@ -4,6 +4,8 @@ export const OG_IMAGE = `${SITE_URL}/og.jpg`;
 export const CONTACT_EMAIL = "sagnik.dhar2018@gmail.com";
 export const UPDATED = "2026-09-24";
 export const GITHUB = "https://github.com/sagnikdhar2018-jpg/seven-nil";
+/** Public AdSense publisher id. Must match public/ads.txt. Not a secret. */
+export const ADSENSE_CLIENT = "ca-pub-1391099021196311";
 
 export const orgRef = {
   "@type": "Organization",

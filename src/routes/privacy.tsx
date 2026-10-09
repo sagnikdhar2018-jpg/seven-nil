@@ -54,11 +54,15 @@ function PrivacyPage() {
       </p>
       <h2 className="mt-4 font-display text-2xl tracking-wide">Advertising</h2>
       <p>
-        Seven Nil may display advertising through Google AdSense or another advertising provider. Publisher ID
-        pub-1391099021196311 is reserved for this site. Ads are not shown until an account is approved and the ad code
-        is allowed to serve. When advertising is enabled, those providers may use cookies, device identifiers, or
-        similar technology to provide and measure advertisements, including a coarse location derived from an IP
-        address.
+        This site loads one Google AdSense script for publisher ID pub-1391099021196311. The same ID is the only
+        record in /ads.txt. Loading the script is not the same thing as Google approving this site, and it does not
+        mean an advertisement is on the screen. Google decides whether an ad is served. There are no ad slots drawn
+        by the game itself, and nothing on the page asks you to click an ad.
+      </p>
+      <p>
+        When that script runs, Google and its partners may use cookies, device identifiers, or similar technology to
+        provide and measure advertisements, including a coarse location derived from an IP address. That can happen
+        before an ad is visible.
       </p>
       <p>
         Google's own explanation is in the{" "}
@@ -69,12 +73,13 @@ function PrivacyPage() {
         <a className="underline" href="https://policies.google.com/technologies/ads" rel="noreferrer">
           How Google uses information from sites or apps that use its services
         </a>
-        . The ads.txt file at the root of this site lists that publisher ID.
+        . The file at /ads.txt lists that same publisher ID and no other.
       </p>
       <p>
-        Visitors in the European Economic Area, the United Kingdom, and Switzerland are shown a consent message before
-        personalised ads, once advertising is enabled. You can refuse. Non-personalised ads may still appear. You can change ad personalisation at
-        any time in{" "}
+        If Google serves personalised ads, visitors in the European Economic Area, the United Kingdom, and Switzerland
+        should see the consent message configured in the AdSense account first. You can refuse. Non-personalised ads
+        may still appear. Whether that message is showing on a given visit is controlled in the AdSense account, not
+        by a second script in this repository. You can change ad personalisation at any time in{" "}
         <a className="underline" href="https://adssettings.google.com" rel="noreferrer">
           Google Ads Settings
         </a>

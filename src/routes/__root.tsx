@@ -2,11 +2,10 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
-import { OG_IMAGE, SITE_NAME, SITE_URL, orgRef, personRef } from "@/lib/seven/site";
+import { OG_IMAGE, SITE_NAME, SITE_URL, ADSENSE_CLIENT, orgRef, personRef } from "@/lib/seven/site";
 import "../styles.css";
 
 const APP_NAME = "Seven Nil";
-const ADSENSE_CLIENT = "ca-pub-1391099021196311";
 
 const jsonLd = {
   "@context": "https://schema.org",

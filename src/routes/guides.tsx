@@ -105,8 +105,9 @@ function GuidesPage() {
       <p>
         Seven Nil is not affiliated with FIFA, UEFA, or any club or league. It does not sell bets, tips, or packs.
         There is no account. Drafts stay on your device unless you join a friends room, and a friends room only shares
-        the code, the names, and the picks with the people in that room. Advertising, if Google approves the site, is
-        explained on the <a className="underline" href="/privacy">privacy policy</a>.
+        the code, the names, and the picks with the people in that room. One AdSense script is loaded. Whether an ad
+        appears is Google's decision, not a promise that this site is approved. The details are on the{" "}
+        <a className="underline" href="/privacy">privacy policy</a>.
       </p>
       <p>
         If a year is wrong or a shirt is missing, use the <a className="underline" href="/contact">contact page</a>.
