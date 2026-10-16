@@ -250,6 +250,10 @@ export function ArcadeApp() {
               <Button type="button" onClick={() => void startSearch()}>
                 Find a rival
               </Button>
+              <Link to="/auction" className="rounded-2xl border border-line bg-surface p-4">
+                <span className="block font-display text-2xl tracking-wide">5-a-side auction</span>
+                <span className="mt-2 block text-sm text-muted">Blind bids. $16. You against the scout, or pass-and-play.</span>
+              </Link>
             </>
           ) : null}
           {phase === "queue" ? (

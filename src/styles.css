@@ -1295,3 +1295,18 @@
   border-color: #d64532;
   color: #fff;
 }
+
+@keyframes auction-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auction-in {
+  animation: auction-in 0.35s var(--ease-out);
+}

@@ -16,6 +16,9 @@ export function SiteFooter({ note }: { note?: string }) {
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/play">
           Arcade
         </Link>
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/auction">
+          Auction
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/how-to-play">
           How to play
         </Link>

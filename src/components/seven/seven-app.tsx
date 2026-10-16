@@ -129,6 +129,9 @@ export function SevenApp({ pool = "world" }: { pool?: PoolId }) {
                 <Link to="/play">Arcade</Link>
               </Button>
               <Button variant="secondary" asChild>
+                <Link to="/auction">Auction</Link>
+              </Button>
+              <Button variant="secondary" asChild>
                 <Link to={pool === "club" ? "/club/friends" : "/friends"}>With friends</Link>
               </Button>
               <Button variant="ghost" asChild>
