@@ -13,6 +13,9 @@ export function SiteFooter({ note }: { note?: string }) {
       </p>
       {note ? <p>{note}</p> : null}
       <nav aria-label="Site" className="flex flex-wrap gap-x-4 gap-y-1">
+        <Link className="underline-offset-2 hover:text-ink hover:underline" to="/play">
+          Arcade
+        </Link>
         <Link className="underline-offset-2 hover:text-ink hover:underline" to="/how-to-play">
           How to play
         </Link>
