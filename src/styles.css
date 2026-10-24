@@ -1310,3 +1310,12 @@
 .auction-in {
   animation: auction-in 0.35s var(--ease-out);
 }
+
+@keyframes auction-live {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+
+.auction-photo {
+  animation: auction-live 7s ease-in-out infinite alternate;
+}

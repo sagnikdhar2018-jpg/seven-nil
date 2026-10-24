@@ -230,10 +230,8 @@ function Board({
       {!done && player ? (
         <>
           <article className="auction-in overflow-hidden rounded-3xl border border-line bg-surface">
-            <div className="flex items-center gap-4 p-4">
-              <div className="grid size-16 shrink-0 place-items-center rounded-2xl bg-field font-display text-2xl text-white" aria-hidden>
-                {initials(player.name)}
-              </div>
+            <ActionShot key={player.id} player={player} live={match.phase === "bidding"} />
+            <div className="flex items-end justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
                   {flagEmoji(player.nationality)} {player.position} · {player.club}
@@ -241,7 +239,7 @@ function Board({
                 <h2 className="truncate text-3xl">{player.name}</h2>
                 <p className="text-sm text-muted">{player.funFactOrForm}</p>
               </div>
-              <p className="ml-auto font-display text-3xl tabular-nums">{showRatings ? player.overallRating : "??"}</p>
+              <p className="font-display text-3xl tabular-nums">{showRatings ? player.overallRating : "??"}</p>
             </div>
             {match.phase === "bidding" ? (
               <div className="px-4 pb-4">
@@ -341,6 +339,27 @@ function SquadColumn({ manager, showRatings }: { manager: Manager; showRatings: 
           ];
         })}
       </ul>
+    </div>
+  );
+}
+
+function ActionShot({ player, live }: { player: AuctionPlayer; live: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (!player.imageUrl || failed) {
+    return (
+      <div className="grid h-48 place-items-center bg-field font-display text-5xl text-white" aria-hidden>
+        {initials(player.name)}
+      </div>
+    );
+  }
+  return (
+    <div className="relative h-72 overflow-hidden bg-field sm:h-96">
+      <img
+        src={player.imageUrl}
+        alt={`${player.name} in action`}
+        className={`h-full w-full object-cover object-[center_22%] ${live ? "auction-photo" : ""}`}
+        onError={() => setFailed(true)}
+      />
     </div>
   );
 }

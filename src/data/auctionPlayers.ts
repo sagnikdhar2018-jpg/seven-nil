@@ -13,7 +13,8 @@ export interface AuctionPlayer {
   imageUrl: string;
 }
 
-/** Portraits are drawn in the UI. Remote photos are left blank so a dead link never breaks a card. */
+/** Match photos live in /auction-players. A missing file falls back to initials. */
+const PNG = new Set(["donnarumma", "camavinga"]);
 const p = (
   id: string,
   name: string,
@@ -23,7 +24,17 @@ const p = (
   nationality: string,
   club: string,
   funFactOrForm: string,
-): AuctionPlayer => ({ id, name, position, overallRating, marketValueTier, nationality, club, funFactOrForm, imageUrl: "" });
+): AuctionPlayer => ({
+  id,
+  name,
+  position,
+  overallRating,
+  marketValueTier,
+  nationality,
+  club,
+  funFactOrForm,
+  imageUrl: `/auction-players/${id}.${PNG.has(id) ? "png" : "jpg"}`,
+});
 
 export const AUCTION_PLAYERS: AuctionPlayer[] = [
   p("courtois", "Courtois", "GK", 90, "S", "BE", "Real Madrid", "World-class shot stopper"),
